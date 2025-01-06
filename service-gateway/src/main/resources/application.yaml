@@ -1,6 +1,12 @@
 spring:
   application:
     name: service-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/lotheas
+          jwk-set-uri: http://localhost:8080/realms/lotheas/protocol/openid-connect/certs
   cloud:
     gateway:
       discovery:
@@ -10,13 +16,13 @@ spring:
         - id: service-auth
           uri: lb://service-auth
           predicates:
-            - Path=/auth/**
+            - Path=/users/**
 server:
   port: 8081
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 30
-    lease-expiration-duration-in-seconds: 90
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
     register-with-eureka: true
     fetch-registry: true
