@@ -9,14 +9,6 @@ spring:
           jwk-set-uri: http://localhost:8080/realms/lotheas/protocol/openid-connect/certs
 server:
   port: 8082
-keycloak:
-  auth-server-url: http://localhost:8080/auth
-  realm: lotheas
-  resource: microservice-auth
-  public-client: true
-  bearer-only: true
-  credentials:
-    secret: t4pd53wXrRTUUAp3gFBOsCXEeZtJwdCW
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 10

@@ -1,8 +1,0 @@
-{
-  "auth-server-url" : "http://localhost:8080",
-  "realm" : "lotheas",
-  "resource" : "microservice-auth",
-  "credentials" : {
-    "secret" : "t4pd53wXrRTUUAp3gFBOsCXEeZtJwdCW"
-  }
-}
