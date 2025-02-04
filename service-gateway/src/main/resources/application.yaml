@@ -10,7 +10,7 @@ spring:
         - id: service-auth
           uri: lb://service-auth
           predicates:
-            - Path=/auth/**
+            - Path=/auth/**, /users/**
 server:
   port: 8081
 eureka:

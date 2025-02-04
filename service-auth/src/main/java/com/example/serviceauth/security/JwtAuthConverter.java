@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Component
+@Deprecated
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     private static final String RESOURCE_ACCESS = "resource_access";
     private static final String CLIENT = "microservice-auth";

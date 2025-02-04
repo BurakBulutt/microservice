@@ -1,0 +1,15 @@
+{
+  "realm": "lotheas",
+  "auth-server-url" : "http://localhost:8080",
+  "resource" : "microservice-auth",
+  "credentials" : {
+    "secret" : "t4pd53wXrRTUUAp3gFBOsCXEeZtJwdCW"
+  },
+  "http-method-as-scope" : true,
+  "paths" : [
+    {
+      "path" : "/auth/*",
+      "enforcement-mode" : "DISABLED"
+    }
+  ]
+}
