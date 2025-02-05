@@ -23,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AuthService {
     private static final String USER_GROUP = "microservice-users-group";
+    private static final String REDIRECT_URI = "http://localhost:8081/auth/callback";
 
     private final Keycloak keycloak;
     private final KeycloakProperties keycloakProperties;
@@ -30,8 +31,16 @@ public class AuthService {
 
     public AccessTokenResponse login(LoginRequest request) {
         Map<String, String> form = generateForm(OAuth2Constants.PASSWORD);
-        form.put("username", request.username());
-        form.put("password", request.password());
+        form.put(OAuth2Constants.USERNAME, request.username());
+        form.put(OAuth2Constants.PASSWORD, request.password());
+
+        return feignClient.getAccessToken(keycloakProperties.getRealm(), form);
+    }
+
+    public AccessTokenResponse loginWithAuthorizationCode(String authorizationCode) {
+        Map<String,String> form = generateForm(OAuth2Constants.AUTHORIZATION_CODE);
+        form.put(OAuth2Constants.CODE,authorizationCode);
+        form.put(OAuth2Constants.REDIRECT_URI,REDIRECT_URI);
 
         return feignClient.getAccessToken(keycloakProperties.getRealm(), form);
     }
@@ -49,7 +58,7 @@ public class AuthService {
 
     public AccessTokenResponse refreshToken(String refreshToken) {
         Map<String, String> form = generateForm(OAuth2Constants.REFRESH_TOKEN);
-        form.put("refresh_token", refreshToken);
+        form.put(OAuth2Constants.REFRESH_TOKEN, refreshToken);
 
         return feignClient.getAccessToken(keycloakProperties.getRealm(), form);
     }
@@ -76,7 +85,6 @@ public class AuthService {
             response.close();
             return UserRepresentationMapper.toDto(savedUser);
         }
-
         throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
     }
 
@@ -94,9 +102,9 @@ public class AuthService {
 
     private Map<String ,String> generateForm(String grantType) {
         Map<String, String> form = new HashMap<>();
-        form.put("grant_type", grantType);
-        form.put("client_id", keycloakProperties.getResource());
-        form.put("client_secret", keycloakProperties.getCredentials().getSecret());
+        form.put(OAuth2Constants.GRANT_TYPE, grantType);
+        form.put(OAuth2Constants.CLIENT_ID, keycloakProperties.getResource());
+        form.put(OAuth2Constants.CLIENT_SECRET, keycloakProperties.getCredentials().getSecret());
 
         return form;
     }

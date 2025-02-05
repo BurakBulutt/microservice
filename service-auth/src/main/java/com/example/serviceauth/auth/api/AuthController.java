@@ -19,6 +19,11 @@ public class AuthController {
         return ResponseEntity.ofNullable(UserRepresentationMapper.toTokenResponse(service.login(request)));
     }
 
+    @GetMapping("callback")
+    public ResponseEntity<TokenResponse> login(@RequestParam("code") String authorizationCode) {
+        return ResponseEntity.ofNullable(UserRepresentationMapper.toTokenResponse(service.loginWithAuthorizationCode(authorizationCode)));
+    }
+
     @PostMapping("register")
     public ResponseEntity<UserRepresentationResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ofNullable(UserRepresentationMapper.toResponse(service.register(UserRepresentationMapper.toDto(request))));
