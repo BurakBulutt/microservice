@@ -1,12 +1,6 @@
 spring:
   application:
     name: service-auth
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/lotheas
-          jwk-set-uri: http://localhost:8080/realms/lotheas/protocol/openid-connect/certs
 server:
   port: 8082
 eureka:
@@ -18,13 +12,4 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
     fetch-registry: true
     register-with-eureka: true
-keycloak:
-  realm: lotheas
-  auth-server-url: http://localhost:8080
-  resource: microservice-auth
-  credentials:
-    secret: t4pd53wXrRTUUAp3gFBOsCXEeZtJwdCW
-
-keycloak-util:
-  users-group-id: f6b8355a-797c-4723-b9b6-44f1b8c41031
 
