@@ -110,8 +110,8 @@ public class UserServiceImpl implements UserService {
             userResource.executeActionsEmail(List.of("UPDATE_PASSWORD"));
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,id);
-        }catch (BadRequestException e) {
-            throw new BaseException(MessageResource.BAD_REQUEST);
+        }catch (InternalServerErrorException e) {
+            throw new BaseException(MessageResource.INTERNAL_SERVER_ERROR);
         }
     }
 
