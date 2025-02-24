@@ -6,11 +6,14 @@ import lombok.NoArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
+import java.util.Objects;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
 
-    public static UserRepresentationResponse toUserRepresentationResponse(UserRepresentation userRepresentation) {
+    public static UserRepresentationResponse toUserRepresentationResponse(UserRepresentation userRepresentation)  {
+        String birthDateStr = Objects.requireNonNull(userRepresentation.getAttributes().get("birthdate").get(0));
+
         return UserRepresentationResponse.builder()
                 .id(userRepresentation.getId())
                 .username(userRepresentation.getUsername())
@@ -18,20 +21,9 @@ public class UserMapper {
                 .lastName(userRepresentation.getLastName())
                 .email(userRepresentation.getEmail())
                 .emailVerified(userRepresentation.isEmailVerified())
-                .attributes(userRepresentation.getAttributes())
+                .birthdate(birthDateStr)
                 .createdTimestamp(userRepresentation.getCreatedTimestamp())
                 .enabled(userRepresentation.isEnabled())
-                .federationLink(userRepresentation.getFederationLink())
-                .serviceAccountClientId(userRepresentation.getServiceAccountClientId())
-                .disableableCredentialTypes(userRepresentation.getDisableableCredentialTypes())
-                .requiredActions(userRepresentation.getRequiredActions())
-                .federatedIdentities(userRepresentation.getFederatedIdentities())
-                .realmRoles(userRepresentation.getRealmRoles())
-                .clientRoles(userRepresentation.getClientRoles())
-                .clientConsents(userRepresentation.getClientConsents())
-                .notBefore(userRepresentation.getNotBefore())
-                .groups(userRepresentation.getGroups())
-                .access(userRepresentation.getAccess())
                 .build();
     }
 

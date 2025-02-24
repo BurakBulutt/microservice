@@ -13,6 +13,7 @@ public enum MessageResource {
     NOT_FOUND(HttpStatus.NOT_FOUND,"general.notFound"),
     FORBIDDEN(HttpStatus.FORBIDDEN,"general.forbidden"),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED,"general.unauthorized"),
+    CONFLICT(HttpStatus.CONFLICT,"general.conflict"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,"general.internalServerError");
 
     private final HttpStatus httpStatus;

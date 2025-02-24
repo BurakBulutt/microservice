@@ -2,7 +2,6 @@ package com.example.serviceusers.users.api;
 
 import com.example.serviceusers.users.mapper.UserMapper;
 import com.example.serviceusers.users.service.UserServiceImpl;
-import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +23,11 @@ public class UserController {
     @GetMapping("/{username}")
     public ResponseEntity<UserRepresentationResponse> getUserByUsername(@PathVariable String username) {
         return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserByUsername(username)));
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Integer> getUserByUsername() {
+        return ResponseEntity.ok(service.getUserCount());
     }
 
     @PostMapping

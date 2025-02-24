@@ -14,12 +14,9 @@ import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +29,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserRepresentation> getAllUsers(int page, int size) {
         int first = page * size;
-        return keycloakAdmin.realm(realm).users().list(first, size);
+        return keycloakAdmin.realm(realm).users().list(first, size).stream()
+                .filter(userRepresentation -> checkRoles(userRepresentation.getId()))
+                .toList();
     }
 
     @Override
@@ -50,8 +49,12 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setLastName(request.lastName());
         userRepresentation.setEmail(request.email());
         userRepresentation.setEmailVerified(request.emailVerified());
-        userRepresentation.setRequiredActions(request.requiredActions());
+        userRepresentation.setRequiredActions(new ArrayList<>());
         userRepresentation.setEnabled(request.enabled());
+
+        if (!userRepresentation.isEmailVerified()) {
+            userRepresentation.getRequiredActions().add("VERIFY_EMAIL");
+        }
 
         Map<String,List<String>> attributes = Map.of("locale", List.of("tr"),"birthdate",List.of(request.birthdate()));
         userRepresentation.setAttributes(attributes);
@@ -64,8 +67,16 @@ public class UserServiceImpl implements UserService {
 
         Response response = keycloakAdmin.realm(realm).users().create(userRepresentation);
 
-        if (response.getStatus() == HttpStatus.BAD_REQUEST.value()) {
-            throw new BaseException(MessageResource.BAD_REQUEST);
+        switch (response.getStatus()) {
+            case 201 -> {
+                return;
+            }
+            case 409 -> {
+                throw new BaseException(MessageResource.CONFLICT);
+            }
+            case 400 -> {
+                throw new BaseException(MessageResource.BAD_REQUEST);
+            }
         }
     }
 
@@ -80,7 +91,6 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setEmail(request.email());
         userRepresentation.setEmailVerified(request.emailVerified());
         userRepresentation.setEnabled(request.enabled());
-        userRepresentation.setRequiredActions(request.requiredActions());
         userRepresentation.setAttributes(Map.of("locale", List.of("tr"),"birthdate",List.of(request.birthdate())));
 
         userResource.update(userRepresentation);
@@ -107,6 +117,11 @@ public class UserServiceImpl implements UserService {
     public void resetUserPassword(String id) {
         try {
             UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+            UserRepresentation representation = userResource.toRepresentation();
+            if(representation.getRequiredActions().stream().noneMatch(action -> action.equals("UPDATE_PASSWORD"))) {
+                representation.getRequiredActions().add("UPDATE_PASSWORD");
+                userResource.update(representation);
+            }
             userResource.executeActionsEmail(List.of("UPDATE_PASSWORD"));
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,id);
@@ -119,11 +134,25 @@ public class UserServiceImpl implements UserService {
     public void sendVerifyEmail(String id) {
         try {
             UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+            UserRepresentation representation = userResource.toRepresentation();
+            representation.setEmailVerified(Boolean.FALSE);
+            representation.getRequiredActions().add("VERIFY_EMAIL");
+            userResource.update(representation);
             userResource.sendVerifyEmail();
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,id);
         }catch (InternalServerErrorException e) {
             throw new BaseException(MessageResource.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Integer getUserCount() {
+        return Objects.requireNonNull(keycloakAdmin.realm(realm).users().count());
+    }
+
+    private boolean checkRoles(String id) {
+        UserResource user = keycloakAdmin.realm(realm).users().get(id);
+        return user.roles().realmLevel().listAll().stream().noneMatch(role -> role.getName().equals("ADMIN"));
     }
 }

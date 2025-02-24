@@ -15,4 +15,6 @@ public interface UserService {
     void delete(String id);
     void resetUserPassword(String id);
     void sendVerifyEmail(String id);
+
+    Integer getUserCount();
 }
