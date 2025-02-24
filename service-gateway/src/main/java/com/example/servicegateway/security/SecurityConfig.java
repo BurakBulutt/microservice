@@ -6,10 +6,9 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsConfigurationSource;
-import org.springframework.web.server.ServerWebExchange;
 
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -24,23 +23,17 @@ public class SecurityConfig {
            authorizeExchangeSpec.anyExchange().authenticated();
         });
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
-        http.cors(corsSpec -> corsSpec.configurationSource(new CorsConfigurationSource() {
-            @Override
-            public CorsConfiguration getCorsConfiguration(ServerWebExchange exchange) {
-                CorsConfiguration corsConfiguration = new CorsConfiguration();
-                corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
-                corsConfiguration.setAllowCredentials(Boolean.TRUE);
-                corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-                corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-            //    corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
-                return corsConfiguration;
-            }
+        http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
+            CorsConfiguration corsConfiguration = new CorsConfiguration();
+            corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+            corsConfiguration.setAllowCredentials(Boolean.TRUE);
+            corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
+            corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+        //    corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
+            return corsConfiguration;
         }));
-        http.oauth2ResourceServer(oAuth2ResourceServerSpec -> {
-            oAuth2ResourceServerSpec.jwt(jwtSpec -> {
-                jwtSpec.jwtAuthenticationConverter(new JwtAuthConverter());
-            });
-        });
+        http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
+                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(new JwtAuthConverter())));
         return http.build();
     }
 }
