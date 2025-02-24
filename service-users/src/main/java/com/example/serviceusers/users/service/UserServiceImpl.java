@@ -68,15 +68,8 @@ public class UserServiceImpl implements UserService {
         Response response = keycloakAdmin.realm(realm).users().create(userRepresentation);
 
         switch (response.getStatus()) {
-            case 201 -> {
-                return;
-            }
-            case 409 -> {
-                throw new BaseException(MessageResource.CONFLICT);
-            }
-            case 400 -> {
-                throw new BaseException(MessageResource.BAD_REQUEST);
-            }
+            case 409 -> throw new BaseException(MessageResource.CONFLICT);
+            case 400 -> throw new BaseException(MessageResource.BAD_REQUEST);
         }
     }
 
