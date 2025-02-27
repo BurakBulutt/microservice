@@ -5,6 +5,7 @@ import com.example.serviceusers.rest.MessageResource;
 import com.example.serviceusers.users.api.CreateUserRequest;
 import com.example.serviceusers.users.api.UpdateUserRequest;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -51,6 +52,7 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setEmailVerified(request.emailVerified());
         userRepresentation.setRequiredActions(new ArrayList<>());
         userRepresentation.setEnabled(request.enabled());
+        userRepresentation.setGroups(List.of("app-users-group"));
 
         if (!userRepresentation.isEmailVerified()) {
             userRepresentation.getRequiredActions().add("VERIFY_EMAIL");
@@ -91,6 +93,11 @@ public class UserServiceImpl implements UserService {
             throw new BaseException(MessageResource.BAD_REQUEST);
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,id);
+        }catch (ClientErrorException e) {
+            if (e.getResponse().getStatus() == 409) {
+                throw new BaseException(MessageResource.CONFLICT);
+            }
+            throw new ClientErrorException(e.getMessage(),e.getResponse().getStatus());
         }
     }
 

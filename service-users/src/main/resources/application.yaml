@@ -15,6 +15,5 @@ eureka:
 keycloak:
   auth-server-url: ${KEYCLOAK_URL:http://localhost:8180}
   realm: ${KEYCLOAK_REALM:lotheas}
-  resource: ${KEYCLOAK_RESOURCE:app-client}
-  credentials:
-    secret: ${KEYCLOAK_SECRET:xOaWyC8LAanKNQmIIYSnbALIxvJf5gGW}
+  client-id: ${KEYCLOAK_RESOURCE:app-client}
+  client-secret: ${KEYCLOAK_SECRET:xOaWyC8LAanKNQmIIYSnbALIxvJf5gGW}

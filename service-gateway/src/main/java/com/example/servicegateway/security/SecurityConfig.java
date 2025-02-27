@@ -2,8 +2,10 @@ package com.example.servicegateway.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -19,21 +21,31 @@ public class SecurityConfig {
         http.formLogin(ServerHttpSecurity.FormLoginSpec::disable);
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-           authorizeExchangeSpec.pathMatchers("api/v1/auth/**").hasAnyRole("USER", "ADMIN");
-           authorizeExchangeSpec.anyExchange().authenticated();
+           authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"api/v1/auth/**").hasAnyRole("ADMIN","USER");
+           authorizeExchangeSpec.anyExchange().permitAll();
         });
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable);
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable); //yeniden düzenlencek
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
             corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-        //    corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
+            corsConfiguration.setExposedHeaders(Collections.singletonList("X-XSRF-TOKEN"));
             return corsConfiguration;
         }));
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
-                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(new JwtAuthConverter())));
+                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(jwtConverter())));
         return http.build();
+    }
+
+    public ServerJwtAuthenticationConverter jwtConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles");
+
+        ServerJwtAuthenticationConverter jwtAuthenticationConverter = new ServerJwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
     }
 }

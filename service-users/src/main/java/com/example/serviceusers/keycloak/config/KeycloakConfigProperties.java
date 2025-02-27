@@ -12,12 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class KeycloakConfigProperties {
     private String authServerUrl;
     private String realm;
-    private String resource;
-    private Credentials credentials;
-
-    @Getter
-    @Setter
-    public static class Credentials {
-        private String secret;
-    }
+    private String clientId;
+    private String clientSecret;
 }

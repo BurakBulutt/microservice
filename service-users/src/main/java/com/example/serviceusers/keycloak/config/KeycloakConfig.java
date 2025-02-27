@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Scope;
 public class KeycloakConfig {
     private final KeycloakConfigProperties configProperties;
 
-
     @Bean
     @Scope("prototype")
     public Keycloak getInstance() {
@@ -21,8 +20,8 @@ public class KeycloakConfig {
                 .realm(configProperties.getRealm())
                 .serverUrl(configProperties.getAuthServerUrl())
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .clientId(configProperties.getResource())
-                .clientSecret(configProperties.getCredentials().getSecret())
+                .clientId(configProperties.getClientId())
+                .clientSecret(configProperties.getClientSecret())
                 .build();
     }
 }

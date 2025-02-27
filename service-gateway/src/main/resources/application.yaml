@@ -21,6 +21,10 @@ spring:
           uri: lb://service-users
           predicates:
             - Path=/api/v1/users/**
+        - id: service-media
+          uri: lb://service-media
+          predicates:
+            - Path=/api/v1/medias/**, /api/v1/contents/**,
 server:
   port: 8081
 eureka:
