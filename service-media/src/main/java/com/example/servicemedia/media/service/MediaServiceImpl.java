@@ -10,7 +10,6 @@ import com.example.servicemedia.media.repo.MediaRepository;
 import com.example.servicemedia.media.repo.MediaSourceRepository;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

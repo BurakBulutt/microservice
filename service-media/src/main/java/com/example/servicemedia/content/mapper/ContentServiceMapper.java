@@ -2,11 +2,8 @@ package com.example.servicemedia.content.mapper;
 
 import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.content.model.Content;
-import com.example.servicemedia.media.dto.MediaDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContentServiceMapper {
