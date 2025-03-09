@@ -16,17 +16,22 @@ public class UserController {
     private final UserServiceImpl service;
 
     @GetMapping
-    public ResponseEntity<List<UserRepresentationResponse>> getAllUsers(@RequestParam(defaultValue = "0" ) int page, @RequestParam(defaultValue = "15") int size) {
+    public ResponseEntity<List<UserRepresentationResponse>> getAllUsers(@RequestParam(defaultValue = "0" ) int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(UserMapper.toUserRepresentationResponses(service.getAllUsers(page, size)));
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/{id}")
+    public ResponseEntity<UserRepresentationResponse> getUserById(@PathVariable String id) {
+        return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserById(id)));
+    }
+
+    @GetMapping("/username/{username}")
     public ResponseEntity<UserRepresentationResponse> getUserByUsername(@PathVariable String username) {
         return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserByUsername(username)));
     }
 
     @GetMapping("/count")
-    public ResponseEntity<Integer> getUserByUsername() {
+    public ResponseEntity<Integer> getUsersCount() {
         return ResponseEntity.ok(service.getUserCount());
     }
 

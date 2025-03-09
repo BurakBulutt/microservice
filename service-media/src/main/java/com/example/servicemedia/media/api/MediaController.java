@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/medias")
 @RequiredArgsConstructor
@@ -18,6 +20,11 @@ public class MediaController {
     @GetMapping
     public ResponseEntity<Page<MediaResponse>> getAll(Pageable pageable) {
         return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getAll(pageable)));
+    }
+
+    @GetMapping("content/{contentId}")
+    public ResponseEntity<Page<MediaResponse>> getByContentId(Pageable pageable,@PathVariable String contentId) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getByContentId(pageable,contentId)));
     }
 
     @GetMapping("new-media")
@@ -33,6 +40,17 @@ public class MediaController {
     @GetMapping("/slug/{slug}")
     public ResponseEntity<MediaResponse> getBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(MediaApiMapper.toResponse(service.getBySlug(slug)));
+    }
+
+    @GetMapping("media-sources/{mediaId}")
+    public ResponseEntity<List<MediaSourceResponse>> getMediaSources(@PathVariable String mediaId) {
+        return ResponseEntity.ok(MediaApiMapper.toMediaSourceDataResponse(service.getMediaSourcesByMediaId(mediaId)));
+    }
+
+    @PutMapping("media-sources/{mediaId}")
+    public ResponseEntity<List<MediaSourceResponse>> updateMediaSources(@PathVariable String mediaId,@RequestBody MediaSourceRequest request) {
+        service.updateMediaSources(mediaId,request);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping

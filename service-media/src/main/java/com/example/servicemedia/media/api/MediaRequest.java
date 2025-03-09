@@ -7,6 +7,7 @@ import java.util.List;
 
 
 public record MediaRequest(
+        String name,
         String description,
         String contentId,
         Integer count,

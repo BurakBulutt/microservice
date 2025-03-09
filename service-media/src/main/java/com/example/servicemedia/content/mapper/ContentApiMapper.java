@@ -1,11 +1,14 @@
 package com.example.servicemedia.content.mapper;
 
+import com.example.servicemedia.category.dto.CategoryDto;
 import com.example.servicemedia.content.api.ContentRequest;
 import com.example.servicemedia.content.api.ContentResponse;
 import com.example.servicemedia.content.dto.ContentDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
+
+import java.util.Collections;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContentApiMapper {
@@ -21,6 +24,9 @@ public class ContentApiMapper {
                 .startDate(dto.getStartDate())
                 .slug(dto.getSlug())
                 .mediaList(dto.getMediaList())
+                .likeCount(dto.getLikeCount())
+                .categories(dto.getCategories())
+                .episodeTime(dto.getEpisodeTime())
                 .build();
     }
 
@@ -33,6 +39,8 @@ public class ContentApiMapper {
                 .subject(request.subject())
                 .startDate(request.startDate())
                 .slug(request.slug())
+                .categories(request.categoryIds() != null ? request.categoryIds().stream().map(id -> CategoryDto.builder().id(id).build()).toList() : Collections.emptyList())
+                .episodeTime(request.episodeTime())
                 .build();
     }
 

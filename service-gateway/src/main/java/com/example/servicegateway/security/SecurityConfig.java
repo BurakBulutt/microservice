@@ -31,7 +31,7 @@ public class SecurityConfig {
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-            corsConfiguration.setExposedHeaders(Collections.singletonList("X-XSRF-TOKEN"));
+            //corsConfiguration.setExposedHeaders(Collections.singletonList("X-XSRF-TOKEN"));
             return corsConfiguration;
         }));
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->

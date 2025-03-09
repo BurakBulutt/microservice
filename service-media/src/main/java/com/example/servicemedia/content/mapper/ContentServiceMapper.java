@@ -18,6 +18,7 @@ public class ContentServiceMapper {
                 .subject(content.getSubject())
                 .startDate(content.getStartDate())
                 .slug(content.getSlug())
+                .episodeTime(content.getEpisodeTime())
                 .build();
     }
 
@@ -29,6 +30,8 @@ public class ContentServiceMapper {
         content.setSubject(contentDto.getSubject());
         content.setStartDate(contentDto.getStartDate());
         content.setSlug(contentDto.getSlug());
+        content.setEpisodeTime(contentDto.getEpisodeTime());
+
         return content;
     }
 

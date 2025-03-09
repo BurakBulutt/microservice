@@ -1,8 +1,11 @@
 package com.example.servicemedia.content.api;
 
 import com.example.servicemedia.content.enums.ContentType;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
+import java.util.Set;
 
 public record ContentRequest(
     String name,
@@ -11,6 +14,10 @@ public record ContentRequest(
     ContentType type,
     String subject,
     Date startDate,
-    String slug
+    String slug,
+    @NotEmpty(message = "validation.content.category.empty")
+    @NotNull(message = "validation.content.category.null")
+    Set<String> categoryIds,
+    Integer episodeTime
 ) {
 }

@@ -13,14 +13,12 @@ public class MediaServiceMapper {
     public static MediaDto toDto(Media media){
         return MediaDto.builder()
                 .id(media.getId())
-                .created(media.getCreated())
-                .modified(media.getModified())
                 .name(media.getName())
                 .description(media.getDescription())
                 .count(media.getCount())
                 .publishDate(media.getPublishDate())
                 .slug(media.getSlug())
-                .mediaSourceList(media.getMediaSources().stream().map(MediaServiceMapper::toMediaSourceDto).toList())
+                .contentId(media.getContentId())
                 .build();
     }
 
@@ -29,7 +27,8 @@ public class MediaServiceMapper {
                 .id(mediaSource.getId())
                 .url(mediaSource.getUrl())
                 .type(mediaSource.getType())
-                .mediaId(mediaSource.getId())
+                .mediaId(mediaSource.getMedia().getId())
+                .fanSub(mediaSource.getFanSub())
                 .build();
     }
 
@@ -39,7 +38,7 @@ public class MediaServiceMapper {
         media.setCount(dto.getCount());
         media.setPublishDate(dto.getPublishDate());
         media.setSlug(dto.getSlug());
-        media.setContentId(dto.getContent().getId());
+        media.setContentId(dto.getContentId());
 
         return media;
     }

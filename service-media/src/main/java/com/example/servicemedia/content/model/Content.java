@@ -1,11 +1,13 @@
 package com.example.servicemedia.content.model;
 
+import com.example.servicemedia.category.model.Category;
 import com.example.servicemedia.content.enums.ContentType;
 import com.example.servicemedia.util.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -28,4 +30,10 @@ public class Content extends AbstractEntity {
     private Date startDate;
     @Column(unique = true,nullable = false)
     private String slug;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "category_content",
+            joinColumns = @JoinColumn(name = "content_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private List<Category> categories;
+    private Integer episodeTime;
 }

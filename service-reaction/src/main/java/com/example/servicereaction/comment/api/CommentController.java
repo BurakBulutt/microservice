@@ -1,0 +1,48 @@
+package com.example.servicereaction.comment.api;
+
+import com.example.servicereaction.comment.mapper.CommentApiMapper;
+import com.example.servicereaction.comment.service.CommentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/comments")
+@RequiredArgsConstructor
+public class CommentController {
+    private final CommentService service;
+
+    @GetMapping
+    public ResponseEntity<Page<CommentResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable)));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CommentResponse> getById(@PathVariable String id) {
+        return ResponseEntity.ok(CommentApiMapper.toResponse(service.getById(id)));
+    }
+
+    @GetMapping("/comment/{targetId}")
+    public ResponseEntity<Page<CommentResponse>> getByTargetId(@PathVariable String targetId,@RequestParam(required = false) String userId,Pageable pageable) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getByTargetId(targetId,userId,pageable)));
+    }
+
+    @PostMapping
+    public ResponseEntity<CommentResponse> save(@RequestBody AddCommentRequest request) {
+        return ResponseEntity.ok(CommentApiMapper.toResponse(service.save(CommentApiMapper.toDto(request))));
+    }
+
+    @PatchMapping("{id}")
+    public ResponseEntity<CommentResponse> update(@PathVariable String id,@RequestBody UpdateCommentRequest request) {
+        return ResponseEntity.ok(CommentApiMapper.toResponse(service.update(id,CommentApiMapper.toDto(request))));
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        service.delete(id);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+}

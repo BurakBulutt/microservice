@@ -13,7 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@ToString
 public class Media extends AbstractEntity {
     private String name;
     private String description;
@@ -24,5 +23,6 @@ public class Media extends AbstractEntity {
     private Date publishDate;
     @OneToMany(mappedBy = "media",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<MediaSource> mediaSources;
+    @Column(unique = true,nullable = false)
     private String slug;
 }

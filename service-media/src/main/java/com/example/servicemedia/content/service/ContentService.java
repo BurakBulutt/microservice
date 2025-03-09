@@ -10,7 +10,7 @@ public interface ContentService {
     Page<ContentDto> getNewContents(Pageable pageable);
 
     ContentDto getById(String id);
-    ContentDto getBySlug(String slug);
+    ContentDto getBySlug(String slug,String ownerId);
     ContentDto save(ContentDto contentDto);
     ContentDto update(String id, ContentDto contentDto);
     void delete(String id);

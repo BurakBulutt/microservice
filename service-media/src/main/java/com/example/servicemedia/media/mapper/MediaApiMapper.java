@@ -1,12 +1,15 @@
 package com.example.servicemedia.media.mapper;
 
-import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.media.api.MediaRequest;
 import com.example.servicemedia.media.api.MediaResponse;
+import com.example.servicemedia.media.api.MediaSourceResponse;
 import com.example.servicemedia.media.dto.MediaDto;
+import com.example.servicemedia.media.dto.MediaSourceDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MediaApiMapper {
@@ -19,17 +22,27 @@ public class MediaApiMapper {
                 .count(dto.getCount())
                 .slug(dto.getSlug())
                 .publishDate(dto.getPublishDate())
-                .content(dto.getContent())
-                .mediaSourceList(dto.getMediaSourceList())
+                .contentId(dto.getContentId())
+                .likeCount(dto.getLikeCount())
+                .build();
+    }
+
+    public static MediaSourceResponse toMediaSourceResponse(MediaSourceDto dto) {
+        return MediaSourceResponse.builder()
+                .id(dto.getId())
+                .type(dto.getType())
+                .url(dto.getUrl())
+                .mediaId(dto.getMediaId())
+                .fanSub(dto.getFanSub())
                 .build();
     }
 
     public static MediaDto toDto(MediaRequest request) {
         return MediaDto.builder()
+                .name(request.name())
                 .description(request.description())
-                .content(ContentDto.builder().id(request.contentId()).build())
+                .contentId(request.contentId())
                 .slug(request.slug())
-                .mediaSourceList(request.mediaSourceList())
                 .publishDate(request.publishDate())
                 .count(request.count())
                 .build();
@@ -37,5 +50,9 @@ public class MediaApiMapper {
 
     public static Page<MediaResponse> toPageResponse(Page<MediaDto> dtoPage) {
         return dtoPage.map(MediaApiMapper::toResponse);
+    }
+
+    public static List<MediaSourceResponse> toMediaSourceDataResponse(List<MediaSourceDto> mediaSources) {
+        return mediaSources.stream().map(MediaApiMapper::toMediaSourceResponse).toList();
     }
 }

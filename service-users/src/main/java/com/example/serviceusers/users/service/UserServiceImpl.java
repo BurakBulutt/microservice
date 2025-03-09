@@ -24,15 +24,14 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
     @Value("${keycloak.realm}")
     private String realm;
+    private static final String userGroup = "ef73f2f1-84ef-4b5b-8ea4-2ba9091c777e";
 
     private final Keycloak keycloakAdmin;
 
     @Override
     public List<UserRepresentation> getAllUsers(int page, int size) {
         int first = page * size;
-        return keycloakAdmin.realm(realm).users().list(first, size).stream()
-                .filter(userRepresentation -> checkRoles(userRepresentation.getId()))
-                .toList();
+        return keycloakAdmin.realm(realm).groups().group(userGroup).members(first,size);
     }
 
     @Override
@@ -40,6 +39,15 @@ public class UserServiceImpl implements UserService {
         return keycloakAdmin.realm(realm).users().search(username).stream()
                 .findFirst()
                 .orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,username));
+    }
+
+    @Override
+    public UserRepresentation getUserById(String id) {
+        try{
+            return keycloakAdmin.realm(realm).users().get(id).toRepresentation();
+        }catch (Exception e) {
+            throw new BaseException(MessageResource.NOT_FOUND,id);
+        }
     }
 
     @Override
@@ -148,7 +156,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Integer getUserCount() {
-        return Objects.requireNonNull(keycloakAdmin.realm(realm).users().count());
+        return keycloakAdmin.realm(realm).groups().group(userGroup).members().size();
     }
 
     private boolean checkRoles(String id) {

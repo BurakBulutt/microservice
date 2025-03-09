@@ -1,0 +1,14 @@
+package com.example.servicereaction.like.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class LikeCountDto {
+    private String targetId;
+    private Integer likeCount;
+    private Integer dislikeCount;
+    private Boolean isUserLiked;
+    private Boolean isUserDisliked;
+}

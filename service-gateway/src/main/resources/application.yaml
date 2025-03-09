@@ -9,9 +9,6 @@ spring:
           jwk-set-uri: "http://localhost:8180/realms/lotheas/protocol/openid-connect/certs"
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
       routes:
         - id: service-auth
           uri: lb://service-auth
@@ -24,7 +21,12 @@ spring:
         - id: service-media
           uri: lb://service-media
           predicates:
-            - Path=/api/v1/medias/**, /api/v1/contents/**,
+            - Path=/api/v1/medias/**, /api/v1/contents/**, /api/v1/categories/**
+        - id: service-reaction
+          uri: lb://service-reaction
+          predicates:
+            - Path=/api/v1/comments/**, /api/v1/likes/**
+
 server:
   port: 8081
 eureka:
@@ -32,6 +34,7 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
   client:
+    registry-fetch-interval-seconds: 10
     register-with-eureka: true
     fetch-registry: true
     service-url:

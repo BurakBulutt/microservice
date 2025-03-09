@@ -1,0 +1,20 @@
+package com.example.servicereaction.util.rest;
+
+import lombok.Getter;
+
+@Getter
+public class BaseException extends RuntimeException {
+    private final MessageResource messageResource;
+    private final Object[] args;
+
+    public BaseException(MessageResource messageResource,Object... args) {
+        this.args = args;
+        this.messageResource = messageResource;
+    }
+
+    public BaseException(String message) {
+        super(message);
+        this.messageResource = null;
+        this.args = null;
+    }
+}

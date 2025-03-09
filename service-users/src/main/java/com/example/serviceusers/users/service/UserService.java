@@ -9,6 +9,9 @@ import java.util.List;
 public interface UserService {
     List<UserRepresentation> getAllUsers(int page,int size);
     UserRepresentation getUserByUsername(String username);
+
+    UserRepresentation getUserById(String id);
+
     void save(CreateUserRequest request);
     void update(String id, UpdateUserRequest request);
     void delete(String id);

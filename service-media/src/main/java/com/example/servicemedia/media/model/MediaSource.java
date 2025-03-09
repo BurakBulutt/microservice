@@ -11,12 +11,15 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@ToString
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"type","media_id","fan_sub"})})
 public class MediaSource extends AbstractEntity {
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String url;
     @Enumerated(EnumType.STRING)
     private SourceType type;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "media_id",nullable = false)
     private Media media;
+    private String fanSub;
 }

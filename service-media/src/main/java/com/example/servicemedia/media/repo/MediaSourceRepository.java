@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MediaSourceRepository extends JpaRepository<MediaSource,String> {
+    List<MediaSource> findAllByMediaIdAndFanSub(String mediaId, String fanSub);
     List<MediaSource> findAllByMediaId(String mediaId);
-
     void deleteMediaSourcesByMediaId(String mediaId);
+
 }
