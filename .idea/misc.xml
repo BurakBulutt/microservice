@@ -9,7 +9,14 @@
         <option value="$PROJECT_DIR$/service-gateway/pom.xml" />
         <option value="$PROJECT_DIR$/service-users/pom.xml" />
         <option value="$PROJECT_DIR$/service-media/pom.xml" />
+        <option value="$PROJECT_DIR$/service-reaction/pom.xml" />
+        <option value="$PROJECT_DIR$/service-configserver/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/service-auth/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_22" default="true" project-jdk-name="openjdk-22" project-jdk-type="JavaSDK">

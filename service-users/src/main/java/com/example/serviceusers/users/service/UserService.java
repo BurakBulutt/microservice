@@ -1,13 +1,14 @@
 package com.example.serviceusers.users.service;
 
 import com.example.serviceusers.users.api.CreateUserRequest;
+import com.example.serviceusers.users.api.Page;
 import com.example.serviceusers.users.api.UpdateUserRequest;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
 
 public interface UserService {
-    List<UserRepresentation> getAllUsers(int page,int size);
+    Page<UserRepresentation> getAllUsers(int page, int size);
     UserRepresentation getUserByUsername(String username);
 
     UserRepresentation getUserById(String id);
@@ -18,5 +19,4 @@ public interface UserService {
     void resetUserPassword(String id);
     void sendVerifyEmail(String id);
 
-    Integer getUserCount();
 }

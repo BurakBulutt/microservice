@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.mapper;
 
+import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.media.api.MediaRequest;
 import com.example.servicemedia.media.api.MediaResponse;
 import com.example.servicemedia.media.api.MediaSourceResponse;
@@ -22,8 +23,9 @@ public class MediaApiMapper {
                 .count(dto.getCount())
                 .slug(dto.getSlug())
                 .publishDate(dto.getPublishDate())
-                .contentId(dto.getContentId())
+                .content(dto.getContent())
                 .likeCount(dto.getLikeCount())
+                .numberOfViews(dto.getNumberOfViews())
                 .build();
     }
 
@@ -41,7 +43,7 @@ public class MediaApiMapper {
         return MediaDto.builder()
                 .name(request.name())
                 .description(request.description())
-                .contentId(request.contentId())
+                .content(ContentDto.builder().id(request.contentId()).build())
                 .slug(request.slug())
                 .publishDate(request.publishDate())
                 .count(request.count())

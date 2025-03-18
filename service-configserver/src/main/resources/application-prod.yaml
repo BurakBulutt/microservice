@@ -1,0 +1,21 @@
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${GITHUB_URI}
+          username: ${GITHUB_USER}
+          password: ${GITHUB_PASSWORD}
+          default-label: main
+          search-paths:
+            - "{application}"
+          timeout: 5
+          clone-on-start: true
+          force-pull: true
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: 5672
+    username: ${RABBIT_USER}
+    password: ${RABBIT_PASSWORD}
+server:
+  port: 8888

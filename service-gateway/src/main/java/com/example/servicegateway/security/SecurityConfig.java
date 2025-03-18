@@ -2,6 +2,7 @@ package com.example.servicegateway.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -22,16 +23,16 @@ public class SecurityConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"api/v1/auth/**").hasAnyRole("ADMIN","USER");
-           authorizeExchangeSpec.anyExchange().permitAll();
+           authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
+           authorizeExchangeSpec.anyExchange().authenticated();
         });
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable); //yeniden düzenlencek
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
             corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-            //corsConfiguration.setExposedHeaders(Collections.singletonList("X-XSRF-TOKEN"));
             return corsConfiguration;
         }));
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->

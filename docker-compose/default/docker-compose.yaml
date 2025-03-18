@@ -1,0 +1,224 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: app-database
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: 12345
+    networks:
+      - microservice-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: broker-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservice-network
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+  auth:
+    image: bitnami/keycloak:latest
+    container_name: app-keycloak
+    ports:
+      - "8081:8080"
+    environment:
+      KEYCLOAK_DATABASE_HOST: app-database
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_USER: dbadmin
+      KEYCLOAK_DATABASE_PASSWORD: 12345
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    volumes:
+      - keycloak_data:/opt/bitnami/keycloak
+    healthcheck:
+      test: "curl -f http://localhost:8080/realms/master || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+  configserver:
+    image: wraithkage/app-configserver:s1
+    container_name: config-service
+    environment:
+      RABBIT_HOST: broker-rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    healthcheck:
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservice-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  eureka:
+    image: wraithkage/app-eureka:s1
+    container_name: eureka-service
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    networks:
+      - microservice-network
+    ports:
+      - "8761:8761"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka-service
+      CONFIG_SERVER_URL: http://config-service:9000
+      RABBIT_HOST: broker-rabbitmq
+    healthcheck:
+      test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+  gateway:
+    image: wraithkage/app-gateway:s1
+    container_name: gateway-service
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    networks:
+      - microservice-network
+    ports:
+      - "8080:8080"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: http://config-service:9000
+      EUREKA_HOST: eureka-service
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8080
+      OAUTH2_ISSUER_URI: http://app-keycloak:8080/realms/lotheas
+      OAUTH2_JWK_SET_URI: http://app-keycloak:8080/realms/lotheas/protocol/openid-connect/certs
+      RABBIT_HOST: broker-rabbitmq
+  media:
+    image: wraithkage/app-media:s1
+    container_name: media-service
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    networks:
+      - microservice-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: http://config-service:9000
+      EUREKA_HOST: eureka-service
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8080
+      RABBIT_HOST: broker-rabbitmq
+      DB_USER: dbadmin
+      DB_PASSWORD: 12345
+      DB_HOST: app-database
+      DB_DATABASE: app_media
+  reaction:
+    image: wraithkage/app-reaction:s1
+    container_name: reaction-service
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    networks:
+      - microservice-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: http://config-service:9000
+      EUREKA_HOST: eureka-service
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8080
+      RABBIT_HOST: broker-rabbitmq
+      DB_USER: dbadmin
+      DB_PASSWORD: 12345
+      DB_HOST: app-database
+      DB_DATABASE: app_reaction
+  users:
+    image: wraithkage/app-users:s1
+    container_name: users-service
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+    networks:
+      - microservice-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: http://config-service:9000
+      EUREKA_HOST: eureka-service
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8080
+      RABBIT_HOST: broker-rabbitmq
+
+networks:
+  microservice-network:
+    driver: bridge
+volumes:
+  postgres_data:
+  keycloak_data:

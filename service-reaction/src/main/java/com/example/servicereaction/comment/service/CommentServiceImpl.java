@@ -53,7 +53,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto save(CommentDto commentDto) {
+    public void save(CommentDto commentDto) {
         Comment parent = null;
         if (commentDto.getType() == CommentType.REPLY) {
             if (commentDto.getParent().getId() == null) {
@@ -65,15 +65,15 @@ public class CommentServiceImpl implements CommentService {
                 throw new BaseException(MessageResource.BAD_REQUEST);
             }
         }
-        return toCommentDto(repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent)));
+        repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent));
     }
 
     @Override
     @Transactional
-    public CommentDto update(String id, CommentDto commentDto) {
+    public void update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         comment.setContent(commentDto.getContent());
-        return toCommentDto(repository.save(comment));
+        repository.save(comment);
     }
 
     @Override

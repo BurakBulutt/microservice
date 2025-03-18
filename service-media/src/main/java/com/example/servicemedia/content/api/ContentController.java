@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/contents")
 @RequiredArgsConstructor
@@ -21,8 +23,18 @@ public class ContentController {
     }
 
     @GetMapping("new-content")
-    public ResponseEntity<Page<ContentResponse>> getNewContents(Pageable pageable) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getNewContents(pageable)));
+    public ResponseEntity<Page<ContentResponse>> getNewContents() {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getNewContents()));
+    }
+
+    @GetMapping("search")
+    public ResponseEntity<List<ContentSearchResponse>> getNewContents(@RequestParam(required = true) String query) {
+        return ResponseEntity.ok(ContentApiMapper.toSearchResponses(service.searchFilter(query)));
+    }
+
+    @GetMapping("filter")
+    public ResponseEntity<Page<ContentResponse>> filter(@RequestParam(required = false) String category,@RequestParam(required = false) String sortBy, Pageable pageable) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(category,sortBy,pageable)));
     }
 
     @GetMapping("/{id}")
@@ -36,18 +48,20 @@ public class ContentController {
     }
 
     @PostMapping
-    public ResponseEntity<ContentResponse> save(@RequestBody ContentRequest request) {
-        return ResponseEntity.ok(ContentApiMapper.toResponse(service.save(ContentApiMapper.toDto(request))));
+    public ResponseEntity<Void> save(@RequestBody ContentRequest request) {
+        service.save(ContentApiMapper.toDto(request));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<ContentResponse> update(@PathVariable String id,@RequestBody ContentRequest request) {
-        return ResponseEntity.ok(ContentApiMapper.toResponse(service.update(id,ContentApiMapper.toDto(request))));
+    public ResponseEntity<Void> update(@PathVariable String id,@RequestBody ContentRequest request) {
+        service.update(id,ContentApiMapper.toDto(request));
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.noContent().build();
     }
 }

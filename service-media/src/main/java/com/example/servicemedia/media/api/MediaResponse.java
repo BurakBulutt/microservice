@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.api;
 
+import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.feign.LikeCountResponse;
 import com.example.servicemedia.media.dto.MediaSourceDto;
 import lombok.Builder;
@@ -14,10 +15,11 @@ public class MediaResponse {
     private String id;
     private String name;
     private String description;
-    private String contentId;
+    private ContentDto content;
     private Integer count;
     private Date publishDate;
     private String slug;
     private List<MediaSourceDto> mediaSourceList;
     private LikeCountResponse likeCount;
+    private Integer numberOfViews;
 }

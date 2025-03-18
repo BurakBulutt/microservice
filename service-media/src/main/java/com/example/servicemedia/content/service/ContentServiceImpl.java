@@ -15,7 +15,9 @@ import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +42,39 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Page<ContentDto> getNewContents(Pageable pageable) {
-        return repository.findNewContents(pageable).map(content -> toContentDto(content, null));
+    public Page<ContentDto> filter(String categoryId, String sortBy, Pageable pageable) {
+        Page<Content> contents;
+        Sort sort;
+
+        switch (sortBy) {
+            case "name" -> sort = Sort.by(Sort.Direction.ASC, "name");
+            case "newest" -> sort = Sort.by(Sort.Direction.DESC, "startDate");
+            default -> sort = Sort.unsorted();
+        }
+
+        Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),sort);
+
+        if (categoryId != null) {
+            contents = repository.findAllByCategoryId(categoryId, pageRequest);
+        } else {
+            contents = repository.findAll(pageRequest);
+        }
+
+        return contents.map(content -> toContentDto(content, null));
+    }
+
+    @Override
+    public List<ContentDto> searchFilter(String query) {
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        Pageable pageRequest = PageRequest.of(0, 4, sort);
+
+        return repository.findAllByNameContainsIgnoreCase(query, pageRequest).map(content -> toContentDto(content, null)).getContent();
+    }
+
+    @Override
+    public Page<ContentDto> getNewContents() {
+        Pageable pageRequest = PageRequest.of(0, 30, Sort.by(Sort.Direction.DESC, "created"));
+        return repository.findNewContents(pageRequest).map(content -> toContentDto(content, null));
     }
 
     @Override
@@ -60,13 +93,13 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     @Transactional
-    public ContentDto save(ContentDto contentDto) {
-        return ContentServiceMapper.toDto(repository.save(ContentServiceMapper.toEntity(new Content(), contentDto)));
+    public void save(ContentDto contentDto) {
+        repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
     }
 
     @Override
     @Transactional
-    public ContentDto update(String id, ContentDto contentDto) {
+    public void update(String id, ContentDto contentDto) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
                 .map(CategoryDto::getId)
@@ -80,7 +113,7 @@ public class ContentServiceImpl implements ContentService {
         if (!willSaveCategories.isEmpty()) {
             categorySet.addAll(categoryService.getAllByIds(willSaveCategories));
         }
-        return ContentServiceMapper.toDto(repository.save(ContentServiceMapper.toEntity(content, contentDto)));
+        repository.save(ContentServiceMapper.toEntity(content, contentDto));
     }
 
     @Override

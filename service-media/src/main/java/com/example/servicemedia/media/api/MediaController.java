@@ -28,8 +28,8 @@ public class MediaController {
     }
 
     @GetMapping("new-media")
-    public ResponseEntity<Page<MediaResponse>> getNewMedia(Pageable pageable) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getNewMedias(pageable)));
+    public ResponseEntity<Page<MediaResponse>> getNewMedia() {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getNewMedias()));
     }
 
     @GetMapping("/{id}")
@@ -47,25 +47,33 @@ public class MediaController {
         return ResponseEntity.ok(MediaApiMapper.toMediaSourceDataResponse(service.getMediaSourcesByMediaId(mediaId)));
     }
 
-    @PutMapping("media-sources/{mediaId}")
-    public ResponseEntity<List<MediaSourceResponse>> updateMediaSources(@PathVariable String mediaId,@RequestBody MediaSourceRequest request) {
-        service.updateMediaSources(mediaId,request);
-        return ResponseEntity.ok().build();
+    @PostMapping
+    public ResponseEntity<Void> save(@RequestBody MediaRequest request) {
+        service.save(MediaApiMapper.toDto(request));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping
-    public ResponseEntity<MediaResponse> save(@RequestBody MediaRequest request) {
-        return ResponseEntity.ok(MediaApiMapper.toResponse(service.save(MediaApiMapper.toDto(request))));
+    @PostMapping("increase-views/{id}")
+    public ResponseEntity<Void> increaseNumberOfViews(@PathVariable String id) {
+        service.increaseNumberOfViews(id);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<MediaResponse> update(@PathVariable String id,@RequestBody MediaRequest request) {
-        return ResponseEntity.ok(MediaApiMapper.toResponse(service.update(id,MediaApiMapper.toDto(request))));
+    public ResponseEntity<Void> update(@PathVariable String id,@RequestBody MediaRequest request) {
+        service.update(id,MediaApiMapper.toDto(request));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("media-sources/{mediaId}")
+    public ResponseEntity<Void> updateMediaSources(@PathVariable String mediaId,@RequestBody MediaSourceRequest request) {
+        service.updateMediaSources(mediaId,request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.noContent().build();
     }
 }

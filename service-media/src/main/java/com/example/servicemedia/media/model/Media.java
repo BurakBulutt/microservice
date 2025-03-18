@@ -25,4 +25,5 @@ public class Media extends AbstractEntity {
     private List<MediaSource> mediaSources;
     @Column(unique = true,nullable = false)
     private String slug;
+    private Integer numberOfViews = 0;
 }

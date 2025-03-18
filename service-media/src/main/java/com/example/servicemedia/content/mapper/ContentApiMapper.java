@@ -3,12 +3,14 @@ package com.example.servicemedia.content.mapper;
 import com.example.servicemedia.category.dto.CategoryDto;
 import com.example.servicemedia.content.api.ContentRequest;
 import com.example.servicemedia.content.api.ContentResponse;
+import com.example.servicemedia.content.api.ContentSearchResponse;
 import com.example.servicemedia.content.dto.ContentDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import java.util.Collections;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContentApiMapper {
@@ -30,6 +32,15 @@ public class ContentApiMapper {
                 .build();
     }
 
+    public static ContentSearchResponse toSearchResponse(ContentDto dto) {
+        return ContentSearchResponse.builder()
+                .name(dto.getName())
+                .type(dto.getType())
+                .slug(dto.getSlug())
+                .photoUrl(dto.getPhotoUrl())
+                .build();
+    }
+
     public static ContentDto toDto(ContentRequest request) {
         return ContentDto.builder()
                 .name(request.name())
@@ -46,5 +57,9 @@ public class ContentApiMapper {
 
     public static Page<ContentResponse> toPageResponse(Page<ContentDto> page) {
         return page.map(ContentApiMapper::toResponse);
+    }
+
+    public static List<ContentSearchResponse> toSearchResponses(List<ContentDto> dtos) {
+        return dtos.stream().map(ContentApiMapper::toSearchResponse).toList();
     }
 }

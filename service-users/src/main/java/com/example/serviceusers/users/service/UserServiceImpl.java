@@ -1,8 +1,10 @@
 package com.example.serviceusers.users.service;
 
+import com.example.serviceusers.keycloak.config.KeycloakConfigProperties;
 import com.example.serviceusers.rest.BaseException;
 import com.example.serviceusers.rest.MessageResource;
 import com.example.serviceusers.users.api.CreateUserRequest;
+import com.example.serviceusers.users.api.Page;
 import com.example.serviceusers.users.api.UpdateUserRequest;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
@@ -10,43 +12,45 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
-    @Value("${keycloak.realm}")
-    private String realm;
-    private static final String userGroup = "ef73f2f1-84ef-4b5b-8ea4-2ba9091c777e";
+    private static final String userGroup = "app-users-group";
 
     private final Keycloak keycloakAdmin;
+    private final KeycloakConfigProperties keycloakConfig;
 
     @Override
-    public List<UserRepresentation> getAllUsers(int page, int size) {
+    public Page<UserRepresentation> getAllUsers(int page, int size) {
         int first = page * size;
-        return keycloakAdmin.realm(realm).groups().group(userGroup).members(first,size);
+        int userCount = getUserCount();
+        List<UserRepresentation> users = keycloakAdmin.realm(keycloakConfig.getRealm()).groups().group(keycloakConfig.getUserGroup()).members(first,size);
+        return new Page<>(page,size,userCount,users.size(),users);
     }
 
     @Override
     public UserRepresentation getUserByUsername(String username) {
-        return keycloakAdmin.realm(realm).users().search(username).stream()
+        return keycloakAdmin.realm(keycloakConfig.getRealm()).users().search(username).stream()
                 .findFirst()
-                .orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,username));
+                .orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,UserRepresentation.class.getSimpleName(),username));
     }
 
     @Override
     public UserRepresentation getUserById(String id) {
         try{
-            return keycloakAdmin.realm(realm).users().get(id).toRepresentation();
-        }catch (Exception e) {
-            throw new BaseException(MessageResource.NOT_FOUND,id);
+            return keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id).toRepresentation();
+        }catch (NotFoundException e) {
+            throw new BaseException(MessageResource.NOT_FOUND,UserRepresentation.class.getSimpleName(),id);
         }
     }
 
@@ -60,7 +64,7 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setEmailVerified(request.emailVerified());
         userRepresentation.setRequiredActions(new ArrayList<>());
         userRepresentation.setEnabled(request.enabled());
-        userRepresentation.setGroups(List.of("app-users-group"));
+        userRepresentation.setGroups(List.of(userGroup));
 
         if (!userRepresentation.isEmailVerified()) {
             userRepresentation.getRequiredActions().add("VERIFY_EMAIL");
@@ -75,7 +79,7 @@ public class UserServiceImpl implements UserService {
         credentialRepresentation.setType("password");
         userRepresentation.setCredentials(Collections.singletonList(credentialRepresentation));
 
-        Response response = keycloakAdmin.realm(realm).users().create(userRepresentation);
+        Response response = keycloakAdmin.realm(keycloakConfig.getRealm()).users().create(userRepresentation);
 
         switch (response.getStatus()) {
             case 409 -> throw new BaseException(MessageResource.CONFLICT);
@@ -86,7 +90,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void update(String id, UpdateUserRequest request) {
         try {
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
 
         UserRepresentation userRepresentation = userResource.toRepresentation();
         userRepresentation.setFirstName(request.firstName());
@@ -100,22 +104,22 @@ public class UserServiceImpl implements UserService {
         }catch (BadRequestException e) {
             throw new BaseException(MessageResource.BAD_REQUEST);
         }catch (NotFoundException e) {
-            throw new BaseException(MessageResource.NOT_FOUND,id);
+            throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (ClientErrorException e) {
             if (e.getResponse().getStatus() == 409) {
                 throw new BaseException(MessageResource.CONFLICT);
             }
-            throw new ClientErrorException(e.getMessage(),e.getResponse().getStatus());
+            log.warn("Response Status -> {}, Message -> {}", e.getResponse().getStatus(),e.getMessage());
         }
     }
 
     @Override
     public void delete(String id) {
         try {
-            UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
-            userResource.remove();
+            UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
+            userResource.remove(); //TODO MESSAGE BROKER ILE SAGA AKISI KURULMALIDIR.
         }catch (NotFoundException e) {
-            throw new BaseException(MessageResource.NOT_FOUND,id);
+            throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (BadRequestException e) {
             throw new BaseException(MessageResource.BAD_REQUEST);
         }
@@ -124,7 +128,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void resetUserPassword(String id) {
         try {
-            UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+            UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
             UserRepresentation representation = userResource.toRepresentation();
             if(representation.getRequiredActions().stream().noneMatch(action -> action.equals("UPDATE_PASSWORD"))) {
                 representation.getRequiredActions().add("UPDATE_PASSWORD");
@@ -132,8 +136,9 @@ public class UserServiceImpl implements UserService {
             }
             userResource.executeActionsEmail(List.of("UPDATE_PASSWORD"));
         }catch (NotFoundException e) {
-            throw new BaseException(MessageResource.NOT_FOUND,id);
+            throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (InternalServerErrorException e) {
+            log.error(e.getMessage());
             throw new BaseException(MessageResource.INTERNAL_SERVER_ERROR);
         }
     }
@@ -141,26 +146,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendVerifyEmail(String id) {
         try {
-            UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+            UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
             UserRepresentation representation = userResource.toRepresentation();
             representation.setEmailVerified(Boolean.FALSE);
             representation.getRequiredActions().add("VERIFY_EMAIL");
             userResource.update(representation);
             userResource.sendVerifyEmail();
         }catch (NotFoundException e) {
-            throw new BaseException(MessageResource.NOT_FOUND,id);
+            throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (InternalServerErrorException e) {
+            log.error(e.getMessage());
             throw new BaseException(MessageResource.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @Override
-    public Integer getUserCount() {
-        return keycloakAdmin.realm(realm).groups().group(userGroup).members().size();
-    }
-
-    private boolean checkRoles(String id) {
-        UserResource user = keycloakAdmin.realm(realm).users().get(id);
-        return user.roles().realmLevel().listAll().stream().noneMatch(role -> role.getName().equals("ADMIN"));
+    private int getUserCount() {
+        return keycloakAdmin.realm(keycloakConfig.getRealm()).groups().group(keycloakConfig.getUserGroup()).members().size();
     }
 }

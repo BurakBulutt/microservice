@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8083}
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: 5672
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASSWORD:guest}
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+keycloak:
+  auth-server-url: http://${KEYCLOAK_HOST:localhost}:8180
+  realm: ${KEYCLOAK_REALM:lotheas}
+  client-id: ${KEYCLOAK_RESOURCE:app-client}
+  client-secret: ${KEYCLOAK_SECRET:xOaWyC8LAanKNQmIIYSnbALIxvJf5gGW}
+  user-group: ${KEYCLOAK_USER_GROUP:ef73f2f1-84ef-4b5b-8ea4-2ba9091c777e}
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"

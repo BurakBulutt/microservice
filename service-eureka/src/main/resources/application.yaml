@@ -1,13 +1,5 @@
 spring:
   application:
     name: service-eureka
-server:
-  port: 8761
-eureka:
-  server:
-    enable-self-preservation: true
-  instance:
-    hostname: ${EUREKA_HOST:localhost}
-  client:
-    fetch-registry: false
-    register-with-eureka: false
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:9000}

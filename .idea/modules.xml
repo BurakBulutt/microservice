@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/microservice.iml" filepath="$PROJECT_DIR$/.idea/microservice.iml" />
       <module fileurl="file://$PROJECT_DIR$/service-media/service-media.iml" filepath="$PROJECT_DIR$/service-media/service-media.iml" />
+      <module fileurl="file://$PROJECT_DIR$/service-reaction/service-reaction.iml" filepath="$PROJECT_DIR$/service-reaction/service-reaction.iml" />
     </modules>
   </component>
 </project>

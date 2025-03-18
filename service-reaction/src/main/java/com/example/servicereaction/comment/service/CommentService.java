@@ -10,7 +10,7 @@ public interface CommentService {
 
     Page<CommentDto> getByTargetId(String targetId, String ownerId, Pageable pageable);
 
-    CommentDto save(CommentDto commentDto);
-    CommentDto update(String id,CommentDto commentDto);
+    void save(CommentDto commentDto);
+    void update(String id, CommentDto commentDto);
     void delete(String id);
 }

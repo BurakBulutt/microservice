@@ -31,18 +31,20 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<CommentResponse> save(@RequestBody AddCommentRequest request) {
-        return ResponseEntity.ok(CommentApiMapper.toResponse(service.save(CommentApiMapper.toDto(request))));
+    public ResponseEntity<Void> save(@RequestBody AddCommentRequest request) {
+        service.save(CommentApiMapper.toDto(request));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("{id}")
-    public ResponseEntity<CommentResponse> update(@PathVariable String id,@RequestBody UpdateCommentRequest request) {
-        return ResponseEntity.ok(CommentApiMapper.toResponse(service.update(id,CommentApiMapper.toDto(request))));
+    public ResponseEntity<Void> update(@PathVariable String id,@RequestBody UpdateCommentRequest request) {
+        service.update(id,CommentApiMapper.toDto(request));
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.noContent().build();
     }
 }

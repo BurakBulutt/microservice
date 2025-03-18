@@ -1,5 +1,6 @@
 package com.example.serviceusers.users.mapper;
 
+import com.example.serviceusers.users.api.Page;
 import com.example.serviceusers.users.api.UserRepresentationResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -29,5 +30,9 @@ public class UserMapper {
 
     public static List<UserRepresentationResponse> toUserRepresentationResponses(List<UserRepresentation> userRepresentations) {
         return userRepresentations.stream().map(UserMapper::toUserRepresentationResponse).toList();
+    }
+
+    public static Page<UserRepresentationResponse> toPageResponse(Page<UserRepresentation> userRepresentationPage){
+        return userRepresentationPage.map(UserMapper::toUserRepresentationResponse);
     }
 }

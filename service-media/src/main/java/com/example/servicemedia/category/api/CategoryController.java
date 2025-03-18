@@ -5,6 +5,7 @@ import com.example.servicemedia.category.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,18 +31,20 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryResponse> save(@RequestBody CategoryRequest request) {
-        return ResponseEntity.ok(CategoryApiMapper.toResponse(service.save(CategoryApiMapper.toDto(request))));
+    public ResponseEntity<Void> save(@RequestBody CategoryRequest request) {
+        service.save(CategoryApiMapper.toDto(request));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("{id}")
     public ResponseEntity<CategoryResponse> update(@PathVariable String id,@RequestBody CategoryRequest request) {
-        return ResponseEntity.ok(CategoryApiMapper.toResponse(service.update(id,CategoryApiMapper.toDto(request))));
+        service.update(id,CategoryApiMapper.toDto(request));
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

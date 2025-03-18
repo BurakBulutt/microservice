@@ -11,10 +11,4 @@ public class BaseException extends RuntimeException {
         this.args = args;
         this.messageResource = messageResource;
     }
-
-    public BaseException(String message) {
-        super(message);
-        this.messageResource = null;
-        this.args = null;
-    }
 }

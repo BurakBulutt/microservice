@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.service;
 
+import com.example.servicemedia.content.service.ContentService;
 import com.example.servicemedia.feign.LikeCountResponse;
 import com.example.servicemedia.feign.LikeFeignClient;
 import com.example.servicemedia.media.api.MediaSourceRequest;
@@ -12,26 +13,33 @@ import com.example.servicemedia.media.repo.MediaRepository;
 import com.example.servicemedia.media.repo.MediaSourceRepository;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class MediaServiceImpl implements MediaService {
     private final MediaRepository mediaRepository;
     private final MediaSourceRepository mediaSourceRepository;
     private final LikeFeignClient likeFeignClient;
+    private final ContentService contentService;
+
+    public MediaServiceImpl(MediaRepository mediaRepository, MediaSourceRepository mediaSourceRepository, LikeFeignClient likeFeignClient,@Lazy ContentService contentService) {
+        this.mediaRepository = mediaRepository;
+        this.mediaSourceRepository = mediaSourceRepository;
+        this.likeFeignClient = likeFeignClient;
+        this.contentService = contentService;
+    }
 
     @Override
     public Page<MediaDto> getAll(Pageable pageable) {
@@ -44,35 +52,41 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    public Page<MediaDto> getNewMedias(Pageable pageable) {
-        return mediaRepository.findNewMedias(pageable).map(this::toMediaTo);
+    public Page<MediaDto> getNewMedias() {
+        Sort sort = Sort.by(Sort.Direction.DESC,"created");
+        Pageable pageRequest = PageRequest.of(0,12,sort);
+        return mediaRepository.findNewMedias(pageRequest).map(media -> {
+            MediaDto mediaDto = toMediaTo(media);
+            mediaDto.setContent(contentService.getById(media.getContentId()));
+            return mediaDto;
+        });
     }
 
     @Override
     public MediaDto getById(String id) {
-        return mediaRepository.findById(id).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getName(), id));
+        return mediaRepository.findById(id).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
     }
 
     @Override
     public MediaDto getBySlug(String slug) {
-        return mediaRepository.findBySlug(slug).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getName(), slug));
+        return mediaRepository.findBySlug(slug).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), slug));
     }
 
     @Override
     @Transactional
-    public MediaDto save(MediaDto mediaDto) {
+    public void save(MediaDto mediaDto) {
         Media media = new Media();
         media.setMediaSources(new ArrayList<>());
         if (mediaDto.getMediaSourceList() != null && !mediaDto.getMediaSourceList().isEmpty()) {
             mediaDto.getMediaSourceList().forEach(mediaSourceDto -> media.getMediaSources().add(new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub())));
         }
-        return toMediaTo(mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto)));
+        mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto));
     }
 
     @Override
     @Transactional
-    public MediaDto update(String id, MediaDto mediaDto) {
-        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getName(), id));
+    public void update(String id, MediaDto mediaDto) {
+        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         if (mediaDto.getMediaSourceList() != null && !mediaDto.getMediaSourceList().isEmpty()) {
             mediaSourceRepository.deleteMediaSourcesByMediaId(id);
             media.getMediaSources().clear();
@@ -80,13 +94,13 @@ public class MediaServiceImpl implements MediaService {
                     .map(mediaSourceDto -> new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub()))
                     .toList());
         }
-        return toMediaTo(mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto)));
+        mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto));
     }
 
     @Override
     @Transactional
     public void delete(String id) {
-        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getName(), id));
+        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         mediaRepository.delete(media);
     }
 
@@ -114,7 +128,7 @@ public class MediaServiceImpl implements MediaService {
     @Override
     @Transactional
     public void updateMediaSources(String mediaId, MediaSourceRequest request) {
-        Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getName(), mediaId));
+        Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
         if (request.mediaSources() != null && !request.mediaSources().isEmpty()) {
             mediaSourceRepository.deleteMediaSourcesByMediaId(mediaId);
             media.getMediaSources().clear();
@@ -123,6 +137,14 @@ public class MediaServiceImpl implements MediaService {
                     .map(mediaSourceDto -> new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub()))
                     .toList());
         }
+    }
+
+    @Override
+    @Transactional
+    public void increaseNumberOfViews(String id) {
+        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
+        media.setNumberOfViews(media.getNumberOfViews()+ 1);
+        mediaRepository.save(media);
     }
 
     private MediaDto toMediaTo(Media media) {

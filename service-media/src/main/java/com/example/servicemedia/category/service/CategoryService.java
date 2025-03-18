@@ -14,7 +14,7 @@ public interface CategoryService {
     Set<Category> getAllByIds(Set<String> ids);
 
     CategoryDto getBySlug(String slug);
-    CategoryDto save(CategoryDto categoryDto);
-    CategoryDto update(String id,CategoryDto categoryDto);
+    void save(CategoryDto categoryDto);
+    void update(String id, CategoryDto categoryDto);
     void delete(String id);
 }

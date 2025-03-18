@@ -14,13 +14,13 @@ public interface MediaService {
 
     Page<MediaDto> getByContentId(Pageable pageable, String contentId);
 
-    Page<MediaDto> getNewMedias(Pageable pageable);
+    Page<MediaDto> getNewMedias();
     MediaDto getById(String id);
 
     MediaDto getBySlug(String slug);
 
-    MediaDto save(MediaDto mediaDto);
-    MediaDto update(String id,MediaDto mediaDto);
+    void save(MediaDto mediaDto);
+    void update(String id, MediaDto mediaDto);
     void delete(String id);
 
     List<MediaDto> getByContentId(String contentId);
@@ -31,4 +31,7 @@ public interface MediaService {
     List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);
 
     void updateMediaSources(String mediaId, MediaSourceRequest request);
+
+    @Transactional
+    void increaseNumberOfViews(String id);
 }

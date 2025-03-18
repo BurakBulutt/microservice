@@ -7,20 +7,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 public interface MediaRepository extends JpaRepository<Media,String> {
     @Query("SELECT m FROM Media m WHERE m.contentId = :contentId ORDER BY m.count ASC")
-    Page<Media> findAllByContentId(@Param("contentId") String contentId, Pageable pageable);
+    Page<Media> findAllByContentId(@Param("contentId") String contentId, Pageable pageable); //TODO WILL DEPRECATE
 
-    List<Media> findAllByContentId(String contentId);
+    List<Media> findAllByContentId(String contentId);//TODO FE DE BUNU KULLANCAZ
 
-    Page<Media> findAllByPublishDateIsAfter(Date publishDateAfter, Pageable pageable);
-
-    @Query(value = "SELECT * FROM media WHERE created >= CURRENT_DATE - INTERVAL '30 days'",nativeQuery = true)
+    @Query(value = "SELECT * FROM media m WHERE m.created >= CURRENT_DATE - INTERVAL '30 days'",
+            countQuery = "SELECT count(*) FROM media m WHERE m.created >= CURRENT_DATE - INTERVAL '30 days'",
+            nativeQuery = true)
     Page<Media> findNewMedias(Pageable pageable);
+
 
     Optional<Media> findBySlug(String slug);
 

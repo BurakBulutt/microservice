@@ -1,0 +1,29 @@
+server:
+  port: 8761
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: 5672
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASSWORD:guest}
+eureka:
+  server:
+    enable-self-preservation: true
+  instance:
+    hostname: ${EUREKA_HOST:localhost}
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"

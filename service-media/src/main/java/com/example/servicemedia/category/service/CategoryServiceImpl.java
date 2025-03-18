@@ -49,15 +49,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryDto save(CategoryDto categoryDto) {
-        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto)));
+    public void save(CategoryDto categoryDto) {
+        repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto));
     }
 
     @Override
     @Transactional
-    public CategoryDto update(String id, CategoryDto categoryDto) {
+    public void update(String id, CategoryDto categoryDto) {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
-        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(category,categoryDto)));
+        repository.save(CategoryServiceMapper.toEntity(category,categoryDto));
     }
 
     @Override

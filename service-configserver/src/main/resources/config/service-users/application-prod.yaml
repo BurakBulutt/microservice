@@ -1,0 +1,17 @@
+server:
+  port: 8080
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
+keycloak:
+  auth-server-url: http://${KEYCLOAK_HOST}:${KEYCLOAK_PORT}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_RESOURCE}
+  client-secret: ${KEYCLOAK_SECRET}
+  user-group: ${KEYCLOAK_USER_GROUP}
