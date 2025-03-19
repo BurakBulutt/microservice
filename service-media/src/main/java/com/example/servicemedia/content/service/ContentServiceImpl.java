@@ -94,7 +94,11 @@ public class ContentServiceImpl implements ContentService {
     @Override
     @Transactional
     public void save(ContentDto contentDto) {
-        repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
+        Set<String> requestCategoryIds = contentDto.getCategories().stream()
+                .map(CategoryDto::getId)
+                .collect(Collectors.toSet());
+        Content content = repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
+        content.setCategories(categoryService.getAllByIds(requestCategoryIds).stream().toList());
     }
 
     @Override
