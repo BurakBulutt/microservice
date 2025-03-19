@@ -14,8 +14,8 @@ import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
-@Profile("default")
-public class SecurityConfig {
+@Profile("prod")
+public class SecurityProdConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
@@ -23,12 +23,11 @@ public class SecurityConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-           authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
-           authorizeExchangeSpec.anyExchange().permitAll();
+           authorizeExchangeSpec.anyExchange().authenticated();
         });
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+            corsConfiguration.setAllowedOrigins(List.of("http://fe-panel:3000"));
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));

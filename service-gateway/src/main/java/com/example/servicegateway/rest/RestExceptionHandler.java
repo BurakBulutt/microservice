@@ -8,10 +8,10 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice
+//@RestControllerAdvice
 public class RestExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
+   /* @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleBaseException(Exception e,WebRequest request) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponse(
                 request.getDescription(false),
@@ -20,4 +20,6 @@ public class RestExceptionHandler {
                 LocalDateTime.now()
         ));
     }
+
+    */
 }

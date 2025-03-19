@@ -1,3 +1,5 @@
+server:
+  port: 8080
 spring:
   datasource:
     username: ${DB_USER}
@@ -5,21 +7,15 @@ spring:
     url: jdbc:postgresql://${DB_HOST}:5432/${DB_DATABASE}
     driver-class-name: org.postgresql.Driver
   jpa:
-    database: postgresql
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-
-server:
-  port: 8080
-
+    database: ${DB_VENDOR}
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
   client:
+    registry-fetch-interval-seconds: 30
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://{EUREKA_HOST}:${EUREKA_PORT}/eureka/
+      defaultZone: http://${EUREKA_HOST}:8761/eureka/
 

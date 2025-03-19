@@ -2,4 +2,4 @@ spring:
   application:
     name: service-gateway
   config:
-    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:9000}
+    import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888

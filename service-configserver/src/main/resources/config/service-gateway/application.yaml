@@ -1,47 +1,35 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: 8080
 spring:
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/lotheas}
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8180/realms/lotheas/protocol/openid-connect/certs}
+          issuer-uri: http://localhost:8180/realms/lotheas
+          jwk-set-uri: http://localhost:8180/realms/lotheas/protocol/openid-connect/certs
   cloud:
     gateway:
-      routes:
-        - id: service-users
-          uri: lb://service-users
-          predicates:
-            - Path=/api/v1/users/**
-        - id: service-media
-          uri: lb://service-media
-          predicates:
-            - Path=/api/v1/medias/**, /api/v1/contents/**, /api/v1/categories/**
-        - id: service-reaction
-          uri: lb://service-reaction
-          predicates:
-            - Path=/api/v1/comments/**, /api/v1/likes/**
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: 5672
-    username: ${RABBIT_USER:guest}
-    password: ${RABBIT_PASSWORD:guest}
+      discovery:
+        locator:
+          enabled: false
+          lower-case-service-id: true
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 20
+    lease-expiration-duration-in-seconds: 60
   client:
-    registry-fetch-interval-seconds: 10
+    registry-fetch-interval-seconds: 20
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+      defaultZone: http://localhost:8761/eureka/
 logging:
   level:
     org.springframework.security: TRACE
 management:
   endpoint:
+    gateway:
+      enabled: true
     health:
       probes:
         enabled: true

@@ -20,28 +20,13 @@ services:
       resources:
         limits:
           memory: 500m
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: broker-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - microservice-network
-    healthcheck:
-      test: [ "CMD", "rabbitmqctl", "status" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 500m
   auth:
     image: bitnami/keycloak:latest
     container_name: app-keycloak
     ports:
-      - "8081:8080"
+      - "8090:8080"
+      - "8443:8443"
+      - "9000:9000"
     environment:
       KEYCLOAK_DATABASE_HOST: app-database
       KEYCLOAK_DATABASE_PORT: 5432
@@ -66,8 +51,6 @@ services:
   configserver:
     image: wraithkage/app-configserver:s1
     container_name: config-service
-    environment:
-      RABBIT_HOST: broker-rabbitmq
     deploy:
       resources:
         limits:
@@ -80,9 +63,6 @@ services:
       start_period: 10s
     networks:
       - microservice-network
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
   eureka:
     image: wraithkage/app-eureka:s1
     container_name: eureka-service
@@ -97,12 +77,9 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     environment:
       EUREKA_HOST: eureka-service
-      CONFIG_SERVER_URL: http://config-service:9000
-      RABBIT_HOST: broker-rabbitmq
+      CONFIG_SERVER_HOST: config-service
     healthcheck:
       test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
@@ -123,18 +100,13 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       eureka:
         condition: service_healthy
     environment:
-      CONFIG_SERVER_URL: http://config-service:9000
+      CONFIG_SERVER_HOST: config-service
       EUREKA_HOST: eureka-service
-      EUREKA_PORT: 8761
-      SERVER_PORT: 8080
       OAUTH2_ISSUER_URI: http://app-keycloak:8080/realms/lotheas
       OAUTH2_JWK_SET_URI: http://app-keycloak:8080/realms/lotheas/protocol/openid-connect/certs
-      RABBIT_HOST: broker-rabbitmq
   media:
     image: wraithkage/app-media:s1
     container_name: media-service
@@ -147,18 +119,13 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       database:
         condition: service_healthy
       eureka:
         condition: service_healthy
     environment:
-      CONFIG_SERVER_URL: http://config-service:9000
+      CONFIG_SERVER_HOST: config-service
       EUREKA_HOST: eureka-service
-      EUREKA_PORT: 8761
-      SERVER_PORT: 8080
-      RABBIT_HOST: broker-rabbitmq
       DB_USER: dbadmin
       DB_PASSWORD: 12345
       DB_HOST: app-database
@@ -175,18 +142,13 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       database:
         condition: service_healthy
       eureka:
         condition: service_healthy
     environment:
-      CONFIG_SERVER_URL: http://config-service:9000
+      CONFIG_SERVER_HOST: config-service
       EUREKA_HOST: eureka-service
-      EUREKA_PORT: 8761
-      SERVER_PORT: 8080
-      RABBIT_HOST: broker-rabbitmq
       DB_USER: dbadmin
       DB_PASSWORD: 12345
       DB_HOST: app-database
@@ -203,18 +165,13 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       auth:
         condition: service_healthy
       eureka:
         condition: service_healthy
     environment:
-      CONFIG_SERVER_URL: http://config-service:9000
+      CONFIG_SERVER_HOST: config-service
       EUREKA_HOST: eureka-service
-      EUREKA_PORT: 8761
-      SERVER_PORT: 8080
-      RABBIT_HOST: broker-rabbitmq
 
 networks:
   microservice-network:

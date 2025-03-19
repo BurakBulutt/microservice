@@ -1,20 +1,21 @@
 spring:
   application:
     name: service-configserver
-  profiles:
-    active: native
   cloud:
     config:
       server:
-        native:
-          search-locations: "classpath:config/{application}"
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: 5672
-    username: ${RABBIT_USER:guest}
-    password: ${RABBIT_PASSWORD:guest}
+        git:
+          uri: ${GITHUB_URI}
+          username: ${GITHUB_USER}
+          password: ${GITHUB_PASSWORD}
+          default-label: ${GITHUB_BRANCH:dev}
+          search-paths:
+            - "{application}"
+          timeout: 5
+          clone-on-start: true
+          force-pull: true
 server:
-  port: 9000
+  port: 8888
 management:
   endpoint:
     health:

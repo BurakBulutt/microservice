@@ -1,32 +1,26 @@
+server:
+  port: 8083
 spring:
   datasource:
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_DATABASE:app_reaction}
+    username: postgres
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/app_reaction
     driver-class-name: org.postgresql.Driver
   jpa:
     database: postgresql
     hibernate:
       ddl-auto: update
     show-sql: true
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: 5672
-    username: ${RABBIT_USER:guest}
-    password: ${RABBIT_PASSWORD:guest}
-
-server:
-  port: ${SERVER_PORT:8084}
-
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 20
+    lease-expiration-duration-in-seconds: 60
   client:
+    registry-fetch-interval-seconds: 20
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+      defaultZone: http://localhost:8761/eureka/
 management:
   endpoint:
     health:
