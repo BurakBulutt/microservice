@@ -11,15 +11,17 @@ import com.example.servicereaction.like.service.LikeService;
 import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
 public class CommentServiceImpl implements CommentService {
     private final CommentRepository repository;
     private final UserFeignClient userFeignClient;
@@ -81,17 +83,18 @@ public class CommentServiceImpl implements CommentService {
     public void delete(String id) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         repository.delete(comment);
-        //TODO id --> targetId likeleri sildirecek event.
+        likeService.deleteLikesByTargetId(comment.getTargetId());
     }
 
     private CommentDto toCommentDto(Comment comment) {
         CommentDto dto = CommentServiceMapper.toDto(comment, getUser(comment.getUserId()));
+        String userId = MDC.get("userId");
         if (comment.getParent() != null) {
             CommentDto parent = CommentServiceMapper.toDto(comment.getParent(), getUser(comment.getParent().getUserId()));
-            parent.setLikeCount(likeService.findLikeCount(comment.getParent().getId(),null));
+            parent.setLikeCount(likeService.findLikeCount(comment.getParent().getId(),userId));
             dto.setParent(parent);
         }
-        dto.setLikeCount(likeService.findLikeCount(comment.getId(),null));
+        dto.setLikeCount(likeService.findLikeCount(comment.getId(),userId));
         if (comment.getCommentList() != null && !comment.getCommentList().isEmpty()) {
             dto.setCommentList(comment.getCommentList().stream()
                     .map(this::toCommentDto)
@@ -101,7 +104,8 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private UserResponse getUser(String userId) {
-        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(userId);
-        return userResponse.getBody();
+        String correlationId = MDC.get("correlationId");
+        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(correlationId,userId);
+        return userResponse.getBody() != null ? userResponse.getBody() : null;
     }
 }

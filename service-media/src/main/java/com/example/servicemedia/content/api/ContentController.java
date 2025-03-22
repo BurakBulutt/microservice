@@ -43,8 +43,8 @@ public class ContentController {
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<ContentResponse> getBySlug(@PathVariable String slug,@RequestParam(required = false) String userId) {
-        return ResponseEntity.ok(ContentApiMapper.toResponse(service.getBySlug(slug,userId)));
+    public ResponseEntity<ContentResponse> getBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(ContentApiMapper.toResponse(service.getBySlug(slug)));
     }
 
     @PostMapping

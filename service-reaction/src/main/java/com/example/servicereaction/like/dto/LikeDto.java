@@ -1,6 +1,5 @@
 package com.example.servicereaction.like.dto;
 
-import com.example.servicereaction.like.enums.LikeTarget;
 import com.example.servicereaction.like.enums.LikeType;
 import lombok.Builder;
 import lombok.Data;

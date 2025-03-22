@@ -3,3 +3,8 @@ spring:
     name: service-eureka
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+  rabbitmq:
+    username: guest
+    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672

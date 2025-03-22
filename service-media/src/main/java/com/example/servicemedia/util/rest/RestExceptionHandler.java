@@ -36,7 +36,7 @@ public class RestExceptionHandler {
         log.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(
                 request.getDescription(false),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 e.getMessage(),
                 LocalDateTime.now()
         ));

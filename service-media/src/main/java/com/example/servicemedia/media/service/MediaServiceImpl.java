@@ -1,8 +1,8 @@
 package com.example.servicemedia.media.service;
 
 import com.example.servicemedia.content.service.ContentService;
-import com.example.servicemedia.feign.LikeCountResponse;
-import com.example.servicemedia.feign.LikeFeignClient;
+import com.example.servicemedia.feign.like.LikeCountResponse;
+import com.example.servicemedia.feign.like.LikeFeignClient;
 import com.example.servicemedia.media.api.MediaSourceRequest;
 import com.example.servicemedia.media.dto.MediaDto;
 import com.example.servicemedia.media.dto.MediaSourceDto;
@@ -13,6 +13,7 @@ import com.example.servicemedia.media.repo.MediaRepository;
 import com.example.servicemedia.media.repo.MediaSourceRepository;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
 public class MediaServiceImpl implements MediaService {
     private final MediaRepository mediaRepository;
     private final MediaSourceRepository mediaSourceRepository;
@@ -101,7 +103,7 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void delete(String id) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
-        mediaRepository.delete(media);
+        mediaRepository.delete(media); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR.
     }
 
     @Override
@@ -115,7 +117,7 @@ public class MediaServiceImpl implements MediaService {
     @Override
     @Transactional
     public void deleteAllByContentId(String contentId) {
-        mediaRepository.deleteAllByContentId(contentId); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR
+        mediaRepository.deleteAllByContentId(contentId); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR.
     }
 
     @Override
@@ -149,8 +151,11 @@ public class MediaServiceImpl implements MediaService {
 
     private MediaDto toMediaTo(Media media) {
         MediaDto dto = MediaServiceMapper.toDto(media);
-        ResponseEntity<LikeCountResponse> likeCountResponseResponseEntity = likeFeignClient.getLikeCount(media.getId(), null);
-        dto.setLikeCount(likeCountResponseResponseEntity.getBody());
+        String correlationId = MDC.get("correlationId");
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(correlationId,media.getId(), null);
+        if (response.getBody() != null) {
+            dto.setLikeCount(response.getBody());
+        }
         return dto;
     }
 }

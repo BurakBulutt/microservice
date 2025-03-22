@@ -8,18 +8,21 @@ import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.content.mapper.ContentServiceMapper;
 import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.content.repo.ContentRepository;
-import com.example.servicemedia.feign.LikeCountResponse;
-import com.example.servicemedia.feign.LikeFeignClient;
+import com.example.servicemedia.feign.like.LikeCountResponse;
+import com.example.servicemedia.feign.like.LikeFeignClient;
 import com.example.servicemedia.media.service.MediaService;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -29,7 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
+@Slf4j
 public class ContentServiceImpl implements ContentService {
     private final ContentRepository repository;
     private final MediaService mediaService;
@@ -38,7 +42,8 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Page<ContentDto> getAll(Pageable pageable) {
-        return repository.findAll(pageable).map(content -> toContentDto(content, null));
+        log.warn("CONTENT GEL ALL");
+        return repository.findAll(pageable).map(this::toContentDto);
     }
 
     @Override
@@ -60,7 +65,7 @@ public class ContentServiceImpl implements ContentService {
             contents = repository.findAll(pageRequest);
         }
 
-        return contents.map(content -> toContentDto(content, null));
+        return contents.map(this::toContentDto);
     }
 
     @Override
@@ -68,24 +73,24 @@ public class ContentServiceImpl implements ContentService {
         Sort sort = Sort.by(Sort.Direction.ASC, "name");
         Pageable pageRequest = PageRequest.of(0, 4, sort);
 
-        return repository.findAllByNameContainsIgnoreCase(query, pageRequest).map(content -> toContentDto(content, null)).getContent();
+        return repository.findAllByNameContainsIgnoreCase(query, pageRequest).map(this::toContentDto).getContent();
     }
 
     @Override
     public Page<ContentDto> getNewContents() {
         Pageable pageRequest = PageRequest.of(0, 30, Sort.by(Sort.Direction.DESC, "created"));
-        return repository.findNewContents(pageRequest).map(content -> toContentDto(content, null));
+        return repository.findNewContents(pageRequest).map(this::toContentDto);
     }
 
     @Override
     public ContentDto getById(String id) {
-        return repository.findById(id).map(content -> toContentDto(content, null)).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
+        return repository.findById(id).map(this::toContentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
     }
 
     @Override
-    public ContentDto getBySlug(String slug, String ownerId) {
+    public ContentDto getBySlug(String slug) {
         return repository.findBySlug(slug).map(content -> {
-            ContentDto dto = toContentDto(content, ownerId);
+            ContentDto dto = toContentDto(content);
             dto.setMediaList(mediaService.getByContentId(content.getId()));
             return dto;
         }).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), slug));
@@ -121,18 +126,22 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.NEVER)
     public void delete(String id) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         mediaService.deleteAllByContentId(content.getId());
         repository.delete(content); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR
     }
 
-    private ContentDto toContentDto(Content content, String ownerId) {
+    private ContentDto toContentDto(Content content) {
         ContentDto dto = ContentServiceMapper.toDto(content);
-        ResponseEntity<LikeCountResponse> likeCountResponseResponseEntity = likeFeignClient.getLikeCount(content.getId(), ownerId);
-        dto.setLikeCount(likeCountResponseResponseEntity.getBody());
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
+        String correlationId = MDC.get("correlationId");
+        String userId = MDC.get("userId");
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(correlationId,dto.getId(), userId);
+        if (response.getBody() != null) {
+            dto.setLikeCount(response.getBody());
+        }
         return dto;
     }
 }

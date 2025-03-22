@@ -7,4 +7,6 @@ public interface LikeService {
     LikeCountDto findLikeCount(String targetId,String userId);
     void save(LikeDto likeDto);
     void delete(String id);
+
+    void deleteLikesByTargetId(String targetId);
 }

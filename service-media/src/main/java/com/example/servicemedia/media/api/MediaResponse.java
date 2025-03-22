@@ -1,7 +1,7 @@
 package com.example.servicemedia.media.api;
 
 import com.example.servicemedia.content.dto.ContentDto;
-import com.example.servicemedia.feign.LikeCountResponse;
+import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.media.dto.MediaSourceDto;
 import lombok.Builder;
 import lombok.Data;

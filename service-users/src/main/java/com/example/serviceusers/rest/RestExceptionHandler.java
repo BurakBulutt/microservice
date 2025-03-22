@@ -35,7 +35,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             String validationMessage= messageSource.getMessage(Objects.requireNonNull(error.getDefaultMessage()), error.getArguments(), Locale.getDefault());
             validationErrors.put(field, validationMessage);
         });
-
+        log.error(validationErrors.toString());
         return ResponseEntity.status(status).body(validationErrors);
     }
 

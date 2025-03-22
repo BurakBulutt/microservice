@@ -1,4 +1,4 @@
-package com.example.servicemedia.feign;
+package com.example.servicemedia.feign.like;
 
 import lombok.Builder;
 import lombok.Data;

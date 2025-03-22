@@ -15,7 +15,9 @@ public interface ContentService {
     Page<ContentDto> getNewContents();
 
     ContentDto getById(String id);
-    ContentDto getBySlug(String slug,String ownerId);
+
+    ContentDto getBySlug(String slug);
+
     void save(ContentDto contentDto);
     void update(String id, ContentDto contentDto);
     void delete(String id);
