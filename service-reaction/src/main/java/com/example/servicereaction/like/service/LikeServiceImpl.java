@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LikeServiceImpl implements LikeService {
     private final LikeRepository repository;
 
-    @Retry(name = "findLikeCount")
+    @Retry(name = "likeRetry")
     @Override
     public LikeCountDto findLikeCount(String targetId, String userId) {
         Integer likeCount = repository.findTargetLikeCount(targetId,LikeType.LIKE);

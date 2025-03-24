@@ -7,12 +7,10 @@ import java.util.List;
 
 
 public record MediaRequest(
-        String name,
         String description,
         String contentId,
         Integer count,
         List<MediaSourceDto> mediaSourceList,
-        Date publishDate,
-        String slug
+        Date publishDate
 ) {
 }

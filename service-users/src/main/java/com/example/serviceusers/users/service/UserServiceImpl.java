@@ -5,7 +5,9 @@ import com.example.serviceusers.rest.BaseException;
 import com.example.serviceusers.rest.MessageResource;
 import com.example.serviceusers.users.api.CreateUserRequest;
 import com.example.serviceusers.users.api.Page;
+import com.example.serviceusers.users.api.PageUtil;
 import com.example.serviceusers.users.api.UpdateUserRequest;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -34,8 +36,9 @@ public class UserServiceImpl implements UserService {
     public Page<UserRepresentation> getAllUsers(int page, int size) {
         int first = page * size;
         int userCount = getUserCount();
+        int totalPages = (int) Math.ceil((double) userCount /size);
         List<UserRepresentation> users = keycloakAdmin.realm(keycloakConfig.getRealm()).groups().group(keycloakConfig.getUserGroup()).members(first,size);
-        return new Page<>(page,size,userCount,users.size(),users);
+        return new Page<>(users,new PageUtil(page,size,userCount,totalPages));
     }
 
     @Override
@@ -45,6 +48,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,UserRepresentation.class.getSimpleName(),username));
     }
 
+    @Retry(name = "userRetry")
     @Override
     public UserRepresentation getUserById(String id) {
         try{
@@ -150,8 +154,8 @@ public class UserServiceImpl implements UserService {
             UserRepresentation representation = userResource.toRepresentation();
             representation.setEmailVerified(Boolean.FALSE);
             representation.getRequiredActions().add("VERIFY_EMAIL");
-            userResource.update(representation);
             userResource.sendVerifyEmail();
+            userResource.update(representation);
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (InternalServerErrorException e) {

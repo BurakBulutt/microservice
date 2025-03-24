@@ -41,10 +41,8 @@ public class MediaApiMapper {
 
     public static MediaDto toDto(MediaRequest request) {
         return MediaDto.builder()
-                .name(request.name())
                 .description(request.description())
                 .content(ContentDto.builder().id(request.contentId()).build())
-                .slug(request.slug())
                 .publishDate(request.publishDate())
                 .count(request.count())
                 .build();

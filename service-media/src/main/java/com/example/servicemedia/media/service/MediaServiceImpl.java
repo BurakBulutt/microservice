@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.service;
 
+import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.content.service.ContentService;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
@@ -82,6 +83,9 @@ public class MediaServiceImpl implements MediaService {
         if (mediaDto.getMediaSourceList() != null && !mediaDto.getMediaSourceList().isEmpty()) {
             mediaDto.getMediaSourceList().forEach(mediaSourceDto -> media.getMediaSources().add(new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub())));
         }
+        ContentDto content = contentService.getById(mediaDto.getContent().getId());
+        mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
+        mediaDto.setSlug(slugGenerator(mediaDto.getName()));
         mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto));
     }
 
@@ -96,6 +100,9 @@ public class MediaServiceImpl implements MediaService {
                     .map(mediaSourceDto -> new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub()))
                     .toList());
         }
+        ContentDto content = contentService.getById(mediaDto.getContent().getId());
+        mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
+        mediaDto.setSlug(slugGenerator(mediaDto.getName()));
         mediaRepository.save(MediaServiceMapper.toEntity(media, mediaDto));
     }
 
@@ -157,5 +164,15 @@ public class MediaServiceImpl implements MediaService {
             dto.setLikeCount(response.getBody());
         }
         return dto;
+    }
+
+
+    private String slugGenerator(String name) {
+        return name
+                .toLowerCase()
+                .trim()
+                .replaceAll("[^\\w\\s-]", "")
+                .replaceAll("[\\s_-]+", "-")
+                .replaceAll("^-+|-+$", "");
     }
 }

@@ -4,11 +4,6 @@ services:
     container_name: app-database
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    networks:
-      - microservice-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,11 +11,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: on-failure
-    deploy:
-      resources:
-        limits:
-          memory: 500m
+    extends:
+      file: common-config.yaml
+      service: other-services-config
 
   auth:
     image: bitnami/keycloak:latest
@@ -28,64 +21,53 @@ services:
     ports:
       - "8090:8080"
       - "9000:9000"
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KEYCLOAK_ENABLE_HEALTH_ENDPOINTS: true
-      KEYCLOAK_DATABASE_HOST: app-database
-      KEYCLOAK_DATABASE_PORT: 5432
-      KEYCLOAK_DATABASE_USER: admin
-      KEYCLOAK_DATABASE_PASSWORD: admin
+    volumes:
+      - keycloak_data:/opt/bitnami/keycloak
     depends_on:
       database:
         condition: service_healthy
-    networks:
-      - microservice-network
-    volumes:
-      - keycloak_data:/opt/bitnami/keycloak
     healthcheck:
-      test: "curl -f http://localhost:9000/health || exit 1"
+      test: "curl --head -fsS http://localhost:9000/health/ready"
       interval: 10s
       timeout: 5s
       retries: 10
-    restart: on-failure
-    deploy:
-      resources:
-        limits:
-          memory: 500m
+    extends:
+      file: common-config.yaml
+      service: other-services-config
 
   redis:
     image: redis:latest
     container_name: local-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       retries: 3
       start_period: 5s
       timeout: 10s
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    networks:
-      - microservice-network
+    extends:
+      file: common-config.yaml
+      service: other-services-config
 
   rabbitmq:
-    image: rabbitmq:4.0-management-alpine
+    image: rabbitmq:management
     container_name: local-rabbitmq
-    healthcheck:
-      test: ["CMD", "curl", "-u", "guest:guest", "localhost:15672/api/healthchecks/node"]
-      interval: 30s
-      retries: 3
-      start_period: 5s
-      timeout: 10s
     ports:
       - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    restart: unless-stopped
-    networks:
-      - microservice-network
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: other-services-config
 
   configserver:
     image: wraithkage/app-configserver:0.0.1-SNAPSHOT
@@ -93,28 +75,19 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 500m
     healthcheck:
       test: "curl --fail --silent localhost:8888/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
-    networks:
-      - microservice-network
+    extends:
+      file: common-config.yaml
+      service: microservice-config
 
   eureka:
     image: wraithkage/app-eureka:0.0.1-SNAPSHOT
     container_name: eureka-service
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-    networks:
-      - microservice-network
     ports:
       - "8761:8761"
     depends_on:
@@ -122,24 +95,19 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    environment:
-      EUREKA_HOST: eureka-service
-      CONFIG_SERVER_HOST: config-service
-      RABBITMQ_HOST: local-rabbitmq
     healthcheck:
       test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: microservice-config
 
   gateway:
     image: wraithkage/app-gateway:0.0.1-SNAPSHOT
     container_name: gateway-service
-    deploy:
-      resources:
-        limits:
-          memory: 500m
     ports:
       - "8080:8080"
     depends_on:
@@ -151,71 +119,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      CONFIG_SERVER_HOST: config-service
-      EUREKA_HOST: eureka-service
-      RABBITMQ_HOST: local-rabbitmq
-      REDIS_HOST: local-redis
-      OAUTH2_ISSUER_URI: http://app-keycloak:8080/realms/lotheas
-      OAUTH2_JWK_SET_URI: http://app-keycloak:8080/realms/lotheas/protocol/openid-connect/certs
-
-  media:
-    image: wraithkage/app-media:s1
-    container_name: media-service
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-    networks:
-      - microservice-network
-    depends_on:
-      configserver:
-        condition: service_healthy
-      database:
-        condition: service_healthy
-      eureka:
-        condition: service_healthy
-    environment:
-      CONFIG_SERVER_HOST: config-service
-      EUREKA_HOST: eureka-service
-      DB_USER: dbadmin
-      DB_PASSWORD: 12345
-      DB_HOST: app-database
-      DB_DATABASE: app_media
-
-  reaction:
-    image: wraithkage/app-reaction:s1
-    container_name: reaction-service
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-    networks:
-      - microservice-network
-    depends_on:
-      configserver:
-        condition: service_healthy
-      database:
-        condition: service_healthy
-      eureka:
-        condition: service_healthy
-    environment:
-      CONFIG_SERVER_HOST: config-service
-      EUREKA_HOST: eureka-service
-      DB_USER: dbadmin
-      DB_PASSWORD: 12345
-      DB_HOST: app-database
-      DB_DATABASE: app_reaction
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: microservice-config
 
   users:
-    image: wraithkage/app-users:s1
+    image: wraithkage/app-users:0.0.1-SNAPSHOT
     container_name: users-service
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-    networks:
-      - microservice-network
     depends_on:
       configserver:
         condition: service_healthy
@@ -223,14 +139,74 @@ services:
         condition: service_healthy
       eureka:
         condition: service_healthy
-    environment:
-      CONFIG_SERVER_HOST: config-service
-      EUREKA_HOST: eureka-service
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: microservice-config
+
+  media:
+    image: wraithkage/app-media:0.0.1-SNAPSHOT
+    container_name: media-service
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    env_file:
+      - media.env
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: microservice-config
+
+  reaction:
+    image: wraithkage/app-reaction:0.0.1-SNAPSHOT
+    container_name: reaction-service
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    env_file:
+      - reaction.env
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yaml
+      service: microservice-config
 
 networks:
   microservice-network:
     driver: bridge
+
 volumes:
-  postgres_data:
-  keycloak_data:
+  microservice_postgres_data:
+    external: true
+  local_keycloak_data:
+    external: true
   redis_data:
+  rabbit-data:

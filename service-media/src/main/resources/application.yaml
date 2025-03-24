@@ -3,40 +3,5 @@ spring:
     name: service-media
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
-  cloud:
-    openfeign:
-      circuitbreaker:
-        enabled: true
-        alphanumeric-ids:
-          enabled: true
-resilience4j:
-  timelimiter:
-    configs:
-      default:
-        timeout-duration: 2s
-        cancel-running-future: true
-  circuitbreaker:
-    configs:
-      default:
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 2
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 5s
-  retry:
-    configs:
-      default:
-        max-attempts: 3
-        wait-duration: 100ms
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-        ignore-exceptions:
-          - com.example.servicemedia.util.rest.BaseException
-          - feign.FeignException.BadRequest
-  ratelimiter:
-    configs:
-      default:
-        timeout-duration: 1s
-        limit-for-period: 1000
-        limit-refresh-period: 10s
 
 

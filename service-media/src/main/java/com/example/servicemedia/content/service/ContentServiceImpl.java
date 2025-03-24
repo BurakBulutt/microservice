@@ -41,8 +41,8 @@ public class ContentServiceImpl implements ContentService {
     private final LikeFeignClient likeFeignClient;
 
     @Override
+    @Transactional
     public Page<ContentDto> getAll(Pageable pageable) {
-        log.warn("CONTENT GEL ALL");
         return repository.findAll(pageable).map(this::toContentDto);
     }
 

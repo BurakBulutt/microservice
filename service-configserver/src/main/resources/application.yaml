@@ -8,15 +8,15 @@ spring:
           uri: ${GITHUB_URI}
           username: ${GITHUB_USER}
           password: ${GITHUB_PASSWORD}
-          default-label: ${GITHUB_BRANCH:dev}
+          default-label: ${GITHUB_BRANCH}
           search-paths:
             - "{application}"
           timeout: 5
           clone-on-start: true
           force-pull: true
   rabbitmq:
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
 server:
