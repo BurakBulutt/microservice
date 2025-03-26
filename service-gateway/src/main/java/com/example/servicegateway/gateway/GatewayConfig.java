@@ -2,8 +2,7 @@ package com.example.servicegateway.gateway;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
@@ -22,8 +21,6 @@ import java.time.LocalDateTime;
 @Component
 @Profile("default")
 public class GatewayConfig {
-    private static final Logger log = LoggerFactory.getLogger(GatewayConfig.class);
-
     private final RedisRateLimiter rateLimiter;
     private final KeyResolver keyResolver;
 

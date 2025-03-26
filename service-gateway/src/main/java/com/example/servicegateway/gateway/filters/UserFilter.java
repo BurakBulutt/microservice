@@ -16,7 +16,7 @@ public class UserFilter implements WebFilter {
         return exchange.getPrincipal()
                 .doOnNext(principal -> {
                     String user = principal.getName() != null ? principal.getName() : "anonymous";
-                    log.warn("User: {}", user);
+                    log.trace("User: {}", user);
                     exchange.getRequest().getHeaders().add("X-User-Id", user);
                 })
                 .then(chain.filter(exchange));

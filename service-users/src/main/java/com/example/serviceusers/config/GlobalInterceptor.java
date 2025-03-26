@@ -1,4 +1,4 @@
-package com.example.servicemedia.config;
+package com.example.serviceusers.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

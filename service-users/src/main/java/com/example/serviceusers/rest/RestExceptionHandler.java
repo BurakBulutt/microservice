@@ -19,9 +19,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.time.LocalDateTime;
 import java.util.*;
 
-@RestControllerAdvice
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
+@RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     private final MessageSource messageSource;
 
@@ -35,14 +35,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             String validationMessage= messageSource.getMessage(Objects.requireNonNull(error.getDefaultMessage()), error.getArguments(), Locale.getDefault());
             validationErrors.put(field, validationMessage);
         });
-        log.error(validationErrors.toString());
+
         return ResponseEntity.status(status).body(validationErrors);
     }
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException e, Locale locale,WebRequest request) {
         String message = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), locale);
-        log.error(message);
+
         return ResponseEntity.status(e.getMessageResource().getStatus()).body(new ErrorResponse(
                 request.getDescription(false),
                 e.getMessageResource().name(),
@@ -53,7 +53,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleBaseException(Exception e,WebRequest request) {
-        log.error(e.getMessage());
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(
                 request.getDescription(false),
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),

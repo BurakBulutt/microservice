@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
+@Transactional(readOnly = true)
 @Slf4j
 public class ContentServiceImpl implements ContentService {
     private final ContentRepository repository;
@@ -130,7 +130,7 @@ public class ContentServiceImpl implements ContentService {
     public void delete(String id) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         mediaService.deleteAllByContentId(content.getId());
-        repository.delete(content); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR
+        repository.delete(content); //TODO RABBIT ILE SAGA AKISI KURULMALIDIR
     }
 
     private ContentDto toContentDto(Content content) {

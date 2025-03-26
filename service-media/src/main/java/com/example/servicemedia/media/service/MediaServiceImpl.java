@@ -22,7 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-@Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
+@Transactional(readOnly = true)
 public class MediaServiceImpl implements MediaService {
     private final MediaRepository mediaRepository;
     private final MediaSourceRepository mediaSourceRepository;
@@ -110,7 +109,7 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void delete(String id) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
-        mediaRepository.delete(media); //TODO KAFKA ILE SAGA AKISI KURULMALIDIR.
+        mediaRepository.delete(media); //TODO RABBIT ILE SAGA AKISI KURULMALIDIR
     }
 
     @Override
@@ -138,7 +137,7 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
-        if (request.mediaSources() != null && !request.mediaSources().isEmpty()) {
+        if (request.mediaSources() != null) {
             mediaSourceRepository.deleteMediaSourcesByMediaId(mediaId);
             media.getMediaSources().clear();
             mediaRepository.flush();

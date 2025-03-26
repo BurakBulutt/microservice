@@ -37,7 +37,10 @@ public class UserServiceImpl implements UserService {
         int first = page * size;
         int userCount = getUserCount();
         int totalPages = (int) Math.ceil((double) userCount /size);
-        List<UserRepresentation> users = keycloakAdmin.realm(keycloakConfig.getRealm()).groups().group(keycloakConfig.getUserGroup()).members(first,size);
+        List<UserRepresentation> users = keycloakAdmin.realm(keycloakConfig.getRealm())
+                .groups()
+                .group(keycloakConfig.getUserGroup())
+                .members(first,size);
         return new Page<>(users,new PageUtil(page,size,userCount,totalPages));
     }
 
@@ -121,7 +124,7 @@ public class UserServiceImpl implements UserService {
     public void delete(String id) {
         try {
             UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
-            userResource.remove(); //TODO MESSAGE BROKER ILE SAGA AKISI KURULMALIDIR.
+            userResource.remove(); //TODO RABBIT ILE SAGA AKISI KURULMALIDIR
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (BadRequestException e) {
@@ -152,10 +155,12 @@ public class UserServiceImpl implements UserService {
         try {
             UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
             UserRepresentation representation = userResource.toRepresentation();
-            representation.setEmailVerified(Boolean.FALSE);
-            representation.getRequiredActions().add("VERIFY_EMAIL");
+            if(representation.getRequiredActions().stream().noneMatch(action -> action.equals("VERIFY_EMAIL"))) {
+                representation.setEmailVerified(Boolean.FALSE);
+                representation.getRequiredActions().add("VERIFY_EMAIL");
+                userResource.update(representation);
+            }
             userResource.sendVerifyEmail();
-            userResource.update(representation);
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,UserResource.class.getSimpleName(),id);
         }catch (InternalServerErrorException e) {

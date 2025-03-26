@@ -7,8 +7,8 @@ import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-@Component
 @Slf4j
+@Component
 public class LikeFallbackFactory implements FallbackFactory<LikeFeignClient> {
 
     @Override
@@ -16,7 +16,7 @@ public class LikeFallbackFactory implements FallbackFactory<LikeFeignClient> {
         return new LikeFeignClient() {
             @Override
             public ResponseEntity<LikeCountResponse> getLikeCount(String correlationId, String targetId, String userId) {
-                log.warn("{}: Like Servise Erişilemedi: {}",correlationId,cause.getMessage());
+                log.warn("{}: Connection Fail to Like Service: {}",correlationId,cause.getMessage());
                 return ResponseEntity.noContent().build();
             }
         };
