@@ -13,8 +13,8 @@ public class UserFallbackFactory implements FallbackFactory<UserFeignClient> {
     public UserFeignClient create(Throwable cause) {
         return new UserFeignClient() {
             @Override
-            public ResponseEntity<UserResponse> getById(String correlationId, String id) {
-                log.warn("{}: Connection Fail to User Service: {}",correlationId,cause.getMessage());
+            public ResponseEntity<UserResponse> getById(String id,String correlationId) {
+                log.error("Failed to Getting User: {}, CAUSE: {}",id,cause.getMessage());
                 return ResponseEntity.noContent().build();
             }
         };

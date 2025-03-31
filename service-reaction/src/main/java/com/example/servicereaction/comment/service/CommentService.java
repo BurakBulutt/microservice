@@ -8,7 +8,7 @@ public interface CommentService {
     Page<CommentDto> getAll(Pageable pageable);
     CommentDto getById(String id);
 
-    Page<CommentDto> getByTargetId(String targetId, String ownerId, Pageable pageable);
+    Page<CommentDto> getByTargetId(String targetId, Pageable pageable);
 
     void save(CommentDto commentDto);
     void update(String id, CommentDto commentDto);

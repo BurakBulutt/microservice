@@ -10,10 +10,13 @@ import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
@@ -22,11 +25,14 @@ public class LikeServiceImpl implements LikeService {
 
     @Retry(name = "likeRetry")
     @Override
-    public LikeCountDto findLikeCount(String targetId, String userId) {
+    public LikeCountDto findLikeCount(String targetId) {
+        log.info("Getting like count... : {}",targetId);
         Integer likeCount = repository.findTargetLikeCount(targetId,LikeType.LIKE);
         Integer dislikeCount = repository.findTargetLikeCount(targetId,LikeType.DISLIKE);
         Boolean isUserLiked = false;
         Boolean isUserDisliked = false;
+
+        final String userId = MDC.get("X-User-Id");
 
         if (userId != null) {
             isUserLiked = repository.isUserLiked(targetId, userId, LikeType.LIKE);

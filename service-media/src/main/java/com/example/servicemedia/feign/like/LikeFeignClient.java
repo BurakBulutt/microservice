@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 public interface LikeFeignClient {
 
     @GetMapping("like-count/{targetId}")
-    ResponseEntity<LikeCountResponse> getLikeCount(@RequestHeader("X-Correlation-Id") String correlationId,
-                                                   @PathVariable String targetId,
-                                                   @RequestParam(required = false) String userId);
+    ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable String targetId,
+                                                   @RequestHeader("X-Correlation-Id") String correlationId,
+                                                   @RequestHeader("X-User-Id") String userId);
 }

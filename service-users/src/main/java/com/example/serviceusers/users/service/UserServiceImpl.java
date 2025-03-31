@@ -19,6 +19,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -54,8 +55,11 @@ public class UserServiceImpl implements UserService {
     @Retry(name = "userRetry")
     @Override
     public UserRepresentation getUserById(String id) {
+        log.info("Getting user... : {}",id);
         try{
-            return keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id).toRepresentation();
+            final String corroId = MDC.get("X-Correlation-Id");
+            UserResource userResource = keycloakAdmin.realm(keycloakConfig.getRealm()).users().get(id);
+            return userResource.toRepresentation();
         }catch (NotFoundException e) {
             throw new BaseException(MessageResource.NOT_FOUND,UserRepresentation.class.getSimpleName(),id);
         }

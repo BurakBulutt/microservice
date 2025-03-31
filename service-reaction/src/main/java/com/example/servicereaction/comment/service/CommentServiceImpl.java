@@ -11,6 +11,7 @@ import com.example.servicereaction.like.service.LikeService;
 import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
@@ -29,6 +31,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Page<CommentDto> getAll(Pageable pageable) {
+        log.info("Getting all comments...");
         return repository.findAll(pageable).map(this::toCommentDto);
     }
 
@@ -38,14 +41,14 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Page<CommentDto> getByTargetId(String targetId, String ownerId, Pageable pageable) {
+    public Page<CommentDto> getByTargetId(String targetId, Pageable pageable) {
         return repository.findAllByTargetIdAndParentNull(targetId, pageable).map(comment -> {
             CommentDto commentDto = CommentServiceMapper.toDto(comment,getUser(comment.getUserId()));
-            commentDto.setLikeCount(likeService.findLikeCount(comment.getId(), ownerId));
+            commentDto.setLikeCount(likeService.findLikeCount(comment.getId()));
             if (comment.getCommentList() != null && !comment.getCommentList().isEmpty()) {
                 commentDto.setCommentList(comment.getCommentList().stream().map(comment1 -> {
                     CommentDto dto = CommentServiceMapper.toDto(comment1,getUser(comment1.getUserId()));
-                    dto.setLikeCount(likeService.findLikeCount(comment1.getId(), ownerId));
+                    dto.setLikeCount(likeService.findLikeCount(comment1.getId()));
                     return dto;
                 }).toList());
             }
@@ -88,13 +91,12 @@ public class CommentServiceImpl implements CommentService {
 
     private CommentDto toCommentDto(Comment comment) {
         CommentDto dto = CommentServiceMapper.toDto(comment, getUser(comment.getUserId()));
-        String userId = MDC.get("userId");
-        if (comment.getParent() != null) {
+        dto.setLikeCount(likeService.findLikeCount(comment.getId()));
+        if (comment.getParent() != null && comment.getType() == CommentType.REPLY) {
             CommentDto parent = CommentServiceMapper.toDto(comment.getParent(), getUser(comment.getParent().getUserId()));
-            parent.setLikeCount(likeService.findLikeCount(comment.getParent().getId(),userId));
+            parent.setLikeCount(likeService.findLikeCount(comment.getParent().getId()));
             dto.setParent(parent);
         }
-        dto.setLikeCount(likeService.findLikeCount(comment.getId(),userId));
         if (comment.getCommentList() != null && !comment.getCommentList().isEmpty()) {
             dto.setCommentList(comment.getCommentList().stream()
                     .map(this::toCommentDto)
@@ -105,7 +107,7 @@ public class CommentServiceImpl implements CommentService {
 
     private UserResponse getUser(String userId) {
         String correlationId = MDC.get("correlationId");
-        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(correlationId,userId);
+        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(userId,correlationId);
         return userResponse.getBody() != null ? userResponse.getBody() : null;
     }
 }

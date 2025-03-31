@@ -20,7 +20,7 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
 server:
-  port: 8888
+  port: ${SERVER_PORT:8888}
 management:
   endpoint:
     health:

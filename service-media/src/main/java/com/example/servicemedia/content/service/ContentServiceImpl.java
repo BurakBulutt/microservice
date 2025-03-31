@@ -43,6 +43,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     @Transactional
     public Page<ContentDto> getAll(Pageable pageable) {
+        log.info("Getting all contents...");
         return repository.findAll(pageable).map(this::toContentDto);
     }
 
@@ -138,7 +139,7 @@ public class ContentServiceImpl implements ContentService {
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
         String correlationId = MDC.get("correlationId");
         String userId = MDC.get("userId");
-        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(correlationId,dto.getId(), userId);
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId(),correlationId,userId);
         if (response.getBody() != null) {
             dto.setLikeCount(response.getBody());
         }

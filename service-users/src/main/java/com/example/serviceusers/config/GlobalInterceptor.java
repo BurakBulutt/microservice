@@ -25,11 +25,9 @@ public class GlobalInterceptor implements HandlerInterceptor {
 
         if (correlationId != null) {
             MDC.put("correlationId", correlationId);
-            log.trace("Correlation id MDC ye eklendi: {}", correlationId);
         }
         if (userId != null) {
             MDC.put("userId", userId);
-            log.trace("User id MDC ye eklendi: {}",userId);
         }
 
         return true;

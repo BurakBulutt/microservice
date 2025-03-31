@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.ConnectException;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeoutException;
 
@@ -29,6 +30,17 @@ public class RestExceptionHandler {
     @ExceptionHandler(TimeoutException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleGatewayTimeoutException(TimeoutException e, ServerWebExchange exchange) {
         return Mono.just(ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(new ErrorResponse(
+                        exchange.getRequest().getPath().toString(),
+                        HttpStatus.GATEWAY_TIMEOUT.getReasonPhrase(),
+                        e.getLocalizedMessage(),
+                        LocalDateTime.now()
+                )));
+    }
+
+    @ExceptionHandler(ConnectException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleConnectException(ConnectException e, ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(
                         exchange.getRequest().getPath().toString(),
                         HttpStatus.GATEWAY_TIMEOUT.getReasonPhrase(),

@@ -14,6 +14,7 @@ import com.example.servicemedia.media.repo.MediaRepository;
 import com.example.servicemedia.media.repo.MediaSourceRepository;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class MediaServiceImpl implements MediaService {
@@ -45,6 +47,7 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     public Page<MediaDto> getAll(Pageable pageable) {
+        log.info("Getting all medias...");
         return mediaRepository.findAll(pageable).map(this::toMediaTo);
     }
 
@@ -158,7 +161,8 @@ public class MediaServiceImpl implements MediaService {
     private MediaDto toMediaTo(Media media) {
         MediaDto dto = MediaServiceMapper.toDto(media);
         String correlationId = MDC.get("correlationId");
-        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(correlationId,media.getId(), null);
+        String userId = MDC.get("userId");
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(media.getId(), correlationId, userId);
         if (response.getBody() != null) {
             dto.setLikeCount(response.getBody());
         }

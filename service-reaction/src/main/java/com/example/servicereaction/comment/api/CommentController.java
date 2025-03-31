@@ -26,8 +26,8 @@ public class CommentController {
     }
 
     @GetMapping("/comment/{targetId}")
-    public ResponseEntity<Page<CommentResponse>> getByTargetId(@PathVariable String targetId,@RequestParam(required = false) String userId,Pageable pageable) {
-        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getByTargetId(targetId,userId,pageable)));
+    public ResponseEntity<Page<CommentResponse>> getByTargetId(@PathVariable String targetId,Pageable pageable) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getByTargetId(targetId,pageable)));
     }
 
     @PostMapping

@@ -15,8 +15,8 @@ public class LikeFallbackFactory implements FallbackFactory<LikeFeignClient> {
     public LikeFeignClient create(Throwable cause) {
         return new LikeFeignClient() {
             @Override
-            public ResponseEntity<LikeCountResponse> getLikeCount(String correlationId, String targetId, String userId) {
-                log.warn("{}: Connection Fail to Like Service: {}",correlationId,cause.getMessage());
+            public ResponseEntity<LikeCountResponse> getLikeCount(String targetId,String correlationId,String userId) {
+                log.error("Failed to Getting Likes: {},  CAUSE: {}",targetId,cause.getMessage());
                 return ResponseEntity.noContent().build();
             }
         };

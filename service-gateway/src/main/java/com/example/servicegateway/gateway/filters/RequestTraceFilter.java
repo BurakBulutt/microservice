@@ -29,13 +29,12 @@ public class RequestTraceFilter implements GlobalFilter {
             exchange = exchange.mutate()
                     .request(exchange.getRequest().mutate().header(CORRELATION_ID_HEADER, correlationId).build())
                     .build();
-            log.debug("Correlation id not found in request, generated new one: {}", correlationId);
-        }else {
-            log.debug("Correlation id found in request: {}", correlationId);
+            log.info("Correlation id not found in request, generated new one: {}", correlationId);
+            return chain.filter(exchange);
         }
+        log.info("Correlation id found in request: {}", correlationId);
         return chain.filter(exchange);
     }
-
 
     private String generateCorrelationId() {
         return UUID.randomUUID().toString();

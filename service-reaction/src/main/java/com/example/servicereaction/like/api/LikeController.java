@@ -14,8 +14,8 @@ public class LikeController {
     private final LikeService service;
 
     @GetMapping("like-count/{targetId}")
-    public ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable String targetId, @RequestParam(required = false) String userId) {
-        return ResponseEntity.ok(LikeApiMapper.toResponse(service.findLikeCount(targetId,userId)));
+    public ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable String targetId) {
+        return ResponseEntity.ok(LikeApiMapper.toResponse(service.findLikeCount(targetId)));
     }
 
     @PostMapping

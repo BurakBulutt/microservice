@@ -3,3 +3,6 @@ spring :
     name: service-users
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"
