@@ -2,6 +2,7 @@ package com.example.servicemedia.content.model;
 
 import com.example.servicemedia.category.model.Category;
 import com.example.servicemedia.content.enums.ContentType;
+import com.example.servicemedia.media.model.Media;
 import com.example.servicemedia.util.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,5 +36,7 @@ public class Content extends AbstractEntity {
             joinColumns = @JoinColumn(name = "content_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
     private List<Category> categories;
+    @OneToMany(mappedBy = "content",cascade = CascadeType.ALL,fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Media> medias;
     private Integer episodeTime;
 }

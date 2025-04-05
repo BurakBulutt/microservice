@@ -10,7 +10,8 @@ import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.content.repo.ContentRepository;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
-import com.example.servicemedia.media.service.MediaService;
+import com.example.servicemedia.media.mapper.MediaServiceMapper;
+import com.example.servicemedia.media.model.Media;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +36,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ContentServiceImpl implements ContentService {
     private final ContentRepository repository;
-    private final MediaService mediaService;
     private final CategoryService categoryService;
     private final LikeFeignClient likeFeignClient;
     private final StreamBridge streamBridge;
 
+
     @Override
-    @Transactional
     public Page<ContentDto> getAll(Pageable pageable) {
         log.info("Getting all contents");
         return repository.findAll(pageable).map(this::toContentDto);
@@ -92,11 +92,16 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
+    public Content findById(String id) {
+        return repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
+    }
+
+    @Override
     public ContentDto getBySlug(String slug) {
         log.info("Getting content by slug: {}",slug);
         return repository.findBySlug(slug).map(content -> {
             ContentDto dto = toContentDto(content);
-            dto.setMediaList(mediaService.getByContentId(content.getId()));
+            dto.setMedias(content.getMedias().stream().map(MediaServiceMapper::toDto).toList());
             return dto;
         }).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), slug));
     }
@@ -107,7 +112,7 @@ public class ContentServiceImpl implements ContentService {
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
                 .map(CategoryDto::getId)
                 .collect(Collectors.toSet());
-        log.warn("Saving content: {}",contentDto.toString());
+        log.warn("Saving content: {}",contentDto);
         Content content = repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
         content.setCategories(categoryService.getAllByIds(requestCategoryIds).stream().toList());
     }
@@ -128,7 +133,7 @@ public class ContentServiceImpl implements ContentService {
         if (!willSaveCategories.isEmpty()) {
             categorySet.addAll(categoryService.getAllByIds(willSaveCategories));
         }
-        log.warn("Update content: {}, updated: {}",id,contentDto.toString());
+        log.warn("Update content: {}, updated: {}",id,contentDto);
         repository.save(ContentServiceMapper.toEntity(content, contentDto));
     }
 
@@ -136,9 +141,12 @@ public class ContentServiceImpl implements ContentService {
     @Transactional
     public void delete(String id) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
-        mediaService.deleteAllByContentId(content.getId());
+        Set<String> mediaIds = content.getMedias().stream().map(Media::getId).collect(Collectors.toSet());
         repository.delete(content);
         log.warn("Content is deleted: {}", id);
+
+        boolean deleteMediaComments = streamBridge.send("deleteCommentsBulk-out-0", mediaIds);
+        log.info("Deleting all media comments message: {}, status: {}", mediaIds, deleteMediaComments);
         boolean deleteComments = streamBridge.send("deleteComments-out-0",id);
         log.info("Deleting content comments message: {}, status: {}",id,deleteComments);
     }
@@ -146,6 +154,7 @@ public class ContentServiceImpl implements ContentService {
     private ContentDto toContentDto(Content content) {
         ContentDto dto = ContentServiceMapper.toDto(content);
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
+        dto.setMedias(content.getMedias().stream().map(MediaServiceMapper::toDto).toList());
         ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId());
         if (response.getBody() != null) {
             dto.setLikeCount(response.getBody());

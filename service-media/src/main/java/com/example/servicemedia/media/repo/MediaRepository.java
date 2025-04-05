@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MediaRepository extends JpaRepository<Media,String> {
-    @Query("SELECT m FROM Media m WHERE m.contentId = :contentId ORDER BY m.count ASC")
+    @Query("SELECT m FROM Media m WHERE m.content.id = :contentId ORDER BY m.count ASC")
     Page<Media> findAllByContentId(@Param("contentId") String contentId, Pageable pageable); //TODO WILL DEPRECATE
 
     List<Media> findAllByContentId(String contentId);//TODO FE DE BUNU KULLANCAZ
@@ -21,8 +21,5 @@ public interface MediaRepository extends JpaRepository<Media,String> {
             nativeQuery = true)
     Page<Media> findNewMedias(Pageable pageable);
 
-
     Optional<Media> findBySlug(String slug);
-
-    void deleteAllByContentId(String contentId);
 }

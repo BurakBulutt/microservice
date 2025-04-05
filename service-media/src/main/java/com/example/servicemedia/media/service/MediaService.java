@@ -11,27 +11,16 @@ import java.util.List;
 
 public interface MediaService {
     Page<MediaDto> getAll(Pageable pageable);
-
     Page<MediaDto> getByContentId(Pageable pageable, String contentId);
-
     Page<MediaDto> getNewMedias();
+    List<MediaDto> getByContentId(String contentId);
+    List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);
     MediaDto getById(String id);
-
     MediaDto getBySlug(String slug);
 
     void save(MediaDto mediaDto);
     void update(String id, MediaDto mediaDto);
     void delete(String id);
-
-    List<MediaDto> getByContentId(String contentId);
-
-    @Transactional
-    void deleteAllByContentId(String contentId);
-
-    List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);
-
     void updateMediaSources(String mediaId, MediaSourceRequest request);
-
-    @Transactional
     void increaseNumberOfViews(String id);
 }

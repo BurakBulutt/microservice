@@ -21,8 +21,8 @@ public class ContentResponse {
     private String subject;
     private Date startDate;
     private String slug;
-    private List<MediaDto> mediaList;
-    private LikeCountResponse likeCount;
+    private List<MediaDto> medias;
     private List<CategoryDto> categories;
+    private LikeCountResponse likeCount;
     private Integer episodeTime;
 }

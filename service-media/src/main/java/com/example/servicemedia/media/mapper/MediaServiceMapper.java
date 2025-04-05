@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.mapper;
 
+import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.media.dto.MediaDto;
 import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.example.servicemedia.media.model.Media;
@@ -32,13 +33,14 @@ public class MediaServiceMapper {
                 .build();
     }
 
-    public static Media toEntity(Media media,MediaDto dto) {
+    public static Media toEntity(Media media, Content content,MediaDto dto) {
         media.setName(dto.getName());
         media.setDescription(dto.getDescription());
         media.setCount(dto.getCount());
         media.setPublishDate(dto.getPublishDate());
         media.setSlug(dto.getSlug());
-        media.setContentId(dto.getContent().getId());
+        media.setContent(content);
+        media.setNumberOfViews(dto.getNumberOfViews());
 
         return media;
     }

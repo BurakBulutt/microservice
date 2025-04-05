@@ -25,7 +25,7 @@ public class ContentApiMapper {
                 .subject(dto.getSubject())
                 .startDate(dto.getStartDate())
                 .slug(dto.getSlug())
-                .mediaList(dto.getMediaList())
+                .medias(dto.getMedias())
                 .likeCount(dto.getLikeCount())
                 .categories(dto.getCategories())
                 .episodeTime(dto.getEpisodeTime())

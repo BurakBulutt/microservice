@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
         credentialRepresentation.setType(UserServiceConstants.CREDENTIALS_TYPE_PASSWORD);
         userRepresentation.setCredentials(Collections.singletonList(credentialRepresentation));
 
-        log.warn("Saving user: {}",userRepresentation.toString());
+        log.warn("Saving user: {}",request);
         Response response = keycloakAdmin.realm(realm).users().create(userRepresentation);
 
         if (response.getStatus() >= 400) {
@@ -109,7 +109,7 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setAttributes(Map.of(UserServiceConstants.ATTRIBUTE_LOCALE, List.of("tr"),
                 UserServiceConstants.ATTRIBUTE_BIRTHDATE, List.of(request.birthdate())));
 
-        log.warn("Updating user: {}, updated: {}",id, userRepresentation.toString());
+        log.warn("Updating user: {}, updated: {}",id,request);
         userResource.update(userRepresentation);
     }
 

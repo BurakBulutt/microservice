@@ -1,6 +1,7 @@
 package com.example.servicemedia.content.service;
 
 import com.example.servicemedia.content.dto.ContentDto;
+import com.example.servicemedia.content.model.Content;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,6 +16,8 @@ public interface ContentService {
     Page<ContentDto> getNewContents();
 
     ContentDto getById(String id);
+
+    Content findById(String id);
 
     ContentDto getBySlug(String slug);
 

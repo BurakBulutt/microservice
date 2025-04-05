@@ -25,8 +25,9 @@ import java.util.Set;
 public class LikeServiceImpl implements LikeService {
     private final LikeRepository repository;
 
-    @Retry(name = "likeRetry")
+
     @Override
+    @Retry(name = "likeRetry")
     public LikeCountDto findLikeCount(String targetId) {
         Integer likeCount = repository.findTargetLikeCount(targetId,LikeType.LIKE);
         Integer dislikeCount = repository.findTargetLikeCount(targetId,LikeType.DISLIKE);
@@ -43,6 +44,8 @@ public class LikeServiceImpl implements LikeService {
         if (isUserLiked && isUserDisliked) {
             throw new BaseException(MessageResource.BAD_REQUEST);
         }
+
+        log.info("Getting like count..., target: {}",targetId);
 
         return LikeCountDto.builder()
                 .targetId(targetId)

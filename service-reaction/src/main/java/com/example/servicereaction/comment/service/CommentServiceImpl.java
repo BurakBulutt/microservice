@@ -104,10 +104,8 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public void deleteAllByTargetId(String targetId) {
         List<Comment> commentList = repository.findAllByTargetIdAndParentNull(targetId);
-        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
-        commentIds.forEach(likeService::deleteLikesByTargetId);
-        repository.deleteAllById(commentIds);
-        log.warn("Comments are deleted: {}",commentIds);
+        deleteCommentAndLikes(commentList);
+
         boolean deleteLikes = streamBridge.send("deleteLikes-out-0", targetId);
         log.info("Delete target likes message: {}, status: {}",targetId,deleteLikes);
     }
@@ -116,10 +114,8 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public void deleteAllByTargetIdIn(Set<String> targetIds) {
         List<Comment> commentList = repository.findAllByTargetIdInAndParentNull(targetIds);
-        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
-        commentIds.forEach(likeService::deleteLikesByTargetId);
-        repository.deleteAllById(commentIds);
-        log.warn("Comments are deleted: {}",commentIds);
+        deleteCommentAndLikes(commentList);
+
         boolean deleteLikesBulk = streamBridge.send("deleteLikesBulk-out-0", targetIds);
         log.info("Delete all target likes message: {}, status: {}",targetIds,deleteLikesBulk);
     }
@@ -128,12 +124,18 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public void deleteUserComments(String userId) {
         List<Comment> commentList = repository.findAllByUserIdAndParentNull(userId);
-        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
-        commentIds.forEach(likeService::deleteLikesByTargetId);
-        repository.deleteAllById(commentIds);
-        log.warn("Comments are deleted: {}",commentIds);
+        deleteCommentAndLikes(commentList);
+
         boolean deleteLikes = streamBridge.send("deleteUserLikes-out-0", userId);
         log.info("Delete user likes message: {}, status: {}",userId,deleteLikes);
+    }
+
+    @Transactional
+    public void deleteCommentAndLikes(List<Comment> commentList) {
+        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
+        likeService.deleteLikesByTargetIdIn(commentIds);
+        repository.deleteAllById(commentIds);
+        log.warn("Comments are deleted: {}",commentIds);
     }
 
     private CommentDto toCommentDto(Comment comment) {

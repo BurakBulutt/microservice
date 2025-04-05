@@ -17,7 +17,7 @@ public class CommentEventFunctions {
     @Bean
     public Consumer<String> deleteComments(CommentService service) {
         return id -> {
-            log.info("Deleting comments with targetId: {}",id);
+            log.info("Delete comments message consumed: {}",id);
             service.deleteAllByTargetId(id);
         };
     }
@@ -25,14 +25,14 @@ public class CommentEventFunctions {
     @Bean
     public Consumer<String> deleteCommentsDlq() {
         return id -> {
-            log.error("Delete comments processing failed: {}, Message saving to document...",id);
+            log.error("Delete comments message processing failed: {}, Message saving to document...",id);
         };
     }
 
     @Bean
     public Consumer<Set<String>> deleteCommentsBulk(CommentService service) {
         return ids -> {
-            log.info("Deleting comments bulk with targetIdS: {}",ids);
+            log.info("Deleting comments bulk message consumed: {}",ids);
             service.deleteAllByTargetIdIn(ids);
         };
     }
@@ -40,14 +40,14 @@ public class CommentEventFunctions {
     @Bean
     public Consumer<Set<String>> deleteCommentsBulkDlq() {
         return ids -> {
-            log.error("Delete comments bulk processing failed: {}, Message saving to document...",ids);
+            log.error("Delete comments bulk message processing failed: {}, Message saving to document...",ids);
         };
     }
 
     @Bean
     public Consumer<String> deleteUserComments(CommentService service) {
         return id -> {
-            log.info("Deleting user comments with targetId: {}",id);
+            log.info("Deleting user comments message: {}",id);
             service.deleteUserComments(id);
         };
     }
@@ -55,7 +55,7 @@ public class CommentEventFunctions {
     @Bean
     public Consumer<String> deleteUserCommentsDlq() {
         return id -> {
-            log.error("Delete user comments processing failed: {}, Message saving to document...",id);
+            log.error("Delete user comments message processing failed: {}, Message saving to document...",id);
         };
     }
 }

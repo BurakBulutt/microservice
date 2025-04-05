@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.model;
 
+import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.util.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,14 +17,15 @@ import java.util.List;
 public class Media extends AbstractEntity {
     private String name;
     private String description;
-    @Column(nullable = false)
-    private String contentId;
     private Integer count;
     @Temporal(TemporalType.DATE)
     private Date publishDate;
-    @OneToMany(mappedBy = "media",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id")
+    private Content content;
+    @OneToMany(mappedBy = "media",cascade = CascadeType.ALL,fetch = FetchType.LAZY,orphanRemoval = true)
     private List<MediaSource> mediaSources;
     @Column(unique = true,nullable = false)
     private String slug;
-    private Integer numberOfViews = 0;
+    private Integer numberOfViews;
 }

@@ -30,7 +30,7 @@ public class LikeEventFunctions {
     @Bean
     public Consumer<Set<String>> deleteLikesBulk(LikeService service) {
         return ids -> {
-            log.info("Delete likes message consumed : {}",ids);
+            log.info("Delete likes bulk message consumed : {}",ids);
             service.deleteLikesByTargetIdIn(ids);
         };
     }
