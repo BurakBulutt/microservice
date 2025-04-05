@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,15 +28,14 @@ public class LikeServiceImpl implements LikeService {
     @Retry(name = "likeRetry")
     @Override
     public LikeCountDto findLikeCount(String targetId) {
-        log.info("Getting like count... : {}",targetId);
         Integer likeCount = repository.findTargetLikeCount(targetId,LikeType.LIKE);
         Integer dislikeCount = repository.findTargetLikeCount(targetId,LikeType.DISLIKE);
         Boolean isUserLiked = false;
         Boolean isUserDisliked = false;
 
-        final String userId = MDC.get("X-User-Id");
+        final String userId = MDC.get("user");
 
-        if (userId != null) {
+        if (userId != null && !userId.equals("anonymous")) {
             isUserLiked = repository.isUserLiked(targetId, userId, LikeType.LIKE);
             isUserDisliked = repository.isUserLiked(targetId, userId, LikeType.DISLIKE);
         }
@@ -71,8 +72,23 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void deleteLikesByTargetId(String targetId) {
+        log.info("Deleting likes with targetId: {}",targetId);
         repository.deleteAllByTargetId(targetId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteLikesByTargetIdIn(Set<String> targetIds) {
+        log.info("Deleting likes with targetIds: {}",targetIds);
+        repository.deleteAllByTargetIdIn(targetIds);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserLikes(String userId) {
+        log.info("Deleting user likes: {}",userId);
+        repository.deleteAllByUserId(userId);
     }
 }

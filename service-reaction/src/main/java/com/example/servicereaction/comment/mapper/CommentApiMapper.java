@@ -3,7 +3,7 @@ package com.example.servicereaction.comment.mapper;
 import com.example.servicereaction.comment.api.AddCommentRequest;
 import com.example.servicereaction.comment.api.CommentResponse;
 import com.example.servicereaction.comment.api.UpdateCommentRequest;
-import com.example.servicereaction.comment.feign.UserResponse;
+import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.dto.CommentDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

@@ -1,6 +1,6 @@
 package com.example.servicereaction.comment.mapper;
 
-import com.example.servicereaction.comment.feign.UserResponse;
+import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.dto.CommentDto;
 import com.example.servicereaction.comment.model.Comment;
 import lombok.AccessLevel;

@@ -1,18 +1,23 @@
 package com.example.servicegateway.gateway.filters;
 
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
-public class UserFilter implements WebFilter {
+@Order(Ordered.LOWEST_PRECEDENCE - 1)
+public class UserFilter implements GlobalFilter {
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         return exchange.getPrincipal()
                 .doOnNext(principal -> {
                     String user = principal.getName() != null ? principal.getName() : "anonymous";
-                    exchange.getRequest().getHeaders().add("X-User-Id", user);
+                    exchange.getRequest().mutate().headers(httpHeaders ->
+                            httpHeaders.add("X-User", user)
+                    );
                 })
                 .then(chain.filter(exchange));
     }

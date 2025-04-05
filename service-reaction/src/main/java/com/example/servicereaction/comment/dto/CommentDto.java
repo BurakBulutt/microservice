@@ -1,6 +1,6 @@
 package com.example.servicereaction.comment.dto;
 
-import com.example.servicereaction.comment.feign.UserResponse;
+import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.enums.CommentType;
 import com.example.servicereaction.like.dto.LikeCountDto;
 import lombok.Builder;

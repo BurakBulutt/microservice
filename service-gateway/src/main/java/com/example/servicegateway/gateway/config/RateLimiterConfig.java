@@ -27,13 +27,14 @@ public class RateLimiterConfig {
         return exchange -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            String forwardedIp = request.getHeaders().getFirst("X-Forwarded-For");
-            log.info("Forwarded Ip: {}",forwardedIp);
+            final String forwardedIp = request.getHeaders().getFirst("X-Forwarded-For");
 
             if (forwardedIp != null && !forwardedIp.isEmpty()) {
+                log.info("X-Forwarded-For header found: {}", forwardedIp);
                 return Mono.just(forwardedIp.split(",")[0].trim());
             }
 
+            log.info("X-Forwarded-For header not found. Key will resolving with host addr...");
             return Mono.just(Objects.requireNonNull(request.getRemoteAddress())).map(addr -> addr.getAddress().getHostAddress());
         };
     }

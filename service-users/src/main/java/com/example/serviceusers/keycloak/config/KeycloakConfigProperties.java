@@ -14,5 +14,4 @@ public class KeycloakConfigProperties {
     private String realm;
     private String clientId;
     private String clientSecret;
-    private String userGroup;
 }

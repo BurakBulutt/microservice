@@ -1,5 +1,6 @@
 package com.example.serviceusers.rest;
 
+import jakarta.ws.rs.WebApplicationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -23,7 +24,6 @@ import java.util.*;
 @RequiredArgsConstructor
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-    private final MessageSource messageSource;
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, @NonNull HttpStatusCode status, WebRequest request) {
@@ -32,32 +32,39 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
         errorList.forEach(error -> {
             String field = ((FieldError) error).getField();
-            String validationMessage= messageSource.getMessage(Objects.requireNonNull(error.getDefaultMessage()), error.getArguments(), Locale.getDefault());
+            String validationMessage= error.getDefaultMessage();
             validationErrors.put(field, validationMessage);
         });
 
         return ResponseEntity.status(status).body(validationErrors);
     }
 
-    @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ErrorResponse> handleBaseException(BaseException e, Locale locale,WebRequest request) {
-        String message = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), locale);
-
-        return ResponseEntity.status(e.getMessageResource().getStatus()).body(new ErrorResponse(
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception e,WebRequest request) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(
                 request.getDescription(false),
-                e.getMessageResource().name(),
-                message,
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                e.getLocalizedMessage(),
                 LocalDateTime.now()
         ));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleBaseException(Exception e,WebRequest request) {
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(
+    @ExceptionHandler(WebApplicationException.class)
+    public ResponseEntity<ErrorResponse> handleWebApplication(WebApplicationException e,WebRequest request) {
+        return ResponseEntity.status(e.getResponse().getStatus()).body(new ErrorResponse(
                 request.getDescription(false),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
-                e.getMessage(),
+                e.getResponse().getStatusInfo().getReasonPhrase(),
+                e.getLocalizedMessage(),
+                LocalDateTime.now()
+        ));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ErrorResponse> handleNoSuchElement(NoSuchElementException e,WebRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                request.getDescription(false),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                e.getLocalizedMessage(),
                 LocalDateTime.now()
         ));
     }

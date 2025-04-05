@@ -26,5 +26,6 @@ public class Comment extends AbstractEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CommentType type;
+    @Column(nullable = false)
     private String targetId;
 }

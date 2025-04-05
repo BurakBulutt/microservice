@@ -1,4 +1,4 @@
-package com.example.servicereaction.comment.feign;
+package com.example.servicereaction.feign;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
@@ -13,8 +13,8 @@ public class UserFallbackFactory implements FallbackFactory<UserFeignClient> {
     public UserFeignClient create(Throwable cause) {
         return new UserFeignClient() {
             @Override
-            public ResponseEntity<UserResponse> getById(String id,String correlationId) {
-                log.error("Failed to Getting User: {}, CAUSE: {}",id,cause.getMessage());
+            public ResponseEntity<UserResponse> getById(String id) {
+                log.error("Failed to getting user: {}, Cause: {}",id,cause.getMessage());
                 return ResponseEntity.noContent().build();
             }
         };

@@ -28,7 +28,7 @@ public class ContentController {
     }
 
     @GetMapping("search")
-    public ResponseEntity<List<ContentSearchResponse>> getNewContents(@RequestParam(required = true) String query) {
+    public ResponseEntity<List<ContentSearchResponse>> searchContents(@RequestParam(required = true) String query) {
         return ResponseEntity.ok(ContentApiMapper.toSearchResponses(service.searchFilter(query)));
     }
 

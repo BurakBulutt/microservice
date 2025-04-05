@@ -20,15 +20,7 @@ public class GlobalInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String correlationId = request.getHeader("X-Correlation-Id");
-        String userId = request.getHeader("X-User-Id");
-
-        if (correlationId != null) {
-            MDC.put("correlationId", correlationId);
-        }
-        if (userId != null) {
-            MDC.put("userId", userId);
-        }
+        log.info("Users service interceptor intervene this request: {}, method: {}", request.getRequestURL(), request.getMethod());
 
         return true;
     }

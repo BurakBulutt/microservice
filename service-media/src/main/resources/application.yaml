@@ -3,8 +3,21 @@ spring:
     name: service-media
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
-logging:
-  pattern:
-    level: "%5p [%X{correlationId:-}]"
+  cloud:
+    stream:
+      bindings:
+        deleteComments-out-0:
+          destination: deleteComments
+        deleteCommentsBulk-out-0:
+          destination: deleteCommentsBulk
+      rabbit:
+        bindings:
+          deleteComments-out-0:
+            producer:
+              ttl: 10000
+          deleteCommentsBulk-out-0:
+            producer:
+              ttl: 10000
+
 
 

@@ -3,3 +3,4 @@ spring:
     name: service-gateway
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+

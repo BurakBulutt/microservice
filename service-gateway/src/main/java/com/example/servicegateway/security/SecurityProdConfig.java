@@ -1,18 +1,12 @@
 package com.example.servicegateway.security;
 
-import com.example.servicegateway.gateway.filters.UserFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-
-import java.util.Collections;
-import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -27,15 +21,7 @@ public class SecurityProdConfig {
         http.authorizeExchange(authorizeExchangeSpec -> {
            authorizeExchangeSpec.anyExchange().authenticated();
         });
-        http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
-            CorsConfiguration corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of("http://fe-panel:3000"));
-            corsConfiguration.setAllowCredentials(Boolean.TRUE);
-            corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-            corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-            return corsConfiguration;
-        }));
-        http.addFilterAfter(new UserFilter(), SecurityWebFiltersOrder.AUTHORIZATION);
+        //TODO CORS REQUIRED
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
                 oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(jwtConverter())));
         return http.build();

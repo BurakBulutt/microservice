@@ -15,14 +15,13 @@ import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -39,11 +38,12 @@ public class ContentServiceImpl implements ContentService {
     private final MediaService mediaService;
     private final CategoryService categoryService;
     private final LikeFeignClient likeFeignClient;
+    private final StreamBridge streamBridge;
 
     @Override
     @Transactional
     public Page<ContentDto> getAll(Pageable pageable) {
-        log.info("Getting all contents...");
+        log.info("Getting all contents");
         return repository.findAll(pageable).map(this::toContentDto);
     }
 
@@ -66,6 +66,7 @@ public class ContentServiceImpl implements ContentService {
             contents = repository.findAll(pageRequest);
         }
 
+        log.info("Getting filtered contents: [category: {}, sort: {}]",categoryId,sortBy);
         return contents.map(this::toContentDto);
     }
 
@@ -74,12 +75,14 @@ public class ContentServiceImpl implements ContentService {
         Sort sort = Sort.by(Sort.Direction.ASC, "name");
         Pageable pageRequest = PageRequest.of(0, 4, sort);
 
+        log.info("Getting searched contents: {}",query);
         return repository.findAllByNameContainsIgnoreCase(query, pageRequest).map(this::toContentDto).getContent();
     }
 
     @Override
     public Page<ContentDto> getNewContents() {
         Pageable pageRequest = PageRequest.of(0, 30, Sort.by(Sort.Direction.DESC, "created"));
+        log.info("Getting new contents");
         return repository.findNewContents(pageRequest).map(this::toContentDto);
     }
 
@@ -90,6 +93,7 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public ContentDto getBySlug(String slug) {
+        log.info("Getting content by slug: {}",slug);
         return repository.findBySlug(slug).map(content -> {
             ContentDto dto = toContentDto(content);
             dto.setMediaList(mediaService.getByContentId(content.getId()));
@@ -103,6 +107,7 @@ public class ContentServiceImpl implements ContentService {
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
                 .map(CategoryDto::getId)
                 .collect(Collectors.toSet());
+        log.warn("Saving content: {}",contentDto.toString());
         Content content = repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
         content.setCategories(categoryService.getAllByIds(requestCategoryIds).stream().toList());
     }
@@ -123,23 +128,25 @@ public class ContentServiceImpl implements ContentService {
         if (!willSaveCategories.isEmpty()) {
             categorySet.addAll(categoryService.getAllByIds(willSaveCategories));
         }
+        log.warn("Update content: {}, updated: {}",id,contentDto.toString());
         repository.save(ContentServiceMapper.toEntity(content, contentDto));
     }
 
     @Override
-    @Transactional(propagation = Propagation.NEVER)
+    @Transactional
     public void delete(String id) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         mediaService.deleteAllByContentId(content.getId());
-        repository.delete(content); //TODO RABBIT ILE SAGA AKISI KURULMALIDIR
+        repository.delete(content);
+        log.warn("Content is deleted: {}", id);
+        boolean deleteComments = streamBridge.send("deleteComments-out-0",id);
+        log.info("Deleting content comments message: {}, status: {}",id,deleteComments);
     }
 
     private ContentDto toContentDto(Content content) {
         ContentDto dto = ContentServiceMapper.toDto(content);
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
-        String correlationId = MDC.get("correlationId");
-        String userId = MDC.get("userId");
-        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId(),correlationId,userId);
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId());
         if (response.getBody() != null) {
             dto.setLikeCount(response.getBody());
         }

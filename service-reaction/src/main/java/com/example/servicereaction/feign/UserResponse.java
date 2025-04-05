@@ -1,4 +1,4 @@
-package com.example.servicereaction.comment.feign;
+package com.example.servicereaction.feign;
 
 import lombok.Builder;
 import lombok.Data;

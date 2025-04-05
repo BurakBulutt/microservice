@@ -1,9 +1,9 @@
 package com.example.servicereaction.comment.service;
 
-import com.example.servicereaction.comment.feign.UserResponse;
+import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.dto.CommentDto;
 import com.example.servicereaction.comment.enums.CommentType;
-import com.example.servicereaction.comment.feign.UserFeignClient;
+import com.example.servicereaction.feign.UserFeignClient;
 import com.example.servicereaction.comment.mapper.CommentServiceMapper;
 import com.example.servicereaction.comment.model.Comment;
 import com.example.servicereaction.comment.repo.CommentRepository;
@@ -12,13 +12,17 @@ import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,20 +32,23 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository repository;
     private final UserFeignClient userFeignClient;
     private final LikeService likeService;
+    private final StreamBridge streamBridge;
 
     @Override
     public Page<CommentDto> getAll(Pageable pageable) {
-        log.info("Getting all comments...");
+        log.info("Getting all comments");
         return repository.findAll(pageable).map(this::toCommentDto);
     }
 
     @Override
     public CommentDto getById(String id) {
+        log.info("Getting comment: {}", id);
         return repository.findById(id).map(this::toCommentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
     }
 
     @Override
     public Page<CommentDto> getByTargetId(String targetId, Pageable pageable) {
+        log.info("Getting target comments: {}", targetId);
         return repository.findAllByTargetIdAndParentNull(targetId, pageable).map(comment -> {
             CommentDto commentDto = CommentServiceMapper.toDto(comment,getUser(comment.getUserId()));
             commentDto.setLikeCount(likeService.findLikeCount(comment.getId()));
@@ -70,6 +77,7 @@ public class CommentServiceImpl implements CommentService {
                 throw new BaseException(MessageResource.BAD_REQUEST);
             }
         }
+        log.warn("Saving comment: {}",commentDto.toString());
         repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent));
     }
 
@@ -78,6 +86,7 @@ public class CommentServiceImpl implements CommentService {
     public void update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         comment.setContent(commentDto.getContent());
+        log.warn("Updating comment: {}, updated: {}",id,commentDto.toString());
         repository.save(comment);
     }
 
@@ -85,8 +94,46 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public void delete(String id) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
+        log.warn("Deleting comment: {}",id);
         repository.delete(comment);
+        log.warn("Deleting comment likes: {}",id);
         likeService.deleteLikesByTargetId(comment.getTargetId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllByTargetId(String targetId) {
+        List<Comment> commentList = repository.findAllByTargetIdAndParentNull(targetId);
+        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
+        commentIds.forEach(likeService::deleteLikesByTargetId);
+        repository.deleteAllById(commentIds);
+        log.warn("Comments are deleted: {}",commentIds);
+        boolean deleteLikes = streamBridge.send("deleteLikes-out-0", targetId);
+        log.info("Delete target likes message: {}, status: {}",targetId,deleteLikes);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllByTargetIdIn(Set<String> targetIds) {
+        List<Comment> commentList = repository.findAllByTargetIdInAndParentNull(targetIds);
+        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
+        commentIds.forEach(likeService::deleteLikesByTargetId);
+        repository.deleteAllById(commentIds);
+        log.warn("Comments are deleted: {}",commentIds);
+        boolean deleteLikesBulk = streamBridge.send("deleteLikesBulk-out-0", targetIds);
+        log.info("Delete all target likes message: {}, status: {}",targetIds,deleteLikesBulk);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserComments(String userId) {
+        List<Comment> commentList = repository.findAllByUserIdAndParentNull(userId);
+        Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
+        commentIds.forEach(likeService::deleteLikesByTargetId);
+        repository.deleteAllById(commentIds);
+        log.warn("Comments are deleted: {}",commentIds);
+        boolean deleteLikes = streamBridge.send("deleteUserLikes-out-0", userId);
+        log.info("Delete user likes message: {}, status: {}",userId,deleteLikes);
     }
 
     private CommentDto toCommentDto(Comment comment) {
@@ -106,8 +153,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private UserResponse getUser(String userId) {
-        String correlationId = MDC.get("correlationId");
-        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(userId,correlationId);
+        ResponseEntity<UserResponse> userResponse = userFeignClient.getById(userId);
         return userResponse.getBody() != null ? userResponse.getBody() : null;
     }
 }
