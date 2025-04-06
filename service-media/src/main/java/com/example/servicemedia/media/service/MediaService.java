@@ -5,7 +5,6 @@ import com.example.servicemedia.media.dto.MediaDto;
 import com.example.servicemedia.media.dto.MediaSourceDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

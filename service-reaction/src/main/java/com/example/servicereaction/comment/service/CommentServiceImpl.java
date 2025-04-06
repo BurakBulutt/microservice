@@ -77,7 +77,7 @@ public class CommentServiceImpl implements CommentService {
                 throw new BaseException(MessageResource.BAD_REQUEST);
             }
         }
-        log.warn("Saving comment: {}",commentDto.toString());
+        log.warn("Saving comment: {}",commentDto);
         repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent));
     }
 
@@ -86,7 +86,7 @@ public class CommentServiceImpl implements CommentService {
     public void update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         comment.setContent(commentDto.getContent());
-        log.warn("Updating comment: {}, updated: {}",id,commentDto.toString());
+        log.warn("Updating comment: {}, updated: {}",id,commentDto);
         repository.save(comment);
     }
 
