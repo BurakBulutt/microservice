@@ -18,8 +18,8 @@ public class ContentController {
     private final ContentService service;
 
     @GetMapping
-    public ResponseEntity<Page<ContentResponse>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getAll(pageable)));
+    public ResponseEntity<Page<ContentResponse>> getAll(Pageable pageable,@RequestParam(required = false) String name) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getAll(pageable,name)));
     }
 
     @GetMapping("new-content")

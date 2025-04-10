@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface CommentRepository extends JpaRepository<Comment,String> {
+    Page<Comment> findAllByTargetId(String targetId,Pageable pageable);
     Page<Comment> findAllByTargetIdAndParentNull(String targetId, Pageable pageable);
     List<Comment> findAllByTargetIdAndParentNull(String targetId);
     List<Comment> findAllByTargetIdInAndParentNull(Set<String> targetIds);

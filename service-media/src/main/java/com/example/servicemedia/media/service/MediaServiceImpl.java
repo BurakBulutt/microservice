@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -41,14 +42,20 @@ public class MediaServiceImpl implements MediaService {
 
 
     @Override
-    public Page<MediaDto> getAll(Pageable pageable) {
+    public Page<MediaDto> getAll(Pageable pageable,String name) {
         log.info("Getting all medias");
+        if (StringUtils.hasLength(name)){
+            return mediaRepository.findAllByNameContainsIgnoreCase(name,pageable).map(this::toMediaTo);
+        }
         return mediaRepository.findAll(pageable).map(this::toMediaTo);
     }
 
     @Override
-    public Page<MediaDto> getByContentId(Pageable pageable, String contentId) {
+    public Page<MediaDto> getByContentId(Pageable pageable, String contentId,String name) {
         log.info("Getting content medias: {}", contentId);
+        if (StringUtils.hasLength(name)){
+            return mediaRepository.findAllByContentIdAndNameContainsIgnoreCase(contentId,name,pageable).map(this::toMediaTo);
+        }
         return mediaRepository.findAllByContentId(contentId, pageable).map(this::toMediaTo);
     }
 

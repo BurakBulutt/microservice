@@ -13,6 +13,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -33,17 +34,25 @@ public class UserServiceImpl implements UserService {
     private final StreamBridge streamBridge;
 
     @Override
-    public Page<UserRepresentation> getAllUsers(int page, int size) {
+    public Page<UserRepresentation> getAll(int page, int size, String username) {
+        int first = page * size;
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username, first, size);
+        int userCount = users.size();
+        log.info("Getting all users");
+        return new Page<>(users, new PageUtil(page, size, userCount));
+    }
+
+    @Override
+    public Page<UserRepresentation> getAllUsersByGroup(int page, int size) {
         int first = page * size;
         final String groupId = getUserGroup().getId();
-        int userCount = getUserCount(groupId);
-        int totalPages = (int) Math.ceil((double) userCount / size);
         List<UserRepresentation> users = keycloakAdmin.realm(realm)
                 .groups()
                 .group(groupId)
                 .members(first, size);
-        log.info("Getting all users");
-        return new Page<>(users, new PageUtil(page, size, userCount, totalPages));
+        int userCount = users.size();
+        log.info("Getting all users by group");
+        return new Page<>(users, new PageUtil(page, size, userCount));
     }
 
     @Override
@@ -100,6 +109,10 @@ public class UserServiceImpl implements UserService {
     public void update(String id, UpdateUserRequest request) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
+        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+            throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());
+        }
+
         UserRepresentation userRepresentation = userResource.toRepresentation();
         userRepresentation.setFirstName(request.firstName());
         userRepresentation.setLastName(request.lastName());
@@ -116,6 +129,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+
+        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+            throw new WebApplicationException("Can not delete admin",Response.status(Response.Status.FORBIDDEN).build());
+        }
+
         log.warn("Deleting user: {}",id);
         userResource.remove();
         boolean deleteComments = streamBridge.send("deleteUserComments-out-0",id);
@@ -125,6 +143,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void resetUserPassword(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+
+        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+            throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());
+        }
+
         UserRepresentation representation = userResource.toRepresentation();
         if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserServiceConstants.ACTION_UPDATE_PASSWORD))) {
             representation.getRequiredActions().add(UserServiceConstants.ACTION_UPDATE_PASSWORD);
@@ -137,6 +160,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendVerifyEmail(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+
+        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+            throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());
+        }
+
         UserRepresentation representation = userResource.toRepresentation();
         if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserServiceConstants.ACTION_VERIFY_EMAIL))) {
             representation.setEmailVerified(Boolean.FALSE);
@@ -147,15 +175,17 @@ public class UserServiceImpl implements UserService {
         userResource.sendVerifyEmail();
     }
 
-    private int getUserCount(String groupId) {
-        return keycloakAdmin.realm(realm).groups().group(groupId).members().size();
-    }
-
     private GroupRepresentation getUserGroup() {
         List<GroupRepresentation> groupRepresentations = keycloakAdmin.realm(realm).groups().groups();
         return groupRepresentations.stream()
                 .filter(group -> group.getName().equals(UserServiceConstants.USER_GROUP))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private boolean isAdmin(List<RoleRepresentation> realmRoles) {
+        return realmRoles.stream().filter(role -> !role.getClientRole())
+                .map(RoleRepresentation::getName)
+                .anyMatch(role -> role.equals(UserServiceConstants.ROLE_ADMIN));
     }
 }

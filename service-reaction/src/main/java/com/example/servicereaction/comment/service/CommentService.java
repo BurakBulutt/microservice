@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Set;
 
 public interface CommentService {
-    Page<CommentDto> getAll(Pageable pageable);
+    Page<CommentDto> getAll(Pageable pageable,String targetId);
     CommentDto getById(String id);
     Page<CommentDto> getByTargetId(String targetId, Pageable pageable);
 

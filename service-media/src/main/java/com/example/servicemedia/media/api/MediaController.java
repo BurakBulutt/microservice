@@ -18,13 +18,13 @@ public class MediaController {
     private final MediaService service;
 
     @GetMapping
-    public ResponseEntity<Page<MediaResponse>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getAll(pageable)));
+    public ResponseEntity<Page<MediaResponse>> getAll(Pageable pageable,@RequestParam(required = false) String name) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getAll(pageable,name)));
     }
 
     @GetMapping("content/{contentId}")
-    public ResponseEntity<Page<MediaResponse>> getByContentId(Pageable pageable,@PathVariable String contentId) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getByContentId(pageable,contentId)));
+    public ResponseEntity<Page<MediaResponse>> getByContentId(Pageable pageable,@PathVariable String contentId,@RequestParam(required = false) String name) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getByContentId(pageable,contentId,name)));
     }
 
     @GetMapping("new-media")

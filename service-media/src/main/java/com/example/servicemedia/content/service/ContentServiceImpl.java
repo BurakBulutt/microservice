@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -42,8 +43,11 @@ public class ContentServiceImpl implements ContentService {
 
 
     @Override
-    public Page<ContentDto> getAll(Pageable pageable) {
+    public Page<ContentDto> getAll(Pageable pageable,String name) {
         log.info("Getting all contents");
+        if (StringUtils.hasLength(name)){
+            return repository.findAllByNameContainsIgnoreCase(name,pageable).map(this::toContentDto);
+        }
         return repository.findAll(pageable).map(this::toContentDto);
     }
 

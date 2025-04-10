@@ -16,8 +16,8 @@ public class CommentController {
     private final CommentService service;
 
     @GetMapping
-    public ResponseEntity<Page<CommentResponse>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable)));
+    public ResponseEntity<Page<CommentResponse>> getAll(Pageable pageable,@RequestParam(required = false) String target) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable,target)));
     }
 
     @GetMapping("/{id}")

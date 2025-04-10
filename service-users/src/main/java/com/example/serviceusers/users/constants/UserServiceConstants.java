@@ -11,4 +11,6 @@ public class UserServiceConstants {
     public static final String ATTRIBUTE_LOCALE = "locale";
     public static final String ATTRIBUTE_BIRTHDATE = "birthdate";
     public static final String CREDENTIALS_TYPE_PASSWORD = "password";
+    public static final String ROLE_ADMIN = "admin";
+    public static final String ROLE_USER = "user";
 }

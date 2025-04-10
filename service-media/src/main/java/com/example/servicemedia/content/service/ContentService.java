@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ContentService {
-    Page<ContentDto> getAll(Pageable pageable);
+    Page<ContentDto> getAll(Pageable pageable,String name);
     Page<ContentDto> filter(String category,String sortBy,Pageable pageable);
 
     List<ContentDto> searchFilter(String query);

@@ -1,7 +1,7 @@
 package com.example.serviceusers.users.api;
 
 import com.example.serviceusers.users.mapper.UserMapper;
-import com.example.serviceusers.users.service.UserServiceImpl;
+import com.example.serviceusers.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,11 +14,19 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 public class UserController {
-    private final UserServiceImpl service;
+    private final UserService service;
 
     @GetMapping
-    public ResponseEntity<Page<UserRepresentationResponse>> getAllUsers(@RequestParam(defaultValue = "0" ) int page, @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAllUsers(page, size)));
+    public ResponseEntity<Page<UserRepresentationResponse>> getAll(@RequestParam(defaultValue = "0" ) int page,
+                                                                   @RequestParam(defaultValue = "10") int size,
+                                                                   @RequestParam(required = false) String username) {
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(page, size,username)));
+    }
+
+    @GetMapping("group-users")
+    public ResponseEntity<Page<UserRepresentationResponse>> getAllGroupUsers(@RequestParam(defaultValue = "0" ) int page,
+                                                                             @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAllUsersByGroup(page, size)));
     }
 
     @GetMapping("/{id}")

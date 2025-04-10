@@ -9,8 +9,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface MediaService {
-    Page<MediaDto> getAll(Pageable pageable);
-    Page<MediaDto> getByContentId(Pageable pageable, String contentId);
+    Page<MediaDto> getAll(Pageable pageable,String name);
+    Page<MediaDto> getByContentId(Pageable pageable, String contentId,String name);
     Page<MediaDto> getNewMedias();
     List<MediaDto> getByContentId(String contentId);
     List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +28,11 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
 
     @Override
-    public Page<CategoryDto> getAll(Pageable pageable) {
+    public Page<CategoryDto> getAll(Pageable pageable,String name) {
+        log.info("Getting all categories");
+        if (StringUtils.hasLength(name)){
+            return repository.findAllByNameContainsIgnoreCase(name,pageable).map(CategoryServiceMapper::toDto);
+        }
         return repository.findAll(pageable).map(CategoryServiceMapper::toDto);
     }
 

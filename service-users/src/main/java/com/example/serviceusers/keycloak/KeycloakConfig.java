@@ -1,4 +1,4 @@
-package com.example.serviceusers.keycloak.config;
+package com.example.serviceusers.keycloak;
 
 import lombok.RequiredArgsConstructor;
 import org.keycloak.OAuth2Constants;
@@ -14,7 +14,7 @@ public class KeycloakConfig {
     private final KeycloakConfigProperties configProperties;
 
     @Bean
-    @Scope("prototype")
+    @Scope("singleton")
     public Keycloak getInstance() {
         return KeycloakBuilder.builder()
                 .realm(configProperties.getRealm())

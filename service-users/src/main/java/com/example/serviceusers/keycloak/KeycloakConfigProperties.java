@@ -1,4 +1,4 @@
-package com.example.serviceusers.keycloak.config;
+package com.example.serviceusers.keycloak;
 
 import lombok.Getter;
 import lombok.Setter;

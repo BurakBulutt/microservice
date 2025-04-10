@@ -8,7 +8,8 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface UserService {
-    Page<UserRepresentation> getAllUsers(int page, int size);
+    Page<UserRepresentation> getAll(int page, int size,String username);
+    Page<UserRepresentation> getAllUsersByGroup(int page, int size);
     UserRepresentation getUserByUsername(String username);
 
     UserRepresentation getUserById(String id);

@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -35,8 +36,11 @@ public class CommentServiceImpl implements CommentService {
     private final StreamBridge streamBridge;
 
     @Override
-    public Page<CommentDto> getAll(Pageable pageable) {
+    public Page<CommentDto> getAll(Pageable pageable,String targetId) {
         log.info("Getting all comments");
+        if (StringUtils.hasLength(targetId)){
+            return repository.findAllByTargetId(targetId, pageable).map(this::toCommentDto);
+        }
         return repository.findAll(pageable).map(this::toCommentDto);
     }
 
