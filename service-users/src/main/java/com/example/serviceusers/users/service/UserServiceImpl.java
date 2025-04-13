@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,24 +33,11 @@ public class UserServiceImpl implements UserService {
     private final StreamBridge streamBridge;
 
     @Override
-    public Page<UserRepresentation> getAll(int page, int size, String username) {
+    public Page<UserRepresentation> getAll(int page, int size,String username) {
         int first = page * size;
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username, first, size);
-        int userCount = users.size();
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,size);
+        int userCount = keycloakAdmin.realm(realm).users().count(username);
         log.info("Getting all users");
-        return new Page<>(users, new PageUtil(page, size, userCount));
-    }
-
-    @Override
-    public Page<UserRepresentation> getAllUsersByGroup(int page, int size) {
-        int first = page * size;
-        final String groupId = getUserGroup().getId();
-        List<UserRepresentation> users = keycloakAdmin.realm(realm)
-                .groups()
-                .group(groupId)
-                .members(first, size);
-        int userCount = users.size();
-        log.info("Getting all users by group");
         return new Page<>(users, new PageUtil(page, size, userCount));
     }
 
@@ -173,14 +159,6 @@ public class UserServiceImpl implements UserService {
         }
         log.warn("Execute verify email action for user: {}",id);
         userResource.sendVerifyEmail();
-    }
-
-    private GroupRepresentation getUserGroup() {
-        List<GroupRepresentation> groupRepresentations = keycloakAdmin.realm(realm).groups().groups();
-        return groupRepresentations.stream()
-                .filter(group -> group.getName().equals(UserServiceConstants.USER_GROUP))
-                .findFirst()
-                .orElseThrow();
     }
 
     private boolean isAdmin(List<RoleRepresentation> realmRoles) {

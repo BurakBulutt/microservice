@@ -23,12 +23,6 @@ public class UserController {
         return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(page, size,username)));
     }
 
-    @GetMapping("group-users")
-    public ResponseEntity<Page<UserRepresentationResponse>> getAllGroupUsers(@RequestParam(defaultValue = "0" ) int page,
-                                                                             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAllUsersByGroup(page, size)));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<UserRepresentationResponse> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserById(id)));
