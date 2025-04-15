@@ -1,0 +1,244 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: service-database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/postgres.env
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  auth:
+    image: bitnami/keycloak:latest
+    container_name: service-authserver
+    ports:
+      - "8090:8080"
+      - "9000:9000"
+    volumes:
+      - keycloak_data:/opt/bitnami/keycloak
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:9000/health/ready | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/keycloak.env
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  redis:
+    image: redis:latest
+    container_name: service-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: service-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/rabbit.env
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  app-configserver:
+    image: wraithkage/service-configserver:0.0.1-SNAPSHOT
+    container_name: service-configserver
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8888/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/globalproject.env
+      - environments/config.env
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+  app-eureka:
+    image: wraithkage/service-eureka:0.0.1-SNAPSHOT
+    container_name: service-eureka
+    ports:
+      - "8761:8761"
+    depends_on:
+      app-configserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      OTEL_SERVICE_NAME: app-eureka
+    env_file:
+      - environments/globalproject.env
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+  app-apigateway:
+    image: wraithkage/service-gateway:0.0.1-SNAPSHOT
+    container_name: service-apigateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      app-configserver:
+        condition: service_healthy
+      app-eureka:
+        condition: service_healthy
+      app-users:
+        condition: service_healthy
+      app-reaction:
+        condition: service_healthy
+      app-media:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/globalproject.env
+      - environments/gateway.env
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+  app-users:
+    image: wraithkage/service-users:0.0.1-SNAPSHOT
+    container_name: service-users
+    depends_on:
+      app-configserver:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      app-eureka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - environments/globalproject.env
+      - environments/users.env
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+  app-media:
+    image: wraithkage/service-media:0.0.1-SNAPSHOT
+    container_name: service-media
+    depends_on:
+      app-configserver:
+        condition: service_healthy
+      app-eureka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    env_file:
+      - environments/globalproject.env
+      - environments/media.env
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+  app-reaction:
+    image: wraithkage/service-reaction:0.0.1-SNAPSHOT
+    container_name: service-reaction
+    depends_on:
+      app-configserver:
+        condition: service_healthy
+      app-eureka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    env_file:
+      - environments/globalproject.env
+      - environments/reaction.env
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    extends:
+      file: ../common-config.yaml
+      service: app-base-config
+
+networks:
+  app-network:
+    external: true
+
+volumes:
+  postgres_data:
+    name: compose_postgres_data
+  keycloak_data:
+    name: compose_keycloak_data
+  redis_data:
+    name: compose_redis_data
+  rabbit-data:
+    name: compose_rabbit_data
