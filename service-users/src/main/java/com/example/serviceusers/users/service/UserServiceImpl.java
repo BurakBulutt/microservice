@@ -123,7 +123,7 @@ public class UserServiceImpl implements UserService {
         log.warn("Deleting user: {}",id);
         userResource.remove();
         boolean deleteComments = streamBridge.send("deleteUserComments-out-0",id);
-        log.info("Deleting user comments message: {}, status: {}",id,deleteComments);
+        log.info("Sending delete user comments message: {}, status: {}",id,deleteComments);
     }
 
     @Override

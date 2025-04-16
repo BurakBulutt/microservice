@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -149,10 +150,11 @@ public class ContentServiceImpl implements ContentService {
         repository.delete(content);
         log.warn("Content is deleted: {}", id);
 
-        boolean deleteMediaComments = streamBridge.send("deleteCommentsBulk-out-0", mediaIds);
-        log.info("Deleting all media comments message: {}, status: {}", mediaIds, deleteMediaComments);
-        boolean deleteComments = streamBridge.send("deleteComments-out-0",id);
-        log.info("Deleting content comments message: {}, status: {}",id,deleteComments);
+        Set<String> targetIds = new HashSet<>(mediaIds);
+        targetIds.add(id);
+
+        boolean deleteMediaComments = streamBridge.send("deleteComments-out-0", targetIds);
+        log.info("Sending delete all content and media comments message: {}, status: {}", targetIds, deleteMediaComments);
     }
 
     private ContentDto toContentDto(Content content) {

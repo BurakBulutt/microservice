@@ -14,7 +14,6 @@ public interface CommentService {
     void save(CommentDto commentDto);
     void update(String id, CommentDto commentDto);
 
-    void deleteAllByTargetId(String targetId);
     void deleteAllByTargetIdIn(Set<String> targetIds);
     void delete(String id);
     void deleteUserComments(String userId);

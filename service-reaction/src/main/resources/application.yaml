@@ -5,104 +5,58 @@ spring:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
   cloud:
     function:
-      definition: deleteComments;deleteCommentsDlq;deleteLikes;deleteLikesDlq;deleteCommentsBulk;deleteCommentsBulkDlq;deleteLikesBulk;deleteLikesBulkDlq;deleteUserComments;deleteUserCommentsDlq;deleteUserLikes;deleteUserLikesDlq
+      definition: deleteComments;deleteLikes;deleteUserComments;deleteUserLikes;
     stream:
+      default:
+        group: ${spring.application.name}
       bindings:
-        deleteComments-in-0:
-          destination: deleteComments
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteCommentsDlq-in-0:
-          destination: deleteCommentsDlq
-          group: ${spring.application.name}
-        deleteCommentsBulk-in-0:
-          destination: deleteCommentsBulk
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteCommentsBulkDlq-in-0:
-          destination: deleteCommentsBulkDlq
-          group: ${spring.application.name}
         deleteLikes-out-0:
           destination: deleteLikes
-        deleteLikes-in-0:
-          destination: deleteLikes
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteLikesDlq-in-0:
-          destination: deleteLikesDlq
-          group: ${spring.application.name}
-        deleteLikesBulk-out-0:
-          destination: deleteLikesBulk
-        deleteLikesBulk-in-0:
-          destination: deleteLikesBulk
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteLikesBulkDlq-in-0:
-          destination: deleteLikesDlqBulk
-          group: ${spring.application.name}
-        deleteUserComments-in-0:
-          destination: deleteUserComments
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteUserCommentsDlq-in-0:
-          destination: deleteUserCommentsDlq
-          group: ${spring.application.name}
-        deleteUserLikes-in-0:
-          destination: deleteUserLikes
-          group: ${spring.application.name}
-          consumer:
-            max-attempts: 3
-            default-retryable: true
-        deleteUserLikesDlq-in-0:
-          destination: deleteUserLikesDlq
-          group: ${spring.application.name}
         deleteUserLikes-out-0:
           destination: deleteUserLikes
+        deleteComments-in-0:
+          destination: deleteComments
+          consumer:
+            max-attempts: 3
+            default-retryable: true
+        deleteLikes-in-0:
+          destination: deleteLikes
+          consumer:
+            max-attempts: 3
+            default-retryable: true
+        deleteUserComments-in-0:
+          destination: deleteUserComments
+          consumer:
+            max-attempts: 3
+            default-retryable: true
+        deleteUserLikes-in-0:
+          destination: deleteUserLikes
+          consumer:
+            max-attempts: 3
+            default-retryable: true
       rabbit:
         bindings:
-          deleteComments-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteCommentsDlq.${spring.application.name}
-          deleteCommentsBulk-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteCommentsBulkDlq.${spring.application.name}
-          deleteLikes-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteLikesDlq.${spring.application.name}
           deleteLikes-out-0:
             producer:
               ttl: 10000
-          deleteLikesBulk-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteLikesBulkDlq.${spring.application.name}
-          deleteLikesBulk-out-0:
-            producer:
-              ttl: 10000
-          deleteUserComments-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteUserCommentsDlq.${spring.application.name}
-          deleteUserLikes-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dead-letter-queue-name: deleteUserLikesDlq.${spring.application.name}
           deleteUserLikes-out-0:
             producer:
               ttl: 10000
-
+          deleteComments-in-0:
+            consumer:
+              auto-bind-dlq: true
+              dlq-ttl: 3600000
+          deleteLikes-in-0:
+            consumer:
+              auto-bind-dlq: true
+              dlq-ttl: 3600000
+          deleteUserComments-in-0:
+            consumer:
+              auto-bind-dlq: true
+              dlq-ttl: 3600000
+          deleteUserLikes-in-0:
+            consumer:
+              auto-bind-dlq: true
+              dlq-ttl: 3600000
 
 

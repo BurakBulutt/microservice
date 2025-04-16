@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -121,7 +122,7 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
         log.warn("Media sources clearing: {}", mediaId);
@@ -149,8 +150,8 @@ public class MediaServiceImpl implements MediaService {
         mediaRepository.delete(media);
         log.warn("Media is deleted: {}", id);
 
-        boolean deleteComments = streamBridge.send("deleteComments-out-0", id);
-        log.info("Deleting media comments message: {}, status: {}", id, deleteComments);
+        boolean deleteComments = streamBridge.send("deleteComments-out-0", Set.of(id));
+        log.info("Sending delete media comments message: {}, status: {}", id, deleteComments);
     }
 
     private MediaDto toMediaTo(Media media) {

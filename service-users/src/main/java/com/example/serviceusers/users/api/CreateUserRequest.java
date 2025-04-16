@@ -7,14 +7,14 @@ import jakarta.validation.constraints.NotNull;
 public record CreateUserRequest(
         String firstName,
         String lastName,
-        @NotNull(message = "validation.user.email.null")
-        @NotEmpty(message = "validation.user.email.empty")
-        @Email(message = "validation.user.email.invalid")
+        @NotNull(message = "validation.email.null")
+        @NotEmpty(message = "validation.email.empty")
+        @Email(message = "validation.email.invalid")
         String email,
         Boolean enabled,
         Boolean emailVerified,
-        @NotNull(message = "validation.user.username.null")
-        @NotEmpty(message = "validation.user.username.empty")
+        @NotNull(message = "validation.username.null")
+        @NotEmpty(message = "validation.username.empty")
         String username,
         String password,
         Boolean isPasswordTemporary,

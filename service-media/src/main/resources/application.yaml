@@ -8,14 +8,9 @@ spring:
       bindings:
         deleteComments-out-0:
           destination: deleteComments
-        deleteCommentsBulk-out-0:
-          destination: deleteCommentsBulk
       rabbit:
         bindings:
           deleteComments-out-0:
-            producer:
-              ttl: 10000
-          deleteCommentsBulk-out-0:
             producer:
               ttl: 10000
 

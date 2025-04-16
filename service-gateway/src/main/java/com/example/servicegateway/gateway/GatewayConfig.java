@@ -6,28 +6,19 @@ import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
-import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
-import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@Component
+@Configuration
 @Profile("default")
 public class GatewayConfig {
-    private final RedisRateLimiter rateLimiter;
-    private final KeyResolver keyResolver;
-
-    public GatewayConfig(RedisRateLimiter rateLimiter, KeyResolver keyResolver) {
-        this.rateLimiter = rateLimiter;
-        this.keyResolver = keyResolver;
-    }
 
     @Bean
     public RouteLocator routeConfig(RouteLocatorBuilder builder) {
@@ -41,10 +32,7 @@ public class GatewayConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true))
-                                .requestRateLimiter(config -> config
-                                        .setRateLimiter(rateLimiter)
-                                        .setKeyResolver(keyResolver))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(2), 2, true))
                         )
                         .uri("lb://SERVICE-MEDIA"))
                 .route(predicateSpec -> predicateSpec
@@ -56,10 +44,7 @@ public class GatewayConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true))
-                                .requestRateLimiter(config -> config
-                                        .setRateLimiter(rateLimiter)
-                                        .setKeyResolver(keyResolver))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(2), 2, true))
 
                         )
                         .uri("lb://SERVICE-REACTION"))
@@ -72,10 +57,7 @@ public class GatewayConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true))
-                                .requestRateLimiter(config -> config
-                                        .setRateLimiter(rateLimiter)
-                                        .setKeyResolver(keyResolver))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(2), 2, true))
                         )
                         .uri("lb://SERVICE-USERS"))
                 .build();
@@ -86,7 +68,7 @@ public class GatewayConfig {
         return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
                 .timeLimiterConfig(TimeLimiterConfig.custom()
-                        .timeoutDuration(Duration.ofSeconds(30))
+                        .timeoutDuration(Duration.ofSeconds(5L))
                         .cancelRunningFuture(Boolean.TRUE)
                         .build())
                 .build());

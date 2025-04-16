@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtGrantedAuthoritiesConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 @Configuration
@@ -23,17 +25,20 @@ public class SecurityProdConfig {
         });
         //TODO CORS REQUIRED
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
-                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(jwtConverter())));
+                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(reactiveConverter())));
         return http.build();
     }
 
-    private ServerJwtAuthenticationConverter jwtConverter() {
+    private ReactiveJwtAuthenticationConverter reactiveConverter(){
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles");
 
-        ServerJwtAuthenticationConverter jwtAuthenticationConverter = new ServerJwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
+        ReactiveJwtGrantedAuthoritiesConverterAdapter reactiveJwtGrantedAuthoritiesConverterAdapter =
+                new ReactiveJwtGrantedAuthoritiesConverterAdapter(grantedAuthoritiesConverter);
+
+        ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
+        reactiveJwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(reactiveJwtGrantedAuthoritiesConverterAdapter);
+        return reactiveJwtAuthenticationConverter;
     }
 }

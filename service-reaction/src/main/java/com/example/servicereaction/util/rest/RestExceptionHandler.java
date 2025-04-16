@@ -4,18 +4,14 @@ package com.example.servicereaction.util.rest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,26 +19,30 @@ import java.util.*;
 @Slf4j
 @RequiredArgsConstructor
 @RestControllerAdvice
-public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+public class RestExceptionHandler {
     private final MessageSource messageSource;
 
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, @NonNull HttpStatusCode status, WebRequest request) {
-        Map<String,String> validationErrors = new HashMap<>();
-        List<ObjectError> errorList = ex.getBindingResult().getAllErrors();
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e,WebRequest request) {
+        Map<String,Object> validationError = new HashMap<>();
+        HashSet<Map<String,String>> errors = new HashSet<>();
+        validationError.put("path", request.getDescription(false));
+        validationError.put("errors",errors);
+
+        List<ObjectError> errorList = e.getBindingResult().getAllErrors();
 
         errorList.forEach(error -> {
             String field = ((FieldError) error).getField();
-            String validationMessage= messageSource.getMessage(Objects.requireNonNull(error.getDefaultMessage()), error.getArguments(), Locale.getDefault());
-            validationErrors.put(field, validationMessage);
+            String message = messageSource.getMessage(Objects.requireNonNull(error.getDefaultMessage()), error.getArguments(), Locale.getDefault());
+            errors.add(Map.of(field, message));
         });
 
-        return ResponseEntity.status(status).body(validationErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
     }
 
     @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ErrorResponse> handleBaseException(BaseException e, Locale locale, WebRequest request) {
-        String message = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), locale);
+    public ResponseEntity<ErrorResponse> handleBaseException(BaseException e,WebRequest request) {
+        String message = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), Locale.getDefault());
         return ResponseEntity.status(e.getMessageResource().getStatus()).body(new ErrorResponse(
                 request.getDescription(false),
                 e.getMessageResource().name(),
@@ -52,11 +52,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleBaseException(Exception e,WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception e,WebRequest request) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(
                 request.getDescription(false),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
-                e.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                e.getLocalizedMessage(),
                 LocalDateTime.now()
         ));
     }
