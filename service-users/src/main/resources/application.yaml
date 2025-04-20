@@ -3,6 +3,18 @@ spring :
     name: service-users
   config:
     import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      connect-timeout: 1s
+  cache:
+    redis:
+      cache-null-values: false
+      time-to-live: 1m
+      key-prefix: ${spring.application.name}
+      enable-statistics: true
+    type: redis
   cloud:
     stream:
       bindings:

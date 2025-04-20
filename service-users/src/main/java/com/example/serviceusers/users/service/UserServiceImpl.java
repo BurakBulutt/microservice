@@ -15,6 +15,10 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +29,7 @@ import com.example.serviceusers.users.constants.UserServiceConstants;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "userCache")
 public class UserServiceImpl implements UserService {
     @Value("${keycloak.realm}")
     private String realm;
@@ -33,28 +38,41 @@ public class UserServiceImpl implements UserService {
     private final StreamBridge streamBridge;
 
     @Override
-    public Page<UserRepresentation> getAll(int page, int size,String username) {
+    @Cacheable(key = "'user-all:' + #page + '_' + #size")
+    public Page<UserRepresentation> getAll(int page, int size) {
         int first = page * size;
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,size);
-        int userCount = keycloakAdmin.realm(realm).users().count(username);
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().list(first,size);
+        int userCount = keycloakAdmin.realm(realm).users().count();
         log.info("Getting all users");
         return new Page<>(users, new PageUtil(page, size, userCount));
     }
 
     @Override
-    public UserRepresentation getUserByUsername(String username) {
-        log.info("Getting user by username: {}",username);
-        return keycloakAdmin.realm(realm).users().searchByUsername(username, Boolean.TRUE).stream()
-                .findFirst()
-                .orElseThrow();
+    @Cacheable(key = "'user-filter:' + #page + '_' + #size",condition = "#username == null")
+    public Page<UserRepresentation> filter(int page, int size,String username) {
+        int first = page * size;
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,size);
+        int userCount = keycloakAdmin.realm(realm).users().count(username);
+        log.info("Getting filtered users");
+        return new Page<>(users, new PageUtil(page, size, userCount));
     }
 
     @Override
     @Retry(name = "userRetry")
-    public UserRepresentation getUserById(String id) {
+    @Cacheable(key = "'user-id:' + #id")
+    public UserRepresentation getById(String id) {
         log.info("Getting user: {}",id);
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
         return userResource.toRepresentation();
+    }
+
+    @Override
+    @Cacheable(key = "'user-username:' + #username")
+    public UserRepresentation getByUsername(String username) {
+        log.info("Getting user by username: {}",username);
+        return keycloakAdmin.realm(realm).users().searchByUsername(username, Boolean.TRUE).stream()
+                .findFirst()
+                .orElseThrow();
     }
 
     @Override
@@ -92,7 +110,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void update(String id, UpdateUserRequest request) {
+    @CachePut(key = "'user-id:' + #id")
+    public UserRepresentation update(String id, UpdateUserRequest request) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
@@ -110,9 +129,12 @@ public class UserServiceImpl implements UserService {
 
         log.warn("Updating user: {}, updated: {}",id,request);
         userResource.update(userRepresentation);
+
+        return keycloakAdmin.realm(realm).users().get(id).toRepresentation();
     }
 
     @Override
+    @CacheEvict(key = "'user-id:' + #id")
     public void delete(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
@@ -127,7 +149,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void resetUserPassword(String id) {
+    public void resetPassword(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
@@ -144,7 +166,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendVerifyEmail(String id) {
+    public void verifyEmail(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){

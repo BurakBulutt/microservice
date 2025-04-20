@@ -1,6 +1,5 @@
 package com.example.serviceusers.users.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Collections;
@@ -11,12 +10,15 @@ import java.util.stream.Collectors;
 @Data
 public class Page<T> {
     private final List<T> content;
-    @JsonProperty("page")
-    private final PageUtil pageUtil;
+    private final PageUtil page;
 
+    public Page(List<T> content,PageUtil page) {
+        this.content = content;
+        this.page = page;
+    }
 
     public <U> Page<U> map(Function<? super T,? extends U> mapper) {
-        return new Page<>(this.content.stream().map(mapper).collect(Collectors.toList()),this.pageUtil);
+        return new Page<>(this.content.stream().map(mapper).collect(Collectors.toList()),this.page);
     }
 
     public static <T> Page<T> emptyPage() {

@@ -18,23 +18,13 @@ public class ContentController {
     private final ContentService service;
 
     @GetMapping
-    public ResponseEntity<Page<ContentResponse>> getAll(Pageable pageable,@RequestParam(required = false) String name) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getAll(pageable,name)));
-    }
-
-    @GetMapping("new-content")
-    public ResponseEntity<Page<ContentResponse>> getNewContents() {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getNewContents()));
-    }
-
-    @GetMapping("search")
-    public ResponseEntity<List<ContentSearchResponse>> searchContents(@RequestParam(required = true) String query) {
-        return ResponseEntity.ok(ContentApiMapper.toSearchResponses(service.searchFilter(query)));
+    public ResponseEntity<Page<ContentResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.getAll(pageable)));
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<ContentResponse>> filter(@RequestParam(required = false) String category,@RequestParam(required = false) String sortBy, Pageable pageable) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(category,sortBy,pageable)));
+    public ResponseEntity<Page<ContentResponse>> filter(@RequestParam(required = false) String category,@RequestParam(required = false) String name, Pageable pageable) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(pageable,category,name)));
     }
 
     @GetMapping("/{id}")

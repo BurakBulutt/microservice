@@ -9,17 +9,17 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface MediaService {
-    Page<MediaDto> getAll(Pageable pageable,String name);
-    Page<MediaDto> getByContentId(Pageable pageable, String contentId,String name);
-    Page<MediaDto> getNewMedias();
-    List<MediaDto> getByContentId(String contentId);
+    Page<MediaDto> getAll(Pageable pageable);
+    Page<MediaDto> filter(Pageable pageable,String contentId,String name);
+
     List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);
+
     MediaDto getById(String id);
     MediaDto getBySlug(String slug);
 
     void save(MediaDto mediaDto);
-    void update(String id, MediaDto mediaDto);
+    MediaDto update(String id, MediaDto mediaDto);
     void delete(String id);
-    void updateMediaSources(String mediaId, MediaSourceRequest request);
+    List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request);
     void increaseNumberOfViews(String id);
 }

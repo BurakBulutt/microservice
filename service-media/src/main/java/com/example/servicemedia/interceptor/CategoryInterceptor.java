@@ -1,4 +1,4 @@
-package com.example.serviceusers.config;
+package com.example.servicemedia.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,7 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Slf4j
 @Component
-public class GlobalInterceptor implements HandlerInterceptor {
+public class CategoryInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -20,7 +20,7 @@ public class GlobalInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        log.info("Users service interceptor intervene this request: {}, method: {}", request.getRequestURL(), request.getMethod());
+        log.info("Category interceptor intervene this request: {}", request.getRequestURL());
 
         return true;
     }

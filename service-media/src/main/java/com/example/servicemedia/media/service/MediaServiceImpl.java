@@ -13,20 +13,23 @@ import com.example.servicemedia.media.model.Media;
 import com.example.servicemedia.media.model.MediaSource;
 import com.example.servicemedia.media.repo.MediaRepository;
 import com.example.servicemedia.media.repo.MediaSourceRepository;
+import com.example.servicemedia.media.repo.MediaSpec;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -34,6 +37,7 @@ import java.util.*;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "mediaCache")
 public class MediaServiceImpl implements MediaService {
     private final MediaRepository mediaRepository;
     private final MediaSourceRepository mediaSourceRepository;
@@ -43,53 +47,36 @@ public class MediaServiceImpl implements MediaService {
 
 
     @Override
-    public Page<MediaDto> getAll(Pageable pageable,String name) {
+    @Cacheable(key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    public Page<MediaDto> getAll(Pageable pageable) {
         log.info("Getting all medias");
-        if (StringUtils.hasLength(name)){
-            return mediaRepository.findAllByNameContainsIgnoreCase(name,pageable).map(this::toMediaTo);
-        }
         return mediaRepository.findAll(pageable).map(this::toMediaTo);
     }
 
     @Override
-    public Page<MediaDto> getByContentId(Pageable pageable, String contentId,String name) {
-        log.info("Getting content medias: {}", contentId);
-        if (StringUtils.hasLength(name)){
-            return mediaRepository.findAllByContentIdAndNameContainsIgnoreCase(contentId,name,pageable).map(this::toMediaTo);
-        }
-        return mediaRepository.findAllByContentId(contentId, pageable).map(this::toMediaTo);
+    @Cacheable(key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#contentId == null and #name == null")
+    public Page<MediaDto> filter(Pageable pageable, String contentId,String name) {
+        Specification<Media> specification = Specification.where(MediaSpec.byContentId(contentId)).and(MediaSpec.nameContainsIgnoreCase(name));
+        log.info("Getting filtered medias");
+        return mediaRepository.findAll(specification,pageable).map(this::toMediaTo);
     }
 
     @Override
-    public Page<MediaDto> getNewMedias() {
-        Sort sort = Sort.by(Sort.Direction.DESC, "created");
-        Pageable pageRequest = PageRequest.of(0, 12, sort);
-        log.info("Getting new medias");
-        return mediaRepository.findNewMedias(pageRequest).map(this::toMediaTo);
-    }
-
-    @Override
+    @Cacheable(key = "'media-id:' + #id")
     public MediaDto getById(String id) {
         log.info("Getting media: {}", id);
         return mediaRepository.findById(id).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
     }
 
     @Override
+    @Cacheable(key = "'media-slug:' + #slug")
     public MediaDto getBySlug(String slug) {
         log.info("Getting media with slug: {}", slug);
         return mediaRepository.findBySlug(slug).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), slug));
     }
 
     @Override
-    public List<MediaDto> getByContentId(String contentId) {
-        log.info("Getting content media list: {}", contentId);
-        return mediaRepository.findAllByContentId(contentId).stream()
-                .sorted(Comparator.comparing(Media::getCount).reversed())
-                .map(this::toMediaTo)
-                .toList();
-    }
-
-    @Override
+    @Cacheable(key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId) {
         log.info("Getting media media sources: {}", mediaId);
         return mediaSourceRepository.findAllByMediaId(mediaId).stream()
@@ -112,18 +99,20 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    public void update(String id, MediaDto mediaDto) {
+    @CachePut(key = "'media-id:' + #id")
+    public MediaDto update(String id, MediaDto mediaDto) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         Content content = contentService.findById(mediaDto.getContent().getId());
         mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
         log.warn("Updating media: {}, updated: {}", id, mediaDto);
-        mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto));
+        return MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateMediaSources(String mediaId, MediaSourceRequest request) {
+    @CachePut(key = "'media-source:' + #mediaId")
+    public List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
         log.warn("Media sources clearing: {}", mediaId);
         media.getMediaSources().clear();
@@ -132,6 +121,7 @@ public class MediaServiceImpl implements MediaService {
         media.getMediaSources().addAll(request.mediaSources().stream()
                 .map(mediaSourceDto -> new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub()))
                 .toList());
+        return media.getMediaSources().stream().map(MediaServiceMapper::toMediaSourceDto).toList();
     }
 
     @Override
@@ -145,6 +135,7 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
+    @CacheEvict(key = "'media-id:' + #id")
     public void delete(String id) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         mediaRepository.delete(media);

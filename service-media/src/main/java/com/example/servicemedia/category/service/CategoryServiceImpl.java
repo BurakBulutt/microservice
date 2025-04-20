@@ -4,14 +4,20 @@ import com.example.servicemedia.category.dto.CategoryDto;
 import com.example.servicemedia.category.mapper.CategoryServiceMapper;
 import com.example.servicemedia.category.model.Category;
 import com.example.servicemedia.category.repo.CategoryRepository;
+import com.example.servicemedia.category.repo.CategorySpec;
 import com.example.servicemedia.content.mapper.ContentServiceMapper;
 import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,19 +30,27 @@ import java.util.Set;
 @Service
 @Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "categoryCache")
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
 
     @Override
-    public Page<CategoryDto> getAll(Pageable pageable,String name) {
+    @Cacheable(key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    public Page<CategoryDto> getAll(Pageable pageable) {
         log.info("Getting all categories");
-        if (StringUtils.hasLength(name)){
-            return repository.findAllByNameContainsIgnoreCase(name,pageable).map(CategoryServiceMapper::toDto);
-        }
         return repository.findAll(pageable).map(CategoryServiceMapper::toDto);
     }
 
     @Override
+    @Cacheable(key = "'category-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#name == null")
+    public Page<CategoryDto> filter(Pageable pageable, String name) {
+        log.info("Getting filtered categories");
+        Specification<Category> specification = Specification.where(CategorySpec.nameContainsIgnoreCase(name));
+        return repository.findAll(specification,pageable).map(CategoryServiceMapper::toDto);
+    }
+
+    @Override
+    @Cacheable(key = "'category-id:' + #id")
     public CategoryDto getById(String id) {
         return repository.findById(id).map(CategoryServiceMapper::toDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
     }
@@ -47,6 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(key = "'category-slug:' + #slug")
     public CategoryDto getBySlug(String slug) {
         return repository.findBySlug(slug).map(category -> {
             CategoryDto dto = CategoryServiceMapper.toDto(category);
@@ -63,13 +78,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void update(String id, CategoryDto categoryDto) {
+    @CachePut(key = "'category-id:' + #id")
+    public CategoryDto update(String id, CategoryDto categoryDto) {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
-        repository.save(CategoryServiceMapper.toEntity(category,categoryDto));
+        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(category,categoryDto)));
     }
 
     @Override
     @Transactional
+    @CacheEvict(key = "'category-id:' + #id")
     public void delete(String id) {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
 

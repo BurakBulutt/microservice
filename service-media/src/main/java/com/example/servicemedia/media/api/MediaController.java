@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.api;
 
+import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.example.servicemedia.media.mapper.MediaApiMapper;
 import com.example.servicemedia.media.service.MediaService;
 import lombok.RequiredArgsConstructor;
@@ -18,18 +19,15 @@ public class MediaController {
     private final MediaService service;
 
     @GetMapping
-    public ResponseEntity<Page<MediaResponse>> getAll(Pageable pageable,@RequestParam(required = false) String name) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getAll(pageable,name)));
+    public ResponseEntity<Page<MediaResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getAll(pageable)));
     }
 
-    @GetMapping("content/{contentId}")
-    public ResponseEntity<Page<MediaResponse>> getByContentId(Pageable pageable,@PathVariable String contentId,@RequestParam(required = false) String name) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getByContentId(pageable,contentId,name)));
-    }
-
-    @GetMapping("new-media")
-    public ResponseEntity<Page<MediaResponse>> getNewMedia() {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.getNewMedias()));
+    @GetMapping("filter")
+    public ResponseEntity<Page<MediaResponse>> filter(Pageable pageable,
+                                                      @RequestParam(required = false) String content,
+                                                      @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.filter(pageable,content,name)));
     }
 
     @GetMapping("/{id}")
@@ -67,7 +65,7 @@ public class MediaController {
 
     @PutMapping("media-sources/{mediaId}")
     public ResponseEntity<Void> updateMediaSources(@PathVariable String mediaId,@RequestBody MediaSourceRequest request) {
-        service.updateMediaSources(mediaId,request);
+        service.updateMediaSources(mediaId, request);
         return ResponseEntity.noContent().build();
     }
 

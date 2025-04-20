@@ -18,19 +18,25 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<Page<UserRepresentationResponse>> getAll(@RequestParam(defaultValue = "0" ) int page,
+                                                                   @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(page, size)));
+    }
+
+    @GetMapping("filter")
+    public ResponseEntity<Page<UserRepresentationResponse>> getAll(@RequestParam(defaultValue = "0" ) int page,
                                                                    @RequestParam(defaultValue = "10") int size,
                                                                    @RequestParam(required = false) String username) {
-        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(page, size,username)));
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.filter(page, size,username)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserRepresentationResponse> getUserById(@PathVariable String id) {
-        return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserById(id)));
+        return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getById(id)));
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<UserRepresentationResponse> getUserByUsername(@PathVariable String username) {
-        return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getUserByUsername(username)));
+        return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getByUsername(username)));
     }
 
     @PostMapping
@@ -53,13 +59,13 @@ public class UserController {
 
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<Void> resetUserPassword(@PathVariable String id) {
-        service.resetUserPassword(id);
+        service.resetPassword(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/verify-email")
     public ResponseEntity<Void> sendVerifyEmail(@PathVariable String id) {
-        service.sendVerifyEmail(id);
+        service.verifyEmail(id);
         return ResponseEntity.noContent().build();
     }
 }

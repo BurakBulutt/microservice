@@ -1,19 +1,17 @@
 package com.example.serviceusers.users.api;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
 
-@AllArgsConstructor
-@Getter
-@ToString
+import lombok.Data;
+
+
+@Data
 public class PageUtil {
     private final int number;
     private final int size;
-    private final int totalElements;
+    private final long totalElements;
     private final int totalPages;
 
-    public PageUtil(int number, int size, int totalElements) {
+    public PageUtil(int number,int size,long totalElements) {
         this.number = number;
         this.size = size;
         this.totalElements = totalElements;

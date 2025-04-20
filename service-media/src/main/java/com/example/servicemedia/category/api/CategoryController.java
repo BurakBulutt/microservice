@@ -16,8 +16,13 @@ public class CategoryController {
     private final CategoryService service;
 
     @GetMapping
-    public ResponseEntity<Page<CategoryResponse>> getAll(Pageable pageable,@RequestParam(required = false) String name) {
-        return ResponseEntity.ok(CategoryApiMapper.toPageResponse(service.getAll(pageable,name)));
+    public ResponseEntity<Page<CategoryResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(CategoryApiMapper.toPageResponse(service.getAll(pageable)));
+    }
+
+    @GetMapping("filter")
+    public ResponseEntity<Page<CategoryResponse>> filter(Pageable pageable,@RequestParam(required = false) String name) {
+        return ResponseEntity.ok(CategoryApiMapper.toPageResponse(service.filter(pageable,name)));
     }
 
     @GetMapping("{id}")

@@ -8,13 +8,15 @@ import org.springframework.data.domain.Pageable;
 import java.util.Set;
 
 public interface CategoryService {
-    Page<CategoryDto> getAll(Pageable pageable,String name);
+    Page<CategoryDto> getAll(Pageable pageable);
+    Page<CategoryDto> filter(Pageable pageable,String name);
+
     CategoryDto getById(String id);
+    CategoryDto getBySlug(String slug);
 
     Set<Category> getAllByIds(Set<String> ids);
 
-    CategoryDto getBySlug(String slug);
     void save(CategoryDto categoryDto);
-    void update(String id, CategoryDto categoryDto);
+    CategoryDto update(String id, CategoryDto categoryDto);
     void delete(String id);
 }

@@ -1,11 +1,15 @@
 package com.example.servicemedia.category.dto;
 
 import com.example.servicemedia.content.dto.ContentDto;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
 public class CategoryDto {
