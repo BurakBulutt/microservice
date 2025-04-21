@@ -12,7 +12,7 @@ public interface CommentService {
     CommentDto getById(String id);
 
     void save(CommentDto commentDto);
-    void update(String id, CommentDto commentDto);
+    CommentDto update(String id, CommentDto commentDto);
 
     void deleteAllByTargetIdIn(Set<String> targetIds);
     void delete(String id);

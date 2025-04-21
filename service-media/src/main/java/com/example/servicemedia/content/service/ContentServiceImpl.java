@@ -16,10 +16,9 @@ import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +42,7 @@ public class ContentServiceImpl implements ContentService {
     private final CategoryService categoryService;
     private final LikeFeignClient likeFeignClient;
     private final StreamBridge streamBridge;
+    private final CacheManager cacheManager;
 
 
     @Override
@@ -94,7 +94,13 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     @Transactional
-    @CachePut(key = "'content-id:' + #id")
+    @Caching(
+            put = {
+                    @CachePut(key = "'content-id:' + #id"),
+                    @CachePut(key = "'content-slug:' + #result.slug")
+            },
+            evict = @CacheEvict(value = "contentPageCache", allEntries = true)
+    )
     public ContentDto update(String id, ContentDto contentDto) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
@@ -115,12 +121,21 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     @Transactional
-    @CacheEvict(key = "'content-id:' + #id")
+    @Caching(evict = {
+            @CacheEvict(value = "contentPageCache", allEntries = true),
+            @CacheEvict(key = "'content-id:' + #id")
+    })
     public void delete(String id) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         Set<String> mediaIds = content.getMedias().stream().map(Media::getId).collect(Collectors.toSet());
         log.warn("Deleting content: {}", id);
         repository.delete(content);
+
+        Cache cache = cacheManager.getCache("contentCache");
+
+        if (cache != null) {
+            cache.evict("content-slug:" + content.getSlug());
+        }
 
         Set<String> targetIds = new HashSet<>(mediaIds);
         targetIds.add(id);

@@ -11,10 +11,9 @@ import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,16 +32,17 @@ import java.util.Set;
 @CacheConfig(cacheNames = "categoryCache")
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
+    private final CacheManager cacheManager;
 
     @Override
-    @Cacheable(cacheNames = "categoryPageCache" ,key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(value = "categoryPageCache" ,key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<CategoryDto> getAll(Pageable pageable) {
         log.info("Getting all categories");
         return repository.findAll(pageable).map(CategoryServiceMapper::toDto);
     }
 
     @Override
-    @Cacheable(cacheNames = "categoryPageCache" ,key = "'category-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#name == null")
+    @Cacheable(value = "categoryPageCache" ,key = "'category-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#name == null")
     public Page<CategoryDto> filter(Pageable pageable, String name) {
         log.info("Getting filtered categories");
         Specification<Category> specification = Specification.where(CategorySpec.nameContainsIgnoreCase(name));
@@ -78,7 +78,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CachePut(key = "'category-id:' + #id")
+    @Caching(
+            put = {
+                    @CachePut(key = "'category-id:' + #id"),
+                    @CachePut(key = "'category-slug:' + #result.slug")
+            },
+            evict = @CacheEvict(value = "categoryPageCache", allEntries = true)
+    )
     public CategoryDto update(String id, CategoryDto categoryDto) {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
         return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(category,categoryDto)));
@@ -86,7 +92,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(key = "'category-id:' + #id")
+    @Caching(evict = {
+            @CacheEvict(value = "categoryPageCache", allEntries = true),
+            @CacheEvict(key = "'category-id:' + #id")
+    })
     public void delete(String id) {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
 
@@ -95,5 +104,11 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         repository.delete(category);
+
+        Cache cache = cacheManager.getCache("categoryCache");
+
+        if (cache != null) {
+            cache.evict("category-slug:" + category.getSlug());
+        }
     }
 }

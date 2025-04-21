@@ -18,10 +18,9 @@ import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,17 +43,18 @@ public class MediaServiceImpl implements MediaService {
     private final LikeFeignClient likeFeignClient;
     private final ContentService contentService;
     private final StreamBridge streamBridge;
+    private final CacheManager cacheManager;
 
 
     @Override
-    @Cacheable(cacheNames = "mediaPageCache" ,key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(value = "mediaPageCache" ,key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<MediaDto> getAll(Pageable pageable) {
         log.info("Getting all medias");
         return mediaRepository.findAll(pageable).map(this::toMediaTo);
     }
 
     @Override
-    @Cacheable(cacheNames = "mediaPageCache" ,key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#contentId == null and #name == null")
+    @Cacheable(value = "mediaPageCache" ,key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#contentId == null and #name == null")
     public Page<MediaDto> filter(Pageable pageable, String contentId,String name) {
         Specification<Media> specification = Specification.where(MediaSpec.byContentId(contentId)).and(MediaSpec.nameContainsIgnoreCase(name));
         log.info("Getting filtered medias");
@@ -76,7 +76,7 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Cacheable(cacheNames = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
+    @Cacheable(value = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId) {
         log.info("Getting media media sources: {}", mediaId);
         return mediaSourceRepository.findAllByMediaId(mediaId).stream()
@@ -99,7 +99,13 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    @CachePut(key = "'media-id:' + #id")
+    @Caching(
+            put = {
+                    @CachePut(key = "'media-id:' + #id"),
+                    @CachePut(key = "'media-slug:' + #result.slug")
+            },
+            evict = @CacheEvict(value = {"mediaPageCache,","mediaSourceListCache"}, allEntries = true)
+    )
     public MediaDto update(String id, MediaDto mediaDto) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         Content content = contentService.findById(mediaDto.getContent().getId());
@@ -111,7 +117,7 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @CachePut(cacheNames = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
+    @CachePut(value = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
         log.warn("Media sources clearing: {}", mediaId);
@@ -135,11 +141,20 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    @CacheEvict(key = "'media-id:' + #id")
+    @Caching(evict = {
+            @CacheEvict(value = {"mediaPageCache","mediaSourceListCache"}, allEntries = true),
+            @CacheEvict(key = "'media-id:' + #id")
+    })
     public void delete(String id) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         mediaRepository.delete(media);
         log.warn("Media is deleted: {}", id);
+
+        Cache cache = cacheManager.getCache("mediaCache");
+
+        if (cache != null) {
+            cache.evict("media-slug:" + media.getSlug());
+        }
 
         boolean deleteComments = streamBridge.send("deleteComments-out-0", Set.of(id));
         log.info("Sending delete media comments message: {}, status: {}", id, deleteComments);

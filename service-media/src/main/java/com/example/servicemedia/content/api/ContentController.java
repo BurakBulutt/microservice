@@ -23,8 +23,10 @@ public class ContentController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<ContentResponse>> filter(@RequestParam(required = false) String category,@RequestParam(required = false) String name, Pageable pageable) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(pageable,category,name)));
+    public ResponseEntity<Page<ContentResponse>> filter(Pageable pageable,
+                                                        @RequestParam(required = false) String category,
+                                                        @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(pageable, category, name)));
     }
 
     @GetMapping("/{id}")
@@ -44,8 +46,8 @@ public class ContentController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Void> update(@PathVariable String id,@RequestBody ContentRequest request) {
-        service.update(id,ContentApiMapper.toDto(request));
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody ContentRequest request) {
+        service.update(id, ContentApiMapper.toDto(request));
         return ResponseEntity.noContent().build();
     }
 

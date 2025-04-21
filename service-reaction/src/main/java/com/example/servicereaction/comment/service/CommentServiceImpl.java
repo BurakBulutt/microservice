@@ -13,10 +13,9 @@ import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,16 +40,17 @@ public class CommentServiceImpl implements CommentService {
     private final UserFeignClient userFeignClient;
     private final LikeService likeService;
     private final StreamBridge streamBridge;
+    private final CacheManager cacheManager;
 
     @Override
-    @Cacheable(cacheNames = "commentPageCache" ,key = "'comment-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(value = "commentPageCache" ,key = "'comment-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<CommentDto> getAll(Pageable pageable) {
         log.info("Getting all comments");
         return repository.findAll(pageable).map(this::toCommentDto);
     }
 
     @Override
-    @Cacheable(cacheNames = "commentPageCache" ,key = "'comment-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(value = "commentPageCache" ,key = "'comment-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#targetId == null")
     public Page<CommentDto> filter(Pageable pageable, String targetId) {
         Specification<Comment> specification = Specification.where(CommentSpec.byTargetId(targetId));
         log.info("Getting all filtered comments");
@@ -84,17 +84,23 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    @CachePut(key = "'comment-id:' + #id")
-    public void update(String id, CommentDto commentDto) {
+    @Caching(
+            put = @CachePut(key = "'content-id:' + #id"),
+            evict = @CacheEvict(value = "contentPageCache", allEntries = true)
+    )
+    public CommentDto update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         comment.setContent(commentDto.getContent());
         log.warn("Updating comment: {}, updated: {}",id,commentDto);
-        repository.save(comment);
+        return toCommentDto(repository.save(comment));
     }
 
     @Override
     @Transactional
-    @CacheEvict(key = "'comment-id:' + #id")
+    @Caching(evict = {
+            @CacheEvict(value = "commentPageCache", allEntries = true),
+            @CacheEvict(value = "commentCache", key = "'comment-id:' + #id")
+    })
     public void delete(String id) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         log.warn("Deleting comment: {}",id);
@@ -106,10 +112,12 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "commentPageCache",allEntries = true)
+    @CacheEvict(value = "commentPageCache",allEntries = true)
     public void deleteAllByTargetIdIn(Set<String> targetIds) {
         List<Comment> commentList = repository.findAllByTargetIdIn(targetIds);
         deleteCommentAndLikes(commentList);
+
+        deleteCommentCache(commentList);
 
         boolean deleteLikes = streamBridge.send("deleteLikes-out-0", targetIds);
         log.info("Sending delete all target likes message: {}, status: {}",targetIds,deleteLikes);
@@ -117,21 +125,32 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "commentPageCache",allEntries = true)
+    @CacheEvict(value = "commentPageCache",allEntries = true)
     public void deleteUserComments(String userId) {
         List<Comment> commentList = repository.findAllByUserId(userId);
         deleteCommentAndLikes(commentList);
+
+        deleteCommentCache(commentList);
 
         boolean deleteLikes = streamBridge.send("deleteUserLikes-out-0", userId);
         log.info("Sending delete user likes message: {}, status: {}",userId,deleteLikes);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.MANDATORY)
     public void deleteCommentAndLikes(List<Comment> commentList) {
         Set<String> commentIds = commentList.stream().map(Comment::getId).collect(Collectors.toSet());
         repository.deleteAllById(commentIds);
         likeService.deleteLikesByTargetIdIn(commentIds);
         log.warn("Comments are deleted: {}",commentIds);
+    }
+
+    private void deleteCommentCache(List<Comment> commentList) {
+        Cache commentCache = cacheManager.getCache("commentCache");
+        if (commentCache != null) {
+            for (Comment comment : commentList) {
+                commentCache.evict("comment-id:" + comment.getId());
+            }
+        }
     }
 
     private CommentDto toCommentDto(Comment comment) {

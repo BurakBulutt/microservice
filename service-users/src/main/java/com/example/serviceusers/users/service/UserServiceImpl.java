@@ -13,10 +13,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,7 +36,7 @@ public class UserServiceImpl implements UserService {
     private final StreamBridge streamBridge;
 
     @Override
-    @Cacheable(cacheNames = "userPageCache",key = "'user-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(value = "userPageCache",key = "'user-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<UserRepresentation> getAll(Pageable pageable) {
         int first = pageable.getPageNumber() * pageable.getPageSize();
         List<UserRepresentation> users = keycloakAdmin.realm(realm).users().list(first,pageable.getPageSize());
@@ -49,7 +46,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Cacheable(cacheNames = "userPageCache",key = "'user-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#username == null")
+    @Cacheable(value = "userPageCache",key = "'user-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#username == null")
     public Page<UserRepresentation> filter(Pageable pageable,String username) {
         int first = pageable.getPageNumber() * pageable.getPageSize();
         List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,pageable.getPageSize());
@@ -111,7 +108,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @CachePut(key = "'user-id:' + #id")
+    @Caching(
+            put = {
+                    @CachePut(key = "'user-id:' + #id"),
+                    @CachePut(key = "'user-username:' + #result.username")
+            },
+            evict = @CacheEvict(value = "userPageCache", allEntries = true)
+    )
     public UserRepresentation update(String id, UpdateUserRequest request) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
@@ -135,7 +138,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @CacheEvict(key = "'user-id:' + #id")
+    @Caching(evict = {
+            @CacheEvict(value = "userPageCache", allEntries = true),
+            @CacheEvict(key = "'user-id:' + #id")
+    })
     public void delete(String id) {
         UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
 
