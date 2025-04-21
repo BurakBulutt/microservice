@@ -1,12 +1,10 @@
 package com.example.servicereaction.config;
 
 import com.example.servicereaction.comment.dto.CommentDto;
-import com.example.servicereaction.config.jackson.CommentPageDeserializer;
-import com.example.servicereaction.config.jackson.PageModule;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.example.servicereaction.config.jackson.CustomListDeserializer;
+import com.example.servicereaction.config.jackson.CustomPageDeserializer;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +21,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.List;
 
 
 @Configuration
@@ -44,7 +43,7 @@ public class RedisConfig {
                 .build();
     }
 
-    private ObjectMapper genericSerializerMapper() {
+    /*private ObjectMapper genericSerializerMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
         mapper.activateDefaultTyping(
@@ -59,12 +58,15 @@ public class RedisConfig {
         return mapper;
     }
 
-    private ObjectMapper pageSerializerMapper(JsonDeserializer<? extends Page<?>> deserializer) {
+     */
+
+    private ObjectMapper serializerMapper(Class<?> clazz) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.deactivateDefaultTyping();
 
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(Page.class, deserializer);
+        module.addDeserializer(Page.class, new CustomPageDeserializer<>(clazz));
+        module.addDeserializer(List.class,new CustomListDeserializer<>(clazz));
 
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(module);
@@ -83,7 +85,7 @@ public class RedisConfig {
 
 
     private RedisCacheConfiguration commentPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new CommentPageDeserializer());
+        ObjectMapper mapper = serializerMapper(CommentDto.class);
 
         return defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(30))

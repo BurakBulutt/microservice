@@ -1,11 +1,8 @@
 package com.example.serviceusers.config;
 
-import com.example.serviceusers.config.jackson.PageModule;
-import com.example.serviceusers.config.jackson.UserPageDeserializer;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.example.serviceusers.config.jackson.CustomListDeserializer;
+import com.example.serviceusers.config.jackson.CustomPageDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -17,12 +14,12 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.List;
 
 @Configuration
 public class RedisConfig {
@@ -42,7 +39,7 @@ public class RedisConfig {
                 .build();
     }
 
-    private ObjectMapper genericSerializerMapper() {
+    /*private ObjectMapper genericSerializerMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
         mapper.activateDefaultTyping(
@@ -57,12 +54,15 @@ public class RedisConfig {
         return mapper;
     }
 
-    private ObjectMapper pageSerializerMapper(JsonDeserializer<? extends Page<?>> deserializer) {
+     */
+
+    private ObjectMapper serializerMapper(Class<?> clazz) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.deactivateDefaultTyping();
 
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(Page.class, deserializer);
+        module.addDeserializer(Page.class, new CustomPageDeserializer<>(clazz));
+        module.addDeserializer(List.class,new CustomListDeserializer<>(clazz));
 
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(module);
@@ -80,7 +80,7 @@ public class RedisConfig {
     }
 
     private RedisCacheConfiguration userPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new UserPageDeserializer());
+        ObjectMapper mapper = serializerMapper(UserRepresentation.class);
         return defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(60))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))

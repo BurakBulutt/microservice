@@ -4,10 +4,8 @@ import com.example.servicemedia.category.dto.CategoryDto;
 import com.example.servicemedia.config.jackson.*;
 import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.media.dto.MediaDto;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -39,13 +36,13 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheWriter(cacheWriter)
                 .cacheDefaults(defaultCacheConfig())
-                .withCacheConfiguration("contentCache", contentCacheConfig())
-                .withCacheConfiguration("contentPageCache", contentPageCacheConfig())
-                .withCacheConfiguration("mediaCache", mediaCacheConfig())
-                .withCacheConfiguration("mediaSourceListCache", mediaSourceListCacheConfig())
-                .withCacheConfiguration("mediaPageCache", mediaPageCacheConfig())
-                .withCacheConfiguration("categoryCache", categoryCacheConfig())
-                .withCacheConfiguration("categoryPageCache", categoryPageCacheConfig())
+                .withCacheConfiguration("contentCache", dtoCacheConfig(ContentDto.class))
+                .withCacheConfiguration("contentPageCache", pageCacheConfig(ContentDto.class))
+                .withCacheConfiguration("mediaCache", dtoCacheConfig(MediaDto.class))
+                .withCacheConfiguration("mediaSourceListCache", listCacheConfig(MediaSourceDto.class))
+                .withCacheConfiguration("mediaPageCache", pageCacheConfig(MediaDto.class))
+                .withCacheConfiguration("categoryCache", dtoCacheConfig(CategoryDto.class))
+                .withCacheConfiguration("categoryPageCache", pageCacheConfig(CategoryDto.class))
                 .disableCreateOnMissingCache()
                 .enableStatistics()
                 .build();
@@ -68,12 +65,13 @@ public class RedisConfig {
 
      */
 
-    private ObjectMapper pageSerializerMapper(JsonDeserializer<? extends Page<?>> deserializer) {
+    private ObjectMapper serializerMapper(Class<?> clazz) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.deactivateDefaultTyping();
 
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(Page.class, deserializer);
+        module.addDeserializer(Page.class, new CustomPageDeserializer<>(clazz));
+        module.addDeserializer(List.class,new CustomListDeserializer<>(clazz));
 
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(module);
@@ -91,67 +89,28 @@ public class RedisConfig {
     }
 
 
-    private RedisCacheConfiguration mediaSourceListCacheConfig() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.deactivateDefaultTyping();
+    private RedisCacheConfiguration dtoCacheConfig(Class<?> clazz) {
+        return defaultCacheConfig()
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(clazz)))
+                .enableTimeToIdle();
+    }
 
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(List.class, new MediaSourceListDeserializer());
-
-        mapper.registerModule(new JavaTimeModule());
-        mapper.registerModule(module);
+    private RedisCacheConfiguration pageCacheConfig(Class<?> clazz) {
+        ObjectMapper mapper = serializerMapper(clazz);
 
         return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
+                .enableTimeToIdle();
+    }
+
+    private RedisCacheConfiguration listCacheConfig(Class<?> clazz) {
+        ObjectMapper mapper = serializerMapper(clazz);
+
+        return defaultCacheConfig()
+                .entryTtl(Duration.ofSeconds(30))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,List.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration mediaPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new MediaPageDeserializer());
-
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration mediaCacheConfig() {
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(MediaDto.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration contentPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new ContentPageDeserializer());
-
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration contentCacheConfig() {
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(ContentDto.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration categoryPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new CategoryPageDeserializer());
-
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
-                .enableTimeToIdle();
-    }
-
-    private RedisCacheConfiguration categoryCacheConfig() {
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(CategoryDto.class)))
                 .enableTimeToIdle();
     }
 }
