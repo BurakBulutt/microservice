@@ -47,14 +47,14 @@ public class MediaServiceImpl implements MediaService {
 
 
     @Override
-    @Cacheable(key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(cacheNames = "mediaPageCache" ,key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<MediaDto> getAll(Pageable pageable) {
         log.info("Getting all medias");
         return mediaRepository.findAll(pageable).map(this::toMediaTo);
     }
 
     @Override
-    @Cacheable(key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#contentId == null and #name == null")
+    @Cacheable(cacheNames = "mediaPageCache" ,key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#contentId == null and #name == null")
     public Page<MediaDto> filter(Pageable pageable, String contentId,String name) {
         Specification<Media> specification = Specification.where(MediaSpec.byContentId(contentId)).and(MediaSpec.nameContainsIgnoreCase(name));
         log.info("Getting filtered medias");
@@ -76,7 +76,7 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Cacheable(key = "'media-source:' + #mediaId")
+    @Cacheable(cacheNames = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId) {
         log.info("Getting media media sources: {}", mediaId);
         return mediaSourceRepository.findAllByMediaId(mediaId).stream()
@@ -111,7 +111,7 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @CachePut(key = "'media-source:' + #mediaId")
+    @CachePut(cacheNames = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
         log.warn("Media sources clearing: {}", mediaId);

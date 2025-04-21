@@ -1,5 +1,6 @@
 package com.example.servicereaction.comment.service;
 
+import com.example.servicereaction.comment.repo.CommentSpec;
 import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.dto.CommentDto;
 import com.example.servicereaction.comment.enums.CommentType;
@@ -12,9 +13,14 @@ import com.example.servicereaction.util.rest.BaseException;
 import com.example.servicereaction.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,6 +35,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
+@CacheConfig(cacheNames = "commentCache")
 public class CommentServiceImpl implements CommentService {
     private final CommentRepository repository;
     private final UserFeignClient userFeignClient;
@@ -36,35 +43,25 @@ public class CommentServiceImpl implements CommentService {
     private final StreamBridge streamBridge;
 
     @Override
-    public Page<CommentDto> getAll(Pageable pageable,String targetId) {
+    @Cacheable(cacheNames = "commentPageCache" ,key = "'comment-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    public Page<CommentDto> getAll(Pageable pageable) {
         log.info("Getting all comments");
-        if (StringUtils.hasLength(targetId)){
-            return repository.findAllByTargetId(targetId, pageable).map(this::toCommentDto);
-        }
         return repository.findAll(pageable).map(this::toCommentDto);
     }
 
     @Override
-    public CommentDto getById(String id) {
-        log.info("Getting comment: {}", id);
-        return repository.findById(id).map(this::toCommentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
+    @Cacheable(cacheNames = "commentPageCache" ,key = "'comment-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    public Page<CommentDto> filter(Pageable pageable, String targetId) {
+        Specification<Comment> specification = Specification.where(CommentSpec.byTargetId(targetId));
+        log.info("Getting all filtered comments");
+        return repository.findAll(specification,pageable).map(this::toCommentDto);
     }
 
     @Override
-    public Page<CommentDto> getByTargetId(String targetId, Pageable pageable) {
-        log.info("Getting target comments: {}", targetId);
-        return repository.findAllByTargetIdAndParentNull(targetId, pageable).map(comment -> {
-            CommentDto commentDto = CommentServiceMapper.toDto(comment,getUser(comment.getUserId()));
-            commentDto.setLikeCount(likeService.findLikeCount(comment.getId()));
-            if (comment.getCommentList() != null && !comment.getCommentList().isEmpty()) {
-                commentDto.setCommentList(comment.getCommentList().stream().map(comment1 -> {
-                    CommentDto dto = CommentServiceMapper.toDto(comment1,getUser(comment1.getUserId()));
-                    dto.setLikeCount(likeService.findLikeCount(comment1.getId()));
-                    return dto;
-                }).toList());
-            }
-            return commentDto;
-        });
+    @Cacheable(key = "'comment-id:' + #id")
+    public CommentDto getById(String id) {
+        log.info("Getting comment: {}", id);
+        return repository.findById(id).map(this::toCommentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
     }
 
     @Override
@@ -87,6 +84,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CachePut(key = "'comment-id:' + #id")
     public void update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         comment.setContent(commentDto.getContent());
@@ -96,6 +94,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(key = "'comment-id:' + #id")
     public void delete(String id) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
         log.warn("Deleting comment: {}",id);
@@ -107,6 +106,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "commentPageCache",allEntries = true)
     public void deleteAllByTargetIdIn(Set<String> targetIds) {
         List<Comment> commentList = repository.findAllByTargetIdIn(targetIds);
         deleteCommentAndLikes(commentList);
@@ -117,6 +117,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "commentPageCache",allEntries = true)
     public void deleteUserComments(String userId) {
         List<Comment> commentList = repository.findAllByUserId(userId);
         deleteCommentAndLikes(commentList);

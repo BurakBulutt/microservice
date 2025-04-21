@@ -1,12 +1,13 @@
 package com.example.servicemedia.media.repo;
 
 import com.example.servicemedia.media.model.Media;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Locale;
 
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MediaSpec {
 
     public static Specification<Media> byContentId(String contentId) {

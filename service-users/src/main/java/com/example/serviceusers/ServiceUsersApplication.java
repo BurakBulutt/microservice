@@ -8,11 +8,13 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
-//@EnableCaching
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
+@EnableCaching
 public class ServiceUsersApplication {
     public static void main(String[] args) {
         SpringApplication.run(ServiceUsersApplication.class, args);

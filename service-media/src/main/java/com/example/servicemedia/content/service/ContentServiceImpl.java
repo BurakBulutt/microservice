@@ -46,14 +46,14 @@ public class ContentServiceImpl implements ContentService {
 
 
     @Override
-    @Cacheable(key = "'content-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(cacheNames = "contentPageCache" ,key = "'content-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<ContentDto> getAll(Pageable pageable) {
         log.info("Getting all contents");
         return repository.findAll(pageable).map(this::toContentDto);
     }
 
     @Override
-    @Cacheable(key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#categoryId == null and #name == null")
+    @Cacheable(cacheNames = "contentPageCache" ,key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#categoryId == null and #name == null")
     public Page<ContentDto> filter(Pageable pageable,String categoryId,String name) {
         log.info("Getting filtered contents: [category: {}, name: {}]",categoryId,name);
         return repository.filter(name,categoryId,pageable).map(this::toContentDto);

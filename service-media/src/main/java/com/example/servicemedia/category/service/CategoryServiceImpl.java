@@ -35,14 +35,14 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
 
     @Override
-    @Cacheable(key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(cacheNames = "categoryPageCache" ,key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<CategoryDto> getAll(Pageable pageable) {
         log.info("Getting all categories");
         return repository.findAll(pageable).map(CategoryServiceMapper::toDto);
     }
 
     @Override
-    @Cacheable(key = "'category-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#name == null")
+    @Cacheable(cacheNames = "categoryPageCache" ,key = "'category-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#name == null")
     public Page<CategoryDto> filter(Pageable pageable, String name) {
         log.info("Getting filtered categories");
         Specification<Category> specification = Specification.where(CategorySpec.nameContainsIgnoreCase(name));

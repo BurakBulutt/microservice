@@ -1,4 +1,4 @@
-package com.example.servicemedia.config.jackson;
+package com.example.servicereaction.config.jackson;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;

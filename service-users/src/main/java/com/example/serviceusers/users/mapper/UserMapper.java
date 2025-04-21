@@ -1,10 +1,10 @@
 package com.example.serviceusers.users.mapper;
 
-import com.example.serviceusers.users.api.Page;
 import com.example.serviceusers.users.api.UserRepresentationResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Objects;

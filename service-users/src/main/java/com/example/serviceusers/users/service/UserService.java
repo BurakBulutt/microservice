@@ -1,15 +1,14 @@
 package com.example.serviceusers.users.service;
 
 import com.example.serviceusers.users.api.CreateUserRequest;
-import com.example.serviceusers.users.api.Page;
 import com.example.serviceusers.users.api.UpdateUserRequest;
 import org.keycloak.representations.idm.UserRepresentation;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserService {
-    Page<UserRepresentation> getAll(int page, int size);
-    Page<UserRepresentation> filter(int page, int size,String username);
+    Page<UserRepresentation> getAll(Pageable pageable);
+    Page<UserRepresentation> filter(Pageable pageable,String username);
 
     UserRepresentation getByUsername(String username);
     UserRepresentation getById(String id);

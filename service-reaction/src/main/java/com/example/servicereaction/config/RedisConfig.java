@@ -1,14 +1,15 @@
-package com.example.serviceusers.config;
+package com.example.servicereaction.config;
 
-import com.example.serviceusers.config.jackson.PageModule;
-import com.example.serviceusers.config.jackson.UserPageDeserializer;
+import com.example.servicereaction.comment.dto.CommentDto;
+import com.example.servicereaction.config.jackson.CommentPageDeserializer;
+import com.example.servicereaction.config.jackson.PageModule;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.keycloak.representations.idm.UserRepresentation;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,14 +18,15 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
+
 @Configuration
+@RequiredArgsConstructor
 public class RedisConfig {
     @Value("${spring.application.name}")
     private String prefix;
@@ -35,8 +37,8 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheWriter(cacheWriter)
                 .cacheDefaults(defaultCacheConfig())
-                .withCacheConfiguration("userCache",userCacheConfig())
-                .withCacheConfiguration("userPageCache",userPageCacheConfig())
+                .withCacheConfiguration("commentCache", commentCacheConfig())
+                .withCacheConfiguration("commentPageCache", commentPageCacheConfig())
                 .disableCreateOnMissingCache()
                 .enableStatistics()
                 .build();
@@ -79,19 +81,20 @@ public class RedisConfig {
                 .prefixCacheNameWith(prefix + "::");
     }
 
-    private RedisCacheConfiguration userPageCacheConfig() {
-        ObjectMapper mapper = pageSerializerMapper(new UserPageDeserializer());
+
+    private RedisCacheConfiguration commentPageCacheConfig() {
+        ObjectMapper mapper = pageSerializerMapper(new CommentPageDeserializer());
+
         return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
+                .entryTtl(Duration.ofSeconds(30))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
                 .enableTimeToIdle();
     }
 
-    private RedisCacheConfiguration userCacheConfig() {
+    private RedisCacheConfiguration commentCacheConfig() {
         return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(UserRepresentation.class)))
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(CommentDto.class)))
                 .enableTimeToIdle();
     }
-
 }

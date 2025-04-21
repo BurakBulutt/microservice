@@ -4,6 +4,8 @@ import com.example.serviceusers.users.mapper.UserMapper;
 import com.example.serviceusers.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,16 +19,13 @@ public class UserController {
     private final UserService service;
 
     @GetMapping
-    public ResponseEntity<Page<UserRepresentationResponse>> getAll(@RequestParam(defaultValue = "0" ) int page,
-                                                                   @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(page, size)));
+    public ResponseEntity<Page<UserRepresentationResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.getAll(pageable)));
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<UserRepresentationResponse>> getAll(@RequestParam(defaultValue = "0" ) int page,
-                                                                   @RequestParam(defaultValue = "10") int size,
-                                                                   @RequestParam(required = false) String username) {
-        return ResponseEntity.ok(UserMapper.toPageResponse(service.filter(page, size,username)));
+    public ResponseEntity<Page<UserRepresentationResponse>> getAll(Pageable pageable,@RequestParam(required = false) String username) {
+        return ResponseEntity.ok(UserMapper.toPageResponse(service.filter(pageable,username)));
     }
 
     @GetMapping("/{id}")

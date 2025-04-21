@@ -16,18 +16,18 @@ public class CommentController {
     private final CommentService service;
 
     @GetMapping
-    public ResponseEntity<Page<CommentResponse>> getAll(Pageable pageable,@RequestParam(required = false) String target) {
-        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable,target)));
+    public ResponseEntity<Page<CommentResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable)));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<CommentResponse>> filter(Pageable pageable,@RequestParam(required = false) String targetId) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.filter(pageable,targetId)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CommentResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(CommentApiMapper.toResponse(service.getById(id)));
-    }
-
-    @GetMapping("/comment/{targetId}")
-    public ResponseEntity<Page<CommentResponse>> getByTargetId(@PathVariable String targetId,Pageable pageable) {
-        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getByTargetId(targetId,pageable)));
     }
 
     @PostMapping

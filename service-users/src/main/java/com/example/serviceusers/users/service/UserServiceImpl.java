@@ -1,8 +1,6 @@
 package com.example.serviceusers.users.service;
 
 import com.example.serviceusers.users.api.CreateUserRequest;
-import com.example.serviceusers.users.api.Page;
-import com.example.serviceusers.users.api.PageUtil;
 import com.example.serviceusers.users.api.UpdateUserRequest;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.ws.rs.WebApplicationException;
@@ -20,6 +18,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -38,23 +39,23 @@ public class UserServiceImpl implements UserService {
     private final StreamBridge streamBridge;
 
     @Override
-    @Cacheable(key = "'user-all:' + #page + '_' + #size")
-    public Page<UserRepresentation> getAll(int page, int size) {
-        int first = page * size;
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().list(first,size);
+    @Cacheable(cacheNames = "userPageCache",key = "'user-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    public Page<UserRepresentation> getAll(Pageable pageable) {
+        int first = pageable.getPageNumber() * pageable.getPageSize();
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().list(first,pageable.getPageSize());
         int userCount = keycloakAdmin.realm(realm).users().count();
         log.info("Getting all users");
-        return new Page<>(users, new PageUtil(page, size, userCount));
+        return new PageImpl<>(users, pageable, userCount);
     }
 
     @Override
-    @Cacheable(key = "'user-filter:' + #page + '_' + #size",condition = "#username == null")
-    public Page<UserRepresentation> filter(int page, int size,String username) {
-        int first = page * size;
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,size);
+    @Cacheable(cacheNames = "userPageCache",key = "'user-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#username == null")
+    public Page<UserRepresentation> filter(Pageable pageable,String username) {
+        int first = pageable.getPageNumber() * pageable.getPageSize();
+        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,pageable.getPageSize());
         int userCount = keycloakAdmin.realm(realm).users().count(username);
         log.info("Getting filtered users");
-        return new Page<>(users, new PageUtil(page, size, userCount));
+        return new PageImpl<>(users, pageable, userCount);
     }
 
     @Override
