@@ -20,7 +20,7 @@ public class CommentController {
         return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAll(pageable)));
     }
 
-    @GetMapping
+    @GetMapping("filter")
     public ResponseEntity<Page<CommentResponse>> filter(Pageable pageable,@RequestParam(required = false) String targetId) {
         return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.filter(pageable,targetId)));
     }

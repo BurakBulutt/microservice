@@ -3,13 +3,16 @@ package com.example.servicereaction.comment.dto;
 import com.example.servicereaction.feign.UserResponse;
 import com.example.servicereaction.comment.enums.CommentType;
 import com.example.servicereaction.like.dto.LikeCountDto;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 
-@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
+@Getter
+@Setter
+@ToString
 public class CommentDto {
     private String id;
     private String content;

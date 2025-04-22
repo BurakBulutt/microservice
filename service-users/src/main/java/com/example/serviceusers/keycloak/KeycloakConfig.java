@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 
 @Configuration
 @RequiredArgsConstructor
@@ -14,8 +14,7 @@ public class KeycloakConfig {
     private final KeycloakConfigProperties configProperties;
 
     @Bean
-    @Scope("singleton")
-    public Keycloak getInstance() {
+    public Keycloak initKeycloak() {
         return KeycloakBuilder.builder()
                 .realm(configProperties.getRealm())
                 .serverUrl(configProperties.getAuthServerUrl())
@@ -23,5 +22,10 @@ public class KeycloakConfig {
                 .clientId(configProperties.getClientId())
                 .clientSecret(configProperties.getClientSecret())
                 .build();
+    }
+
+    @Bean
+    public UsersResource usersResource(Keycloak keycloak) {
+        return keycloak.realm(configProperties.getRealm()).users();
     }
 }

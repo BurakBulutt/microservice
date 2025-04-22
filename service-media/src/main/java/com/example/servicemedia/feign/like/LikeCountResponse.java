@@ -1,10 +1,13 @@
 package com.example.servicemedia.feign.like;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
 public class LikeCountResponse {
     private String targetId;
     private Integer likeCount;

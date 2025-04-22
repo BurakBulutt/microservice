@@ -1,10 +1,13 @@
 package com.example.servicereaction.feign;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
 public class UserResponse {
     private String id;
     private String firstName;

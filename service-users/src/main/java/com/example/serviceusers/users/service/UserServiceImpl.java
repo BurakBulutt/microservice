@@ -7,12 +7,11 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
@@ -29,18 +28,15 @@ import com.example.serviceusers.users.constants.UserServiceConstants;
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "userCache")
 public class UserServiceImpl implements UserService {
-    @Value("${keycloak.realm}")
-    private String realm;
-
-    private final Keycloak keycloakAdmin;
+    private final UsersResource usersResource;
     private final StreamBridge streamBridge;
 
     @Override
     @Cacheable(value = "userPageCache",key = "'user-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<UserRepresentation> getAll(Pageable pageable) {
         int first = pageable.getPageNumber() * pageable.getPageSize();
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().list(first,pageable.getPageSize());
-        int userCount = keycloakAdmin.realm(realm).users().count();
+        List<UserRepresentation> users = usersResource.list(first,pageable.getPageSize());
+        int userCount = usersResource.count();
         log.info("Getting all users");
         return new PageImpl<>(users, pageable, userCount);
     }
@@ -49,8 +45,8 @@ public class UserServiceImpl implements UserService {
     @Cacheable(value = "userPageCache",key = "'user-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#username == null")
     public Page<UserRepresentation> filter(Pageable pageable,String username) {
         int first = pageable.getPageNumber() * pageable.getPageSize();
-        List<UserRepresentation> users = keycloakAdmin.realm(realm).users().search(username,first,pageable.getPageSize());
-        int userCount = keycloakAdmin.realm(realm).users().count(username);
+        List<UserRepresentation> users = usersResource.search(username,first,pageable.getPageSize());
+        int userCount = usersResource.count(username);
         log.info("Getting filtered users");
         return new PageImpl<>(users, pageable, userCount);
     }
@@ -60,7 +56,7 @@ public class UserServiceImpl implements UserService {
     @Cacheable(key = "'user-id:' + #id")
     public UserRepresentation getById(String id) {
         log.info("Getting user: {}",id);
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = usersResource.get(id);
         return userResource.toRepresentation();
     }
 
@@ -68,7 +64,7 @@ public class UserServiceImpl implements UserService {
     @Cacheable(key = "'user-username:' + #username")
     public UserRepresentation getByUsername(String username) {
         log.info("Getting user by username: {}",username);
-        return keycloakAdmin.realm(realm).users().searchByUsername(username, Boolean.TRUE).stream()
+        return usersResource.searchByUsername(username, Boolean.TRUE).stream()
                 .findFirst()
                 .orElseThrow();
     }
@@ -100,7 +96,7 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setCredentials(Collections.singletonList(credentialRepresentation));
 
         log.warn("Saving user: {}",request);
-        Response response = keycloakAdmin.realm(realm).users().create(userRepresentation);
+        Response response = usersResource.create(userRepresentation);
 
         if (response.getStatus() >= 400) {
             throw new WebApplicationException(response);
@@ -116,7 +112,7 @@ public class UserServiceImpl implements UserService {
             evict = @CacheEvict(value = "userPageCache", allEntries = true)
     )
     public UserRepresentation update(String id, UpdateUserRequest request) {
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = usersResource.get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
             throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());
@@ -134,7 +130,7 @@ public class UserServiceImpl implements UserService {
         log.warn("Updating user: {}, updated: {}",id,request);
         userResource.update(userRepresentation);
 
-        return keycloakAdmin.realm(realm).users().get(id).toRepresentation();
+        return usersResource.get(id).toRepresentation();
     }
 
     @Override
@@ -143,7 +139,7 @@ public class UserServiceImpl implements UserService {
             @CacheEvict(key = "'user-id:' + #id")
     })
     public void delete(String id) {
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = usersResource.get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
             throw new WebApplicationException("Can not delete admin",Response.status(Response.Status.FORBIDDEN).build());
@@ -157,7 +153,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resetPassword(String id) {
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = usersResource.get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
             throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());
@@ -174,7 +170,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void verifyEmail(String id) {
-        UserResource userResource = keycloakAdmin.realm(realm).users().get(id);
+        UserResource userResource = usersResource.get(id);
 
         if (isAdmin(userResource.roles().realmLevel().listEffective())){
             throw new WebApplicationException("Can not update admin",Response.status(Response.Status.FORBIDDEN).build());

@@ -1,10 +1,13 @@
 package com.example.servicereaction.like.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
 public class LikeCountDto {
     private String targetId;
     private Integer likeCount;

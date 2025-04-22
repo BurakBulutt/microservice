@@ -24,7 +24,7 @@ public class UserController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<UserRepresentationResponse>> getAll(Pageable pageable,
+    public ResponseEntity<Page<UserRepresentationResponse>> filter(Pageable pageable,
                                                                    @RequestParam(required = false) String username) {
         return ResponseEntity.ok(UserMapper.toPageResponse(service.filter(pageable, username)));
     }
