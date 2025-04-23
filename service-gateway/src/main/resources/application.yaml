@@ -28,6 +28,8 @@ eureka:
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
 management:
+  server:
+    port: 9000
   endpoint:
     health:
       probes:
@@ -53,7 +55,7 @@ management:
     enabled: true
   otlp:
     tracing:
-      endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+      endpoint: http://${OTLP_HOST:localhost}:4318
 resilience4j:
   circuitbreaker:
     configs:
@@ -68,7 +70,7 @@ logging:
   pattern:
     level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
   level:
-    org.springframework.security: debug
+    org.springframework.security: info
     com.example.servicegateway: debug
 info:
   application:

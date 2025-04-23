@@ -12,6 +12,8 @@ eureka:
     fetch-registry: false
     register-with-eureka: false
 management:
+  server:
+    port: 9761
   endpoint:
     health:
       probes:

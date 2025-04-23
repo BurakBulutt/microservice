@@ -33,6 +33,8 @@ keycloak:
   client-id: ${KC_CLIENT:app-callcenter-client}
   client-secret: ${KC_SECRET:bgahwKLV8HoGll32ZLjmRPVYQOO57Ebc}
 management:
+  server:
+    port: 9001
   endpoint:
     health:
       probes:
@@ -52,6 +54,13 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
+  otlp:
+    tracing:
+      endpoint: http://${OTLP_HOST:localhost}:4318
 resilience4j:
   timelimiter:
     configs:

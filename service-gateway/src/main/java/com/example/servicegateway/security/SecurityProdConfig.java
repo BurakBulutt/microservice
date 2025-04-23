@@ -21,7 +21,8 @@ public class SecurityProdConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-           authorizeExchangeSpec.anyExchange().authenticated();
+            authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
+            authorizeExchangeSpec.anyExchange().authenticated();
         });
         //TODO CORS REQUIRED
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
@@ -29,7 +30,7 @@ public class SecurityProdConfig {
         return http.build();
     }
 
-    private ReactiveJwtAuthenticationConverter reactiveConverter(){
+    private ReactiveJwtAuthenticationConverter reactiveConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles");

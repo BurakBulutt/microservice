@@ -17,6 +17,12 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: https://${EUREKA_HOST}:8761/eureka/
+management:
+  server:
+    port: 9000
+  otlp:
+    tracing:
+      endpoint: https://${OTLP_HOST}:4318
 logging:
   level:
     org.springframework.security: error

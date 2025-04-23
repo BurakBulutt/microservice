@@ -84,13 +84,11 @@ services:
     ports:
       - "8761:8761"
     healthcheck:
-      test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    environment:
-      OTEL_SERVICE_NAME: app-eureka
     env_file:
       - environments/globalproject.env
     extends:
@@ -112,7 +110,7 @@ services:
       app-media:
         condition: service_healthy
     healthcheck:
-      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -137,7 +135,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -165,7 +163,7 @@ services:
       - environments/globalproject.env
       - environments/media.env
     healthcheck:
-      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -190,7 +188,7 @@ services:
       - environments/globalproject.env
       - environments/reaction.env
     healthcheck:
-      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5

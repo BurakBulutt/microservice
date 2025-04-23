@@ -3,3 +3,6 @@ eureka:
     enable-self-preservation: true
   instance:
     hostname: ${EUREKA_HOST}
+management:
+  server:
+    port: 9000
