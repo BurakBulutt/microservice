@@ -1,6 +1,77 @@
+server:
+  port: 8080
 spring:
   application:
     name: service-gateway
-  config:
-    import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
-
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8090/realms/dev}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/dev/protocol/openid-connect/certs}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+          lower-case-service-id: false
+      httpclient:
+        connect-timeout: 1000
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 20
+    lease-expiration-duration-in-seconds: 60
+  client:
+    registry-fetch-interval-seconds: 20
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
+  otlp:
+    tracing:
+      endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+logging:
+  pattern:
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+  level:
+    org.springframework.security: debug
+    com.example.servicegateway: debug
+info:
+  application:
+    name: service-gateway
+    description: service-gateway
+    version: 0.0.1-SNAPSHOT

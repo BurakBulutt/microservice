@@ -1,9 +1,24 @@
+server:
+  port: 8083
 spring:
   application:
     name: service-reaction
-  config:
-    import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+  datasource:
+    username: ${DB_USER:reaction_admin}
+    password: ${DB_PASSWORD:Reaction_admin123}
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:app_reaction}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: update
+    show-sql: true
   cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+        alphanumeric-ids:
+          enabled: true
     function:
       definition: deleteComments;deleteLikes;deleteUserComments;deleteUserLikes;
     stream:
@@ -58,5 +73,77 @@ spring:
             consumer:
               auto-bind-dlq: true
               dlq-ttl: 3600000
+  rabbitmq:
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 2s
+        cancel-running-future: false
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        ignore-exceptions:
+          - com.example.servicereaction.util.rest.BaseException
+          - feign.FeignException.BadRequest
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 20
+    lease-expiration-duration-in-seconds: 60
+  client:
+    registry-fetch-interval-seconds: 20
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+logging:
+  pattern:
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+  level:
+    com.example.servicereaction: debug
+info:
+  application:
+    name: service-reaction
+    description: service-reaction
+    version: 0.0.1-SNAPSHOT
 
 

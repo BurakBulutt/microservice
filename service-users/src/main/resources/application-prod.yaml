@@ -1,0 +1,35 @@
+server:
+  port: 8080
+spring:
+  rabbitmq:
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_HOST}
+    port: 5672
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+  cloud:
+    stream:
+      bindings:
+        deleteUserComments-out-0:
+          destination: deleteUserComments
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+  client:
+    registry-fetch-interval-seconds: 30
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:8761/eureka/
+keycloak:
+  auth-server-url: http://${KC_HOST}:${KC_PORT}
+  realm: ${KC_REALM}
+  client-id: ${KC_CLIENT}
+  client-secret: ${KC_SECRET}
+logging:
+  level:
+    com.example.serviceusers: info

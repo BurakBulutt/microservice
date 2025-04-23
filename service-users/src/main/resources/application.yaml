@@ -1,22 +1,84 @@
-spring :
+server:
+  port: 8081
+spring:
   application:
     name: service-users
-  config:
-    import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+  rabbitmq:
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
   data:
     redis:
+      host: ${REDIS_HOST:localhost}
       port: 6379
-      host: localhost
-      connect-timeout: 1s
-  cache:
-    redis:
-      cache-null-values: false
-      time-to-live: 1m
-      key-prefix: ${spring.application.name}
-      enable-statistics: true
-    type: redis
   cloud:
     stream:
       bindings:
         deleteUserComments-out-0:
           destination: deleteUserComments
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 20
+    lease-expiration-duration-in-seconds: 60
+  client:
+    registry-fetch-interval-seconds: 20
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+keycloak:
+  auth-server-url: http://${KC_HOST:localhost}:${KC_PORT:8090}
+  realm: ${KC_REALM:dev}
+  client-id: ${KC_CLIENT:app-callcenter-client}
+  client-secret: ${KC_SECRET:bgahwKLV8HoGll32ZLjmRPVYQOO57Ebc}
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 2s
+        cancel-running-future: false
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+logging:
+  pattern:
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+  level:
+    com.example.serviceusers: debug
+info:
+  application:
+    name: service-users
+    description: service-users
+    version: 0.0.1-SNAPSHOT

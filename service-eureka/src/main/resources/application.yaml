@@ -1,5 +1,41 @@
+server:
+  port: 8761
 spring:
   application:
     name: service-eureka
-  config:
-    import: configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
+eureka:
+  server:
+    enable-self-preservation: true
+  instance:
+    hostname: ${EUREKA_HOST:localhost}
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+logging:
+  pattern:
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+info:
+  application:
+    name: service-eureka
+    description: service-eureka
+    version: 0.0.1-SNAPSHOT

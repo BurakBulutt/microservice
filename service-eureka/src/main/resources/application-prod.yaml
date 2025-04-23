@@ -1,0 +1,5 @@
+eureka:
+  server:
+    enable-self-preservation: true
+  instance:
+    hostname: ${EUREKA_HOST}

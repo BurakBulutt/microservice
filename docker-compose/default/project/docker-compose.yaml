@@ -78,38 +78,14 @@ services:
       file: ../common-config.yaml
       service: base-config
 
-  app-configserver:
-    image: wraithkage/service-configserver:0.0.1-SNAPSHOT
-    container_name: service-configserver
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent localhost:8888/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    env_file:
-      - environments/globalproject.env
-      - environments/config.env
-    extends:
-      file: ../common-config.yaml
-      service: app-base-config
-
   app-eureka:
-    image: wraithkage/service-eureka:0.0.1-SNAPSHOT
+    image: microservice/service-eureka:0.0.1-SNAPSHOT
     container_name: service-eureka
     ports:
       - "8761:8761"
-    depends_on:
-      app-configserver:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     healthcheck:
       test: "curl --fail --silent localhost:8761/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
@@ -121,14 +97,12 @@ services:
       file: ../common-config.yaml
       service: app-base-config
 
-  app-apigateway:
-    image: wraithkage/service-gateway:0.0.1-SNAPSHOT
-    container_name: service-apigateway
+  app-gateway:
+    image: microservice/service-gateway:0.0.1-SNAPSHOT
+    container_name: service-gateway
     ports:
       - "8080:8080"
     depends_on:
-      app-configserver:
-        condition: service_healthy
       app-eureka:
         condition: service_healthy
       app-users:
@@ -137,11 +111,9 @@ services:
         condition: service_healthy
       app-media:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
@@ -153,20 +125,20 @@ services:
       service: app-base-config
 
   app-users:
-    image: wraithkage/service-users:0.0.1-SNAPSHOT
+    image: microservice/service-users:0.0.1-SNAPSHOT
     container_name: service-users
     depends_on:
-      app-configserver:
-        condition: service_healthy
       auth:
         condition: service_healthy
       app-eureka:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
@@ -178,23 +150,23 @@ services:
       service: app-base-config
 
   app-media:
-    image: wraithkage/service-media:0.0.1-SNAPSHOT
+    image: microservice/service-media:0.0.1-SNAPSHOT
     container_name: service-media
     depends_on:
-      app-configserver:
-        condition: service_healthy
       app-eureka:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
       database:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - environments/globalproject.env
       - environments/media.env
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
@@ -203,14 +175,14 @@ services:
       service: app-base-config
 
   app-reaction:
-    image: wraithkage/service-reaction:0.0.1-SNAPSHOT
+    image: microservice/service-reaction:0.0.1-SNAPSHOT
     container_name: service-reaction
     depends_on:
-      app-configserver:
-        condition: service_healthy
       app-eureka:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       database:
         condition: service_healthy
@@ -219,7 +191,7 @@ services:
       - environments/reaction.env
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s

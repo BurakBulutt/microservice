@@ -3,18 +3,14 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
-  - job_name: 'service-configserver'
-    metrics_path: '/actuator/prometheus'
-    static_configs: 
-      - targets: ['app-configserver:8888']
   - job_name: 'service-eureka'
     metrics_path: '/actuator/prometheus'
     static_configs: 
       - targets: ['app-eureka:8761']
-  - job_name: 'service-apigateway'
+  - job_name: 'service-gateway'
     metrics_path: '/actuator/prometheus'
     static_configs: 
-      - targets: ['app-apigateway:8080']
+      - targets: ['app-gateway:8080']
   - job_name: 'service-media'
     metrics_path: '/actuator/prometheus'
     static_configs: 

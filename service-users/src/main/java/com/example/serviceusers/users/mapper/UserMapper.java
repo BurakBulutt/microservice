@@ -7,13 +7,20 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
-import java.util.Objects;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
 
     public static UserRepresentationResponse toUserRepresentationResponse(UserRepresentation userRepresentation)  {
-        String birthDateStr = Objects.requireNonNull(userRepresentation.getAttributes().get("birthdate").get(0));
+        String birthDateStr = null;
+
+        if (userRepresentation.getAttributes() != null && !userRepresentation.getAttributes().isEmpty()) {
+            List<String> result = userRepresentation.getAttributes().get("birthdate");
+
+            if (result != null && !result.isEmpty()) {
+                birthDateStr = result.get(0);
+            }
+        }
 
         return UserRepresentationResponse.builder()
                 .id(userRepresentation.getId())

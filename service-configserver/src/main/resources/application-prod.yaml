@@ -1,3 +1,0 @@
-logging:
-  pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"

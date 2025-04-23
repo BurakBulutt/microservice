@@ -6,15 +6,10 @@ services:
   base-config:
     extends:
       service: network-deploy-service
-    mem_limit: 1024m
-    cpus: "1"
+    mem_limit: 512m
+    cpus: "0.5"
     restart: on-failure
 
   app-base-config:
     extends:
       service: base-config
-    environment:
-      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.1.0.jar"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo:4318/"
-      OTEL_METRICS_EXPORTER: none
-      OTEL_LOGS_EXPORTER: none

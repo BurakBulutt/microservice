@@ -3,18 +3,20 @@ server:
   http_listen_address: 0.0.0.0
   http_listen_port: 3100
 
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "tempo:4317"
+      http:
+        endpoint: "tempo:4318"
+
 distributor:
-  receivers:
-    otlp:
-      protocols:
-        grpc:
-          endpoint: "tempo:4317"
-        http:
-          endpoint: "tempo:4318"
+  receiver: [otlp]
 
 ingester:
   trace_idle_period: 10s
-  max_block_bytes: 1_000_000
+  max_block_bytes: 100_000_000
   max_block_duration: 5m
 
 compactor:
@@ -28,7 +30,14 @@ storage:
   trace:
     backend: local
     local:
-      path: /var/tempo/blocks
+      path: /var/tempo/traces
     pool:
       max_workers: 100
       queue_depth: 10000
+
+querier:
+  backend: local
+
+frontend:
+  search:
+    backend: local

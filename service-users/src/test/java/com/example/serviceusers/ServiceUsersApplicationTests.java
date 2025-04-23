@@ -8,6 +8,7 @@ class ServiceUsersApplicationTests {
 
     @Test
     void contextLoads() {
+
     }
 
 }
