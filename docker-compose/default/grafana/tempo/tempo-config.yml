@@ -1,6 +1,5 @@
 ---
 server:
-  http_listen_address: 0.0.0.0
   http_listen_port: 3100
 
 distributor:
@@ -14,7 +13,7 @@ distributor:
 
 ingester:
   trace_idle_period: 10s
-  max_block_bytes: 100_000_000
+  max_block_bytes: 1_000_000
   max_block_duration: 5m
 
 compactor:
@@ -28,7 +27,7 @@ storage:
   trace:
     backend: local
     local:
-      path: /var/tempo
+      path: /var/tempo/blocks
     wal:
       path: /tmp/tempo/wal
     pool:

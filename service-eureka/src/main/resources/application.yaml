@@ -33,9 +33,15 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+    tracing:
+      endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
 logging:
   pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{traceId} span_id=%X{spanId} %5p --- %m%n"
 info:
   application:
     name: service-eureka

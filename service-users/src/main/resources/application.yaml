@@ -60,7 +60,7 @@ management:
     enabled: true
   otlp:
     tracing:
-      endpoint: http://${OTLP_HOST:localhost}:4318
+      endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
 resilience4j:
   timelimiter:
     configs:
@@ -83,7 +83,8 @@ resilience4j:
         exponential-backoff-multiplier: 2
 logging:
   pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{traceId} span_id=%X{spanId} %5p --- %m%n"
+
   level:
     com.example.serviceusers: debug
 info:

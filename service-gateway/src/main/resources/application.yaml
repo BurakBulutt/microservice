@@ -54,8 +54,11 @@ management:
       probability: 1.0
     enabled: true
   otlp:
+    metrics:
+      export:
+        enabled: false
     tracing:
-      endpoint: http://${OTLP_HOST:localhost}:4318
+      endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
 resilience4j:
   circuitbreaker:
     configs:
@@ -68,7 +71,7 @@ resilience4j:
         slow-call-duration-threshold: 2s
 logging:
   pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{trace_id} span_id=%X{span_id} %5p --- %m%n"
+    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{traceId} span_id=%X{spanId} %5p --- %m%n"
   level:
     org.springframework.security: info
     com.example.servicegateway: debug
