@@ -82,9 +82,6 @@ resilience4j:
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
 logging:
-  pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{traceId} span_id=%X{spanId} %5p --- %m%n"
-
   level:
     com.example.serviceusers: debug
 info:

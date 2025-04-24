@@ -70,8 +70,6 @@ resilience4j:
         slow-call-rate-threshold: 50
         slow-call-duration-threshold: 2s
 logging:
-  pattern:
-    level: "%d{yyyy-MM-dd HH:mm:ss.SSS} trace_id=%X{traceId} span_id=%X{spanId} %5p --- %m%n"
   level:
     org.springframework.security: info
     com.example.servicegateway: debug
