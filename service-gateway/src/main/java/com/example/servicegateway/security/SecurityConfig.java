@@ -4,6 +4,7 @@ package com.example.servicegateway.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -14,6 +15,8 @@ import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.example.servicegateway.security.SecurityConstants.*;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -26,8 +29,15 @@ public class SecurityConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-           authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
-           authorizeExchangeSpec.anyExchange().permitAll();
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/users/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/medias/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/contents/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/categories/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/comments/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/likes/**").hasRole(ROLE_USER);
+            authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
+            authorizeExchangeSpec.pathMatchers("/api/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.anyExchange().permitAll();
         });
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
@@ -42,7 +52,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private ReactiveJwtAuthenticationConverter reactiveConverter(){
+    private ReactiveJwtAuthenticationConverter reactiveConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles");
