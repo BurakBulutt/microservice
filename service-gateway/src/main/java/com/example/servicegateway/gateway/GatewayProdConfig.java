@@ -6,8 +6,6 @@ import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
-import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
-import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +24,7 @@ public class GatewayProdConfig {
     public RouteLocator routeConfig(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(predicateSpec -> predicateSpec
-                        .path("/api/medias/**", "/api/contents/**", "/api/categories/**")
+                        .path("/api/xml/**","/api/medias/**", "/api/contents/**", "/api/categories/**")
                         .filters(filterSpec -> filterSpec.rewritePath("/api/(?<segment>.*)", "/${segment}")
                                 .addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .circuitBreaker(config -> config

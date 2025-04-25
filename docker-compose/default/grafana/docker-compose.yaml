@@ -215,6 +215,7 @@ services:
 
 networks:
   app-network:
+    name: app_network_default
     external: true
 
 volumes:

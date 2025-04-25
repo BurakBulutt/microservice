@@ -24,7 +24,7 @@ public class GatewayConfig {
     public RouteLocator routeConfig(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(predicateSpec -> predicateSpec
-                        .path("/api/medias/**", "/api/contents/**", "/api/categories/**")
+                        .path("/api/xml/**","/api/medias/**", "/api/contents/**", "/api/categories/**")
                         .filters(filterSpec -> filterSpec.rewritePath("/api/(?<segment>.*)", "/${segment}")
                                 .addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .circuitBreaker(config -> config

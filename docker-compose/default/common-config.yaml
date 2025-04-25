@@ -4,11 +4,10 @@ services:
       - app-network
 
   base-config:
+    mem_limit: 512m
+    cpus: '0.5'
     extends:
       service: network-deploy-service
-    mem_limit: 512m
-    cpus: "0.5"
-    restart: on-failure
 
   app-base-config:
     extends:

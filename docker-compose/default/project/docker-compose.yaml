@@ -23,7 +23,7 @@ services:
     container_name: service-authserver
     ports:
       - "8090:8080"
-      - "9000:9000"
+      - "9000"
     volumes:
       - keycloak_data:/opt/bitnami/keycloak
     depends_on:
@@ -199,7 +199,8 @@ services:
 
 networks:
   app-network:
-    external: true
+    name: app_network_default
+    driver: bridge
 
 volumes:
   postgres_data:

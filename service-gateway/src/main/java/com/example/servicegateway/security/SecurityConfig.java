@@ -29,14 +29,10 @@ public class SecurityConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/users/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/medias/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/contents/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/categories/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/comments/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/likes/**").hasRole(ROLE_USER);
             authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
-            authorizeExchangeSpec.pathMatchers("/api/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/contents/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/medias/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/users/**").hasRole(ROLE_ADMIN);
             authorizeExchangeSpec.anyExchange().permitAll();
         });
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
