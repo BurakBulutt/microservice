@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: service-media
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
   datasource:
     username: ${DB_USER:media_admin}
     password: ${DB_PASSWORD:Media_admin123}
@@ -102,6 +107,7 @@ management:
 logging:
   level:
     com.example.servicemedia: debug
+    org.springframework.batch.core: debug
 info:
   application:
     name: service-media

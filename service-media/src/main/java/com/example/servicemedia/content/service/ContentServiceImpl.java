@@ -10,8 +10,11 @@ import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.content.repo.ContentRepository;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
+import com.example.servicemedia.media.dto.MediaDto;
+import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.example.servicemedia.media.mapper.MediaServiceMapper;
 import com.example.servicemedia.media.model.Media;
+import com.example.servicemedia.media.model.MediaSource;
 import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.util.rest.MessageResource;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -46,17 +47,17 @@ public class ContentServiceImpl implements ContentService {
 
 
     @Override
-    @Cacheable(cacheNames = "contentPageCache" ,key = "'content-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
+    @Cacheable(cacheNames = "contentPageCache", key = "'content-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<ContentDto> getAll(Pageable pageable) {
         log.info("Getting all contents");
         return repository.findAll(pageable).map(this::toContentDto);
     }
 
     @Override
-    @Cacheable(cacheNames = "contentPageCache" ,key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()",condition = "#categoryId == null and #name == null")
-    public Page<ContentDto> filter(Pageable pageable,String categoryId,String name) {
-        log.info("Getting filtered contents: [category: {}, name: {}]",categoryId,name);
-        return repository.filter(name,categoryId,pageable).map(this::toContentDto);
+    @Cacheable(cacheNames = "contentPageCache", key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()", condition = "#categoryId == null and #name == null")
+    public Page<ContentDto> filter(Pageable pageable, String categoryId, String name) {
+        log.info("Getting filtered contents: [category: {}, name: {}]", categoryId, name);
+        return repository.filter(name, categoryId, pageable).map(this::toContentDto);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     @Cacheable(key = "'content-slug:' + #slug")
     public ContentDto getBySlug(String slug) {
-        log.info("Getting content by slug: {}",slug);
+        log.info("Getting content by slug: {}", slug);
         return repository.findBySlug(slug).map(content -> {
             ContentDto dto = toContentDto(content);
             dto.setMedias(content.getMedias().stream().map(MediaServiceMapper::toDto).toList());
@@ -83,13 +84,75 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     @Transactional
-    public void save(ContentDto contentDto) {
+    public ContentDto save(ContentDto contentDto) {
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
                 .map(CategoryDto::getId)
                 .collect(Collectors.toSet());
-        log.warn("Saving content: {}",contentDto);
-        Content content = repository.save(ContentServiceMapper.toEntity(new Content(), contentDto));
-        content.setCategories(categoryService.getAllByIds(requestCategoryIds).stream().toList());
+        log.warn("Saving content: {}", contentDto);
+        List<Category> categories = categoryService.getAllByIds(requestCategoryIds).stream().toList();
+        Content content = ContentServiceMapper.toEntity(new Content(), contentDto);
+        content.setCategories(categories);
+        return ContentServiceMapper.toDto(repository.save(content));
+    }
+
+    @Override
+    @Transactional
+    public void saveContentsBulk(List<ContentDto> contentDtoList) {
+        log.info("Contents are Saving: {}", contentDtoList.toString());
+        List<Content> contentList = new ArrayList<>();
+
+        contentDtoList.forEach(contentDto -> {
+            contentDto.setSlug(slugGenerator(contentDto.getName()));
+            Content content = ContentServiceMapper.toEntity(new Content(), contentDto);
+
+            List<Media> medias = new ArrayList<>();
+            content.setMedias(medias);
+
+            List<MediaDto> mediaDtoList = contentDto.getMedias();
+            mediaDtoList.forEach(mediaDto -> {
+                Media media = new Media();
+                media.setDescription(mediaDto.getDescription());
+                media.setCount(mediaDto.getCount());
+                media.setPublishDate(mediaDto.getPublishDate());
+                media.setNumberOfViews(0);
+                media.setContent(content);
+                media.setName(content.getName() + " " + media.getCount() + ". Bölüm");
+                media.setSlug(slugGenerator(media.getName()));
+
+                List<MediaSource> mediaSources = new ArrayList<>();
+                media.setMediaSources(mediaSources);
+
+                List<MediaSourceDto> mediaSourceDtoList = mediaDto.getMediaSourceList();
+                mediaSourceDtoList.forEach(mediaSourceDto -> {
+                    MediaSource mediaSource = new MediaSource();
+                    mediaSource.setMedia(media);
+                    mediaSource.setUrl(mediaSourceDto.getUrl());
+                    mediaSource.setFanSub(mediaSourceDto.getFanSub());
+                    mediaSource.setType(mediaSourceDto.getType());
+
+                    mediaSources.add(mediaSource);
+                });
+                medias.add(media);
+            });
+
+            Set<String> categoryIds = new HashSet<>();
+
+            List<CategoryDto> categoryDtoList = contentDto.getCategories();
+            categoryDtoList.forEach(categoryDto -> {
+                Optional<Category> category = categoryService.getByName(categoryDto.getName()).stream().findAny();
+                category.ifPresentOrElse(category1 -> categoryIds.add(category1.getId()), () -> {
+                    categoryDto.setSlug(slugGenerator(categoryDto.getName()));
+                    CategoryDto dto1 = categoryService.save(categoryDto);
+                    categoryIds.add(dto1.getId());
+                });
+            });
+
+            List<Category> categories = categoryService.getAllByIds(categoryIds).stream().toList();
+            content.setCategories(categories);
+
+            contentList.add(content);
+        });
+        repository.saveAll(contentList);
     }
 
     @Override
@@ -115,7 +178,7 @@ public class ContentServiceImpl implements ContentService {
         if (!willSaveCategories.isEmpty()) {
             categorySet.addAll(categoryService.getAllByIds(willSaveCategories));
         }
-        log.warn("Updating content: {}",id);
+        log.warn("Updating content: {}", id);
         return ContentServiceMapper.toDto(repository.save(ContentServiceMapper.toEntity(content, contentDto)));
     }
 
@@ -153,5 +216,14 @@ public class ContentServiceImpl implements ContentService {
             dto.setLikeCount(response.getBody());
         }
         return dto;
+    }
+
+    private String slugGenerator(String name) {
+        return name
+                .toLowerCase()
+                .trim()
+                .replaceAll("[^\\w\\s-]", "")
+                .replaceAll("[\\s_-]+", "-")
+                .replaceAll("^-+|-+$", "");
     }
 }

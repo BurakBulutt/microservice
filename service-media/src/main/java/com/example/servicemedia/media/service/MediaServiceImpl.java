@@ -86,7 +86,7 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    public void save(MediaDto mediaDto) {
+    public MediaDto save(MediaDto mediaDto) {
         Media media = new Media();
         media.setMediaSources(Collections.emptyList());
         Content content = contentService.findById(mediaDto.getContent().getId());
@@ -94,7 +94,43 @@ public class MediaServiceImpl implements MediaService {
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
         mediaDto.setNumberOfViews(0);
         log.warn("Saving media: {}", mediaDto);
-        mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto));
+        return MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+    }
+
+    @Override
+    @Transactional
+    public void saveMediasBulk(List<MediaDto> mediaDtoList) {
+        log.info("Medias are Saving: {}",mediaDtoList.toString());
+        List<Media> mediaList = new ArrayList<>();
+
+        mediaDtoList.forEach(mediaDto -> {
+            Content content = contentService.findById(mediaDto.getContent().getId());
+
+            Media media = new Media();
+            media.setDescription(mediaDto.getDescription());
+            media.setCount(mediaDto.getCount());
+            media.setPublishDate(mediaDto.getPublishDate());
+            media.setNumberOfViews(0);
+            media.setContent(content);
+            media.setName(content.getName() + " " + media.getCount() + ". Bölüm");
+            media.setSlug(slugGenerator(media.getName()));
+
+            List<MediaSource> mediaSources = new ArrayList<>();
+            media.setMediaSources(mediaSources);
+
+            List<MediaSourceDto> mediaSourceDtoList = mediaDto.getMediaSourceList();
+            mediaSourceDtoList.forEach(mediaSourceDto ->  {
+                MediaSource mediaSource = new MediaSource();
+                mediaSource.setMedia(media);
+                mediaSource.setUrl(mediaSourceDto.getUrl());
+                mediaSource.setFanSub(mediaSourceDto.getFanSub());
+                mediaSource.setType(mediaSourceDto.getType());
+
+                mediaSources.add(mediaSource);
+            });
+            mediaList.add(media);
+        });
+        mediaRepository.saveAll(mediaList);
     }
 
     @Override

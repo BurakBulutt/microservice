@@ -20,9 +20,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -61,6 +61,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public List<Category> getByName(String name) {
+        return repository.findByNameContainsIgnoreCase(name);
+    }
+
+    @Override
     @Cacheable(key = "'category-slug:' + #slug")
     public CategoryDto getBySlug(String slug) {
         return repository.findBySlug(slug).map(category -> {
@@ -72,8 +77,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void save(CategoryDto categoryDto) {
-        repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto));
+    public CategoryDto save(CategoryDto categoryDto) {
+        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto)));
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.example.servicemedia.category.model.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Set;
 
 public interface CategoryService {
@@ -12,11 +13,14 @@ public interface CategoryService {
     Page<CategoryDto> filter(Pageable pageable,String name);
 
     CategoryDto getById(String id);
+
+    List<Category> getByName(String name);
+
     CategoryDto getBySlug(String slug);
 
     Set<Category> getAllByIds(Set<String> ids);
 
-    void save(CategoryDto categoryDto);
+    CategoryDto save(CategoryDto categoryDto);
     CategoryDto update(String id, CategoryDto categoryDto);
     void delete(String id);
 }

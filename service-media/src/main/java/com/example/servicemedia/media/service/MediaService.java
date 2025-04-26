@@ -17,7 +17,8 @@ public interface MediaService {
     MediaDto getById(String id);
     MediaDto getBySlug(String slug);
 
-    void save(MediaDto mediaDto);
+    MediaDto save(MediaDto mediaDto);
+    void saveMediasBulk(List<MediaDto> mediaDtoList);
     MediaDto update(String id, MediaDto mediaDto);
     void delete(String id);
     List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request);

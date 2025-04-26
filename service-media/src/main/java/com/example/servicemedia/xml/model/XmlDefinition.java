@@ -9,11 +9,15 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class XmlDefinition extends AbstractEntity {
+    private String fileName;
     @Enumerated(EnumType.STRING)
     private DefinitionType type;
-    private String xmlName;
-    private Boolean success =  Boolean.FALSE;
+    @Lob
+    @Column(nullable = false)
+    private byte[] xmlFile;
+    private Boolean success = Boolean.FALSE;
+    private String errorMessage;
 }

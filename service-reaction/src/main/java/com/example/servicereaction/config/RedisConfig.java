@@ -36,8 +36,8 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheWriter(cacheWriter)
                 .cacheDefaults(defaultCacheConfig())
-                .withCacheConfiguration("commentCache", commentCacheConfig())
-                .withCacheConfiguration("commentPageCache", commentPageCacheConfig())
+                .withCacheConfiguration("commentCache", dtoCacheConfig(CommentDto.class))
+                .withCacheConfiguration("commentPageCache", pageCacheConfig(CommentDto.class))
                 .disableCreateOnMissingCache()
                 .enableStatistics()
                 .build();
@@ -83,20 +83,25 @@ public class RedisConfig {
                 .prefixCacheNameWith(prefix + "::");
     }
 
-
-    private RedisCacheConfiguration commentPageCacheConfig() {
-        ObjectMapper mapper = serializerMapper(CommentDto.class);
-
+    private RedisCacheConfiguration dtoCacheConfig(Class<?> clazz) {
         return defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(30))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)))
-                .enableTimeToIdle();
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(clazz)));
     }
 
-    private RedisCacheConfiguration commentCacheConfig() {
+    private RedisCacheConfiguration pageCacheConfig(Class<?> clazz) {
+        ObjectMapper mapper = serializerMapper(clazz);
+
         return defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(30))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(CommentDto.class)))
-                .enableTimeToIdle();
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)));
+    }
+
+    private RedisCacheConfiguration listCacheConfig(Class<?> clazz) {
+        ObjectMapper mapper = serializerMapper(clazz);
+
+        return defaultCacheConfig()
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,List.class)));
     }
 }

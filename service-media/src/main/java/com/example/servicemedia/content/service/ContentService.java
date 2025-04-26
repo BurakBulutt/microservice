@@ -5,6 +5,8 @@ import com.example.servicemedia.content.model.Content;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 
 public interface ContentService {
     Page<ContentDto> getAll(Pageable pageable);
@@ -15,7 +17,8 @@ public interface ContentService {
     ContentDto getById(String id);
     ContentDto getBySlug(String slug);
 
-    void save(ContentDto contentDto);
+    ContentDto save(ContentDto contentDto);
+    void saveContentsBulk(List<ContentDto> contentDtoList);
     ContentDto update(String id, ContentDto contentDto);
     void delete(String id);
 }
