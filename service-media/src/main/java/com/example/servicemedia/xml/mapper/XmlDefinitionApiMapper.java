@@ -2,7 +2,6 @@ package com.example.servicemedia.xml.mapper;
 
 import com.example.servicemedia.xml.api.XmlDefinitionResponse;
 import com.example.servicemedia.xml.dto.XmlDefinitionDto;
-import com.example.servicemedia.xml.model.XmlDefinition;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +11,7 @@ public class XmlDefinitionApiMapper {
 
     public static XmlDefinitionResponse toResponse(XmlDefinitionDto xmlDefinitionDto) {
         return XmlDefinitionResponse.builder()
+                .id(xmlDefinitionDto.getId())
                 .fileName(xmlDefinitionDto.getFileName())
                 .success(xmlDefinitionDto.getSuccess())
                 .type(xmlDefinitionDto.getType())

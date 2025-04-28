@@ -11,7 +11,7 @@ public interface CommentService {
     Page<CommentDto> filter(Pageable pageable,String targetId);
     CommentDto getById(String id);
 
-    void save(CommentDto commentDto);
+    CommentDto save(CommentDto commentDto);
     CommentDto update(String id, CommentDto commentDto);
 
     void deleteAllByTargetIdIn(Set<String> targetIds);

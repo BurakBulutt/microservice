@@ -130,7 +130,25 @@ public class MediaServiceImpl implements MediaService {
             });
             mediaList.add(media);
         });
-        mediaRepository.saveAll(mediaList);
+
+        try {
+            List<Media> chunkList = new ArrayList<>();
+
+            for (int i = 0; i < mediaList.size(); i++) {
+                chunkList.add(mediaList.get(i));
+                if (i % 10 == 9) {
+                    mediaRepository.saveAllAndFlush(chunkList);
+                    chunkList.clear();
+                }
+            }
+
+            if (!chunkList.isEmpty()) {
+                mediaRepository.saveAllAndFlush(chunkList);
+            }
+        } catch (Exception e) {
+            log.error("Media bulk save failing : {}",e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

@@ -57,8 +57,14 @@ management:
   tracing:
     sampling:
       probability: 1.0
-    enabled: true
+    enabled: false
   otlp:
+    logging:
+      export:
+        enabled: false
+    metrics:
+      export:
+        enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
 resilience4j:

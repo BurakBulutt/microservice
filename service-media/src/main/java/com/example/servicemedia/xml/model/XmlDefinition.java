@@ -19,5 +19,6 @@ public class XmlDefinition extends AbstractEntity {
     @Column(nullable = false)
     private byte[] xmlFile;
     private Boolean success = Boolean.FALSE;
+    @Column(columnDefinition = "TEXT")
     private String errorMessage;
 }

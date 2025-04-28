@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void save(CreateUserRequest request) {
+    public UserRepresentation save(CreateUserRequest request) {
         UserRepresentation userRepresentation = new UserRepresentation();
         userRepresentation.setUsername(request.username());
         userRepresentation.setFirstName(request.firstName());
@@ -101,6 +101,8 @@ public class UserServiceImpl implements UserService {
         if (response.getStatus() >= 400) {
             throw new WebApplicationException(response);
         }
+
+        return usersResource.searchByUsername(userRepresentation.getUsername(), Boolean.TRUE).stream().findFirst().get();
     }
 
     @Override

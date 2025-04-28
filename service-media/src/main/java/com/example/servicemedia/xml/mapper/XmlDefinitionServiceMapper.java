@@ -10,6 +10,7 @@ public class XmlDefinitionServiceMapper {
 
     public static XmlDefinitionDto toDto(XmlDefinition xmlDefinition) {
         return XmlDefinitionDto.builder()
+                .id(xmlDefinition.getId())
                 .fileName(xmlDefinition.getFileName())
                 .xmlFile(xmlDefinition.getXmlFile())
                 .success(xmlDefinition.getSuccess())

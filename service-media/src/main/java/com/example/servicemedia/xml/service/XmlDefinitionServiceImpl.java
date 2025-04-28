@@ -9,10 +9,15 @@ import com.example.servicemedia.xml.mapper.XmlDefinitionServiceMapper;
 import com.example.servicemedia.xml.model.XmlDefinition;
 import com.example.servicemedia.xml.repo.XmlDefinitionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobInstance;
+import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -34,11 +39,10 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     @Override
     @Transactional(readOnly = true)
     public XmlDefinition getById(String id) {
-        return repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,XmlDefinition.class.getSimpleName(),id));
+        return repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
     }
 
     @Override
-    @Transactional
     public void save(XmlDefinitionRequest request) throws IOException {
         byte[] file = Base64.getDecoder().decode(request.base64());
 
@@ -57,7 +61,7 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void update(XmlDefinition definition) {
         repository.save(definition);
     }
@@ -65,14 +69,14 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     @Override
     @Transactional
     public void delete(String id) {
-        XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,XmlDefinition.class.getSimpleName(),id));
+        XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
         repository.delete(xmlDefinition);
     }
 
     @Override
     @Transactional(readOnly = true)
     public void startJob(String id) {
-        XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,XmlDefinition.class.getSimpleName(),id));
+        XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
         eventPublisher.publishEvent(new StartJobEvent(xmlDefinition.getId()));
     }
 

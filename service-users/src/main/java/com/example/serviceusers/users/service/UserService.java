@@ -13,7 +13,7 @@ public interface UserService {
     UserRepresentation getByUsername(String username);
     UserRepresentation getById(String id);
 
-    void save(CreateUserRequest request);
+    UserRepresentation save(CreateUserRequest request);
     UserRepresentation update(String id, UpdateUserRequest request);
     void delete(String id);
     void resetPassword(String id);

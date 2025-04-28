@@ -41,25 +41,24 @@ public class XmlDefinitionListener {
     @Scheduled(cron = "0 0 3 * * *")
     public void restartFailedJobs() {
         log.info("Starting to check for FAILED jobs to restart...");
-        for (String jobName : jobExplorer.getJobNames()) {
-            List<JobExecution> executions = jobExplorer.findRunningJobExecutions(jobName)
-                    .stream()
-                    .filter(execution -> execution.getStatus() == BatchStatus.FAILED)
-                    .toList();
+        final String jobName = "importXmlJob";
+        List<JobExecution> executions = jobExplorer.findRunningJobExecutions(jobName)
+                .stream()
+                .filter(execution -> execution.getStatus() == BatchStatus.FAILED)
+                .toList();
 
-            for (JobExecution execution : executions) {
-                String definitionId = execution.getJobParameters().getString("definitionId");
-                XmlDefinition definition = xmlDefinitionService.getById(definitionId);
-                if (!definition.getSuccess() && definition.getErrorMessage() != null) {
-                    continue;
-                }
-                try {
-                    log.info("Restarting failed job {} with executionId {}", jobName, execution.getId());
-                    jobOperator.restart(execution.getId());
-                } catch (Exception e) {
-                    log.error("Failed to restart job {} with executionId {}. Error: {}", jobName, execution.getId(), e.getMessage());
-                    throw new RuntimeException(e);
-                }
+        for (JobExecution execution : executions) {
+            String definitionId = execution.getJobParameters().getString("definitionId");
+            XmlDefinition definition = xmlDefinitionService.getById(definitionId);
+            if (!definition.getSuccess() && definition.getErrorMessage() != null) {
+                continue;
+            }
+            try {
+                log.info("Restarting failed job {} with executionId {}", jobName, execution.getId());
+                jobOperator.restart(execution.getId());
+            } catch (Exception e) {
+                log.error("Failed to restart job {} with executionId {}. Error: {}", jobName, execution.getId(), e.getMessage());
+                throw new RuntimeException(e);
             }
         }
     }

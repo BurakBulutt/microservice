@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -66,7 +65,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public void save(CommentDto commentDto) {
+    public CommentDto save(CommentDto commentDto) {
         Comment parent = null;
         if (commentDto.getType() == CommentType.REPLY) {
             if (commentDto.getParent().getId() == null) {
@@ -79,7 +78,7 @@ public class CommentServiceImpl implements CommentService {
             }
         }
         log.warn("Saving comment: {}",commentDto);
-        repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent));
+        return CommentServiceMapper.toDto(repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent)), getUser(commentDto.getUser().getId()));
     }
 
     @Override

@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 public class XmlDefinitionResponse {
+    private String id;
     private String fileName;
     private DefinitionType type;
     private Boolean success;

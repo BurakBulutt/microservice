@@ -4,6 +4,7 @@ import com.example.servicemedia.content.dto.ContentDto;
 import com.example.servicemedia.content.service.ContentService;
 import com.example.servicemedia.media.dto.MediaDto;
 import com.example.servicemedia.media.service.MediaService;
+import com.example.servicemedia.util.rest.BaseException;
 import com.example.servicemedia.xml.factory.DefinitionConverterFactory;
 import com.example.servicemedia.xml.converter.ContentDefinitionConverter;
 import com.example.servicemedia.xml.converter.MediaDefinitionConverter;
@@ -17,6 +18,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -31,6 +33,7 @@ import java.io.ByteArrayInputStream;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,6 +45,7 @@ public class XmlBatch {
     private final XmlDefinitionService xmlDefinitionService;
     private final ContentService contentService;
     private final MediaService mediaService;
+    private final MessageSource messageSource;
 
     @Bean
     public Job importXmlJob(Step step1) {
@@ -89,12 +93,19 @@ public class XmlBatch {
                 }
 
             } catch (Exception e) {
+                final String msg;
+                if (e instanceof BaseException) {
+                    msg = messageSource.getMessage(((BaseException) e).getMessageResource().getMessage(),((BaseException) e).getArgs(), Locale.getDefault());
+                }else {
+                    msg = e.getLocalizedMessage();
+                }
                 definition.setSuccess(Boolean.FALSE);
-                definition.setErrorMessage(e.getLocalizedMessage());
-                log.error("Task Failed: {}", e.getLocalizedMessage());
+                definition.setErrorMessage(msg);
+                log.error("Task Failed: {}", msg);
                 throw new RuntimeException(e);
+            } finally {
+                xmlDefinitionService.update(definition);
             }
-            xmlDefinitionService.update(definition);
             return RepeatStatus.FINISHED;
         };
     }

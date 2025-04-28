@@ -33,7 +33,14 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: false
   otlp:
+    logging:
+      export:
+        enabled: false
     metrics:
       export:
         enabled: false

@@ -83,7 +83,7 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
 
             Element mediaSourceElement = (Element) mediaSourceNode;
 
-            SourceType sourceType = parseType(parseText(mediaSourceElement,"sourceType"));
+            SourceType sourceType = parseType(parseText(mediaSourceElement,"type"));
 
             MediaSourceDto mediaSource = new MediaSourceDto();
             mediaSource.setUrl(parseText(mediaSourceElement, "url"));

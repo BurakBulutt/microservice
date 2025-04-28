@@ -152,7 +152,25 @@ public class ContentServiceImpl implements ContentService {
 
             contentList.add(content);
         });
-        repository.saveAll(contentList);
+
+        try {
+            List<Content> chunkList = new ArrayList<>();
+
+            for (int i = 0; i < contentList.size(); i++) {
+                chunkList.add(contentList.get(i));
+                if (i % 10 == 9) {
+                    repository.saveAllAndFlush(chunkList);
+                    chunkList.clear();
+                }
+            }
+
+            if (!chunkList.isEmpty()) {
+                repository.saveAllAndFlush(chunkList);
+            }
+        } catch (Exception e) {
+            log.error("Content bulk save failing : {}",e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
