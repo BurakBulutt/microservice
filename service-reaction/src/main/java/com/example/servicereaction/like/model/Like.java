@@ -11,7 +11,6 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Table(name = "likes",uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "targetId"}))
 public class Like extends AbstractEntity {
     private String userId;

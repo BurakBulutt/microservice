@@ -18,6 +18,11 @@ import static com.example.servicegateway.security.SecurityConstants.ROLE_USER;
 @EnableWebFluxSecurity
 @Profile("prod")
 public class SecurityProdConfig {
+    private final ReactiveJwtAuthenticationConverter jwtAuthenticationConverter;
+
+    public SecurityProdConfig(ReactiveJwtAuthenticationConverter jwtAuthenticationConverter) {
+        this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+    }
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
@@ -25,32 +30,17 @@ public class SecurityProdConfig {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(authorizeExchangeSpec -> {
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/users/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/medias/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/contents/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/categories/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/comments/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers(HttpMethod.GET,"/api/likes/**").hasRole(ROLE_USER);
-            authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
-            authorizeExchangeSpec.pathMatchers("/api/**").hasRole(ROLE_ADMIN);
-            authorizeExchangeSpec.anyExchange().denyAll();
+            authorizeExchangeSpec.pathMatchers("/actuator/**").authenticated();
+            authorizeExchangeSpec.pathMatchers("/users/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/contents/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/medias/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/categories/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.pathMatchers("/comments/**").hasRole(ROLE_ADMIN);
+            authorizeExchangeSpec.anyExchange().authenticated();
         });
         //TODO CORS REQUIRED
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
-                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(reactiveConverter())));
+                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(jwtAuthenticationConverter)));
         return http.build();
-    }
-
-    private ReactiveJwtAuthenticationConverter reactiveConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles");
-
-        ReactiveJwtGrantedAuthoritiesConverterAdapter reactiveJwtGrantedAuthoritiesConverterAdapter =
-                new ReactiveJwtGrantedAuthoritiesConverterAdapter(grantedAuthoritiesConverter);
-
-        ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
-        reactiveJwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(reactiveJwtGrantedAuthoritiesConverterAdapter);
-        return reactiveJwtAuthenticationConverter;
     }
 }

@@ -50,7 +50,7 @@ public class MediaServiceImpl implements MediaService {
     @Cacheable(value = "mediaPageCache" ,key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize()")
     public Page<MediaDto> getAll(Pageable pageable) {
         log.info("Getting all medias");
-        return mediaRepository.findAll(pageable).map(this::toMediaTo);
+        return mediaRepository.findAll(pageable).map(this::toMediaDto);
     }
 
     @Override
@@ -58,21 +58,21 @@ public class MediaServiceImpl implements MediaService {
     public Page<MediaDto> filter(Pageable pageable, String contentId,String name) {
         Specification<Media> specification = Specification.where(MediaSpec.byContentId(contentId)).and(MediaSpec.nameContainsIgnoreCase(name));
         log.info("Getting filtered medias");
-        return mediaRepository.findAll(specification,pageable).map(this::toMediaTo);
+        return mediaRepository.findAll(specification,pageable).map(this::toMediaDto);
     }
 
     @Override
     @Cacheable(key = "'media-id:' + #id")
     public MediaDto getById(String id) {
         log.info("Getting media: {}", id);
-        return mediaRepository.findById(id).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
+        return mediaRepository.findById(id).map(this::toMediaDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
     }
 
     @Override
     @Cacheable(key = "'media-slug:' + #slug")
     public MediaDto getBySlug(String slug) {
         log.info("Getting media with slug: {}", slug);
-        return mediaRepository.findBySlug(slug).map(this::toMediaTo).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), slug));
+        return mediaRepository.findBySlug(slug).map(this::toMediaDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), slug));
     }
 
     @Override
@@ -130,25 +130,8 @@ public class MediaServiceImpl implements MediaService {
             });
             mediaList.add(media);
         });
-
-        try {
-            List<Media> chunkList = new ArrayList<>();
-
-            for (int i = 0; i < mediaList.size(); i++) {
-                chunkList.add(mediaList.get(i));
-                if (i % 10 == 9) {
-                    mediaRepository.saveAllAndFlush(chunkList);
-                    chunkList.clear();
-                }
-            }
-
-            if (!chunkList.isEmpty()) {
-                mediaRepository.saveAllAndFlush(chunkList);
-            }
-        } catch (Exception e) {
-            log.error("Media bulk save failing : {}",e.getLocalizedMessage());
-            throw new RuntimeException(e);
-        }
+        mediaRepository.saveAll(mediaList);
+        mediaRepository.flush();
     }
 
     @Override
@@ -165,8 +148,9 @@ public class MediaServiceImpl implements MediaService {
         Content content = contentService.findById(mediaDto.getContent().getId());
         mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
+
         log.warn("Updating media: {}, updated: {}", id, mediaDto);
-        return MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+        return toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
     }
 
     @Override
@@ -214,7 +198,7 @@ public class MediaServiceImpl implements MediaService {
         log.info("Sending delete media comments message: {}, status: {}", id, deleteComments);
     }
 
-    private MediaDto toMediaTo(Media media) {
+    private MediaDto toMediaDto(Media media) {
         MediaDto dto = MediaServiceMapper.toDto(media);
         dto.setContent(ContentServiceMapper.toDto(media.getContent()));
         dto.setMediaSourceList(media.getMediaSources().stream().map(MediaServiceMapper::toMediaSourceDto).toList());

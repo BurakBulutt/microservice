@@ -91,7 +91,7 @@ public class XmlBatch {
                     }
                     default -> throw new IllegalArgumentException("Unsupported definition type: " + definition.getType());
                 }
-
+                inputStream.close();
             } catch (Exception e) {
                 final String msg;
                 if (e instanceof BaseException) {

@@ -152,25 +152,8 @@ public class ContentServiceImpl implements ContentService {
 
             contentList.add(content);
         });
-
-        try {
-            List<Content> chunkList = new ArrayList<>();
-
-            for (int i = 0; i < contentList.size(); i++) {
-                chunkList.add(contentList.get(i));
-                if (i % 10 == 9) {
-                    repository.saveAllAndFlush(chunkList);
-                    chunkList.clear();
-                }
-            }
-
-            if (!chunkList.isEmpty()) {
-                repository.saveAllAndFlush(chunkList);
-            }
-        } catch (Exception e) {
-            log.error("Content bulk save failing : {}",e.getLocalizedMessage());
-            throw new RuntimeException(e);
-        }
+        repository.saveAll(contentList);
+        repository.flush();
     }
 
     @Override
@@ -197,7 +180,8 @@ public class ContentServiceImpl implements ContentService {
             categorySet.addAll(categoryService.getAllByIds(willSaveCategories));
         }
         log.warn("Updating content: {}", id);
-        return ContentServiceMapper.toDto(repository.save(ContentServiceMapper.toEntity(content, contentDto)));
+
+        return toContentDto(repository.save(ContentServiceMapper.toEntity(content, contentDto)));
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.example.servicemedia.media.api;
 
-import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.example.servicemedia.media.mapper.MediaApiMapper;
 import com.example.servicemedia.media.service.MediaService;
 import lombok.RequiredArgsConstructor;
