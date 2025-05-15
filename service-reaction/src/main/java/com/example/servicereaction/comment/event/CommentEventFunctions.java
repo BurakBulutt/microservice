@@ -26,13 +26,6 @@ public class CommentEventFunctions {
         };
     }
 
-    @Bean
-    public Consumer<Set<String>> deleteCommentsDlq() {
-        return id -> {
-            log.error("Delete comments message processing failed: {}, Message saving to document...",id);
-        };
-    }
-
     @RabbitListener(queues = "deleteComments.${spring.cloud.stream.default.group}.dlq")
     public void deleteCommentsDlq(Message message) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -45,13 +38,6 @@ public class CommentEventFunctions {
         return id -> {
             log.info("Delete user comments message consumed: {}",id);
             service.deleteUserComments(id);
-        };
-    }
-
-    @Bean
-    public Consumer<String> deleteUserCommentsDlq() {
-        return id -> {
-            log.error("Delete user comments message processing failed: {}, Message saving to document...",id);
         };
     }
 

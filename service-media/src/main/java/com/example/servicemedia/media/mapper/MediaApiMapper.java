@@ -1,6 +1,7 @@
 package com.example.servicemedia.media.mapper;
 
 import com.example.servicemedia.content.dto.ContentDto;
+import com.example.servicemedia.media.api.MediaNameResponse;
 import com.example.servicemedia.media.api.MediaRequest;
 import com.example.servicemedia.media.api.MediaResponse;
 import com.example.servicemedia.media.api.MediaSourceResponse;
@@ -25,7 +26,14 @@ public class MediaApiMapper {
                 .publishDate(dto.getPublishDate())
                 .content(dto.getContent())
                 .likeCount(dto.getLikeCount())
-                .numberOfViews(dto.getNumberOfViews())
+                .mediaSourceList(dto.getMediaSourceList())
+                .build();
+    }
+
+    public static MediaNameResponse toNameResponse(MediaDto dto) {
+        return MediaNameResponse.builder()
+                .id(dto.getId())
+                .name(dto.getName())
                 .build();
     }
 

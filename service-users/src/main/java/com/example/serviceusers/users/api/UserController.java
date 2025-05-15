@@ -39,6 +39,11 @@ public class UserController {
         return ResponseEntity.ok(UserMapper.toUserRepresentationResponse(service.getByUsername(username)));
     }
 
+    @GetMapping("count")
+    public ResponseEntity<Integer> count() {
+        return ResponseEntity.ok(service.count());
+    }
+
     @PostMapping
     public ResponseEntity<Void> createUser(@RequestBody @Valid CreateUserRequest request) {
         service.save(request);

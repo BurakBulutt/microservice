@@ -15,7 +15,7 @@ public class UserFallbackFactory implements FallbackFactory<UserFeignClient> {
             @Override
             public ResponseEntity<UserResponse> getById(String id) {
                 log.error("Failed to getting user: {}, Cause: {}",id,cause.getMessage());
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.internalServerError().build();
             }
         };
     }

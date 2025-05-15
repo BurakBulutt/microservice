@@ -1,5 +1,7 @@
 package com.example.servicereaction.like.api;
 
+import com.example.servicereaction.like.enums.LikeTarget;
+import com.example.servicereaction.like.enums.LikeType;
 import com.example.servicereaction.like.mapper.LikeApiMapper;
 import com.example.servicereaction.like.service.LikeService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,11 @@ public class LikeController {
     @GetMapping("like-count/{targetId}")
     public ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable String targetId) {
         return ResponseEntity.ok(LikeApiMapper.toResponse(service.findLikeCount(targetId)));
+    }
+
+    @GetMapping("top-like")
+    public ResponseEntity<String> getTopTarget(@RequestParam LikeType likeType) {
+        return ResponseEntity.ok(service.getTopContentLikeTarget(likeType));
     }
 
     @PostMapping

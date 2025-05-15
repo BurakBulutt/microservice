@@ -1,6 +1,7 @@
 package com.example.servicemedia.content.mapper;
 
 import com.example.servicemedia.category.dto.CategoryDto;
+import com.example.servicemedia.content.api.ContentNameResponse;
 import com.example.servicemedia.content.api.ContentRequest;
 import com.example.servicemedia.content.api.ContentResponse;
 import com.example.servicemedia.content.api.ContentSearchResponse;
@@ -29,6 +30,13 @@ public class ContentApiMapper {
                 .likeCount(dto.getLikeCount())
                 .categories(dto.getCategories())
                 .episodeTime(dto.getEpisodeTime())
+                .build();
+    }
+
+    public static ContentNameResponse toNameResponse(ContentDto dto) {
+        return ContentNameResponse.builder()
+                .id(dto.getId())
+                .name(dto.getName())
                 .build();
     }
 

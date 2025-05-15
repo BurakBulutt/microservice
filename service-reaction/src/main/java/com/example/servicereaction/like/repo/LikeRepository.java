@@ -23,4 +23,12 @@ public interface LikeRepository extends JpaRepository<Like, String> {
     void deleteAllByUserId(String userId);
 
     Optional<Like> findByTargetIdAndUserIdAndLikeType(String targetId, String userId, LikeType likeType);
+
+   /* @Query("SELECT l FROM Like l WHERE l.likeTarget = 'CONTENT' AND l.likeType = :likeType GROUP BY l.targetId ORDER BY COUNT(l) DESC LIMIT 1")
+    Optional<Like> findTopContentLikeTarget(@Param("likeType")  LikeType likeType);
+
+    */
+    @Query(value = "SELECT l.target_id FROM likes l WHERE l.like_target = 'CONTENT' AND l.like_type = :likeType GROUP BY l.target_id ORDER BY COUNT(*) DESC LIMIT 1", nativeQuery = true)
+    Optional<String> findTopContentLikeTarget(@Param("likeType") String likeType);
+
 }

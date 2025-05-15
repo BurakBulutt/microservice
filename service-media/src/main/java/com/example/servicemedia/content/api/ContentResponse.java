@@ -7,6 +7,7 @@ import com.example.servicemedia.media.dto.MediaDto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class ContentResponse {
     private String photoUrl;
     private ContentType type;
     private String subject;
-    private Date startDate;
+    private LocalDate startDate;
     private String slug;
     private List<MediaDto> medias;
     private List<CategoryDto> categories;

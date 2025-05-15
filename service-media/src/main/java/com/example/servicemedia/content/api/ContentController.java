@@ -2,6 +2,7 @@ package com.example.servicemedia.content.api;
 
 import com.example.servicemedia.content.mapper.ContentApiMapper;
 import com.example.servicemedia.content.service.ContentService;
+import com.example.servicemedia.feign.like.LikeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,16 @@ public class ContentController {
     @GetMapping("/slug/{slug}")
     public ResponseEntity<ContentResponse> getBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(ContentApiMapper.toResponse(service.getBySlug(slug)));
+    }
+
+    @GetMapping("top-content-by")
+    public ResponseEntity<ContentNameResponse> getByTop(@RequestParam LikeType likeType) {
+        return ResponseEntity.ok(ContentApiMapper.toNameResponse(service.getByTop(likeType)));
+    }
+
+    @GetMapping("count")
+    public ResponseEntity<Long> getCount() {
+        return ResponseEntity.ok(service.getCount());
     }
 
     @PostMapping

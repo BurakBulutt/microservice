@@ -3,7 +3,6 @@ package com.example.servicemedia.interceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -17,16 +16,11 @@ public class CategoryInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         if (!request.getMethod().equals(HttpMethod.GET.name())) {
-            return true;
+            return HandlerInterceptor.super.preHandle(request, response, handler);
         }
 
         log.info("Category interceptor intervene this request: {}", request.getRequestURL());
 
-        return true;
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        MDC.clear();
+        return HandlerInterceptor.super.preHandle(request, response, handler);
     }
 }

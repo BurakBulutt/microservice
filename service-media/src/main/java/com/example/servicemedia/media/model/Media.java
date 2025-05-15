@@ -5,7 +5,7 @@ import com.example.servicemedia.util.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -19,7 +19,7 @@ public class Media extends AbstractEntity {
     private String description;
     private Integer count;
     @Temporal(TemporalType.DATE)
-    private Date publishDate;
+    private LocalDate publishDate;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_id")
     private Content content;
@@ -27,5 +27,4 @@ public class Media extends AbstractEntity {
     private List<MediaSource> mediaSources;
     @Column(unique = true,nullable = false)
     private String slug;
-    private Integer numberOfViews;
 }

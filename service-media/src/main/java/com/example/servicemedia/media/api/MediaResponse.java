@@ -6,7 +6,7 @@ import com.example.servicemedia.media.dto.MediaSourceDto;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -17,9 +17,8 @@ public class MediaResponse {
     private String description;
     private ContentDto content;
     private Integer count;
-    private Date publishDate;
+    private LocalDate publishDate;
     private String slug;
     private List<MediaSourceDto> mediaSourceList;
     private LikeCountResponse likeCount;
-    private Integer numberOfViews;
 }

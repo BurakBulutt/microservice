@@ -23,7 +23,6 @@ services:
     container_name: service-authserver
     ports:
       - "8090:8080"
-      - "9000"
     volumes:
       - keycloak_data:/opt/bitnami/keycloak
     depends_on:
@@ -74,6 +73,39 @@ services:
       start_period: 15s
     env_file:
       - environments/rabbit.env
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  mongodb:
+    image: mongo:latest
+    container_name: service-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: [ "CMD", "mongo", "--username", "root", "--password", "example", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    env_file:
+      - environments/mongo.env
+    extends:
+      file: ../common-config.yaml
+      service: base-config
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: service-mongo-express
+    ports:
+      - "8089:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - environments/mongo.env
     extends:
       file: ../common-config.yaml
       service: base-config
@@ -211,3 +243,5 @@ volumes:
     name: compose_redis_data
   rabbit-data:
     name: compose_rabbit_data
+  mongo_data:
+    name: compose_mongo_data

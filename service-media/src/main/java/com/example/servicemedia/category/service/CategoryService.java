@@ -12,6 +12,8 @@ public interface CategoryService {
     Page<CategoryDto> getAll(Pageable pageable);
     Page<CategoryDto> filter(Pageable pageable,String name);
 
+    Long count();
+
     CategoryDto getById(String id);
 
     List<Category> getByName(String name);

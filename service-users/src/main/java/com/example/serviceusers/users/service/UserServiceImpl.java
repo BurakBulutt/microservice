@@ -70,6 +70,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Integer count() {
+        return usersResource.count();
+    }
+
+    @Override
     public UserRepresentation save(CreateUserRequest request) {
         UserRepresentation userRepresentation = new UserRepresentation();
         userRepresentation.setUsername(request.username());

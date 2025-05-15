@@ -44,15 +44,14 @@ public class MediaController {
         return ResponseEntity.ok(MediaApiMapper.toMediaSourceDataResponse(service.getMediaSourcesByMediaId(mediaId)));
     }
 
+    @GetMapping("count")
+    public ResponseEntity<Long> getCount() {
+        return ResponseEntity.ok(service.getCount());
+    }
+
     @PostMapping
     public ResponseEntity<Void> save(@RequestBody MediaRequest request) {
         service.save(MediaApiMapper.toDto(request));
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @PostMapping("{id}/increase-views")
-    public ResponseEntity<Void> increaseNumberOfViews(@PathVariable String id) {
-        service.increaseNumberOfViews(id);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

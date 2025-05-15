@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @NoArgsConstructor
@@ -23,7 +23,7 @@ public class ContentDto {
     private String photoUrl;
     private ContentType type;
     private String subject;
-    private Date startDate;
+    private LocalDate startDate;
     private String slug;
     private List<MediaDto> medias;
     private List<CategoryDto> categories;

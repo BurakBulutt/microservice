@@ -35,6 +35,11 @@ public class CategoryController {
         return ResponseEntity.ok(CategoryApiMapper.toResponse(service.getBySlug(slug)));
     }
 
+    @GetMapping("count")
+    public ResponseEntity<Long> count() {
+        return ResponseEntity.ok(service.count());
+    }
+
     @PostMapping
     public ResponseEntity<Void> save(@RequestBody CategoryRequest request) {
         service.save(CategoryApiMapper.toDto(request));

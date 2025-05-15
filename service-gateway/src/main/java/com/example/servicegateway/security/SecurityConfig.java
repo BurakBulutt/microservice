@@ -43,7 +43,7 @@ public class SecurityConfig {
         });
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of(exchange.getRequest().getHeaders().getOrigin()));
+            corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));

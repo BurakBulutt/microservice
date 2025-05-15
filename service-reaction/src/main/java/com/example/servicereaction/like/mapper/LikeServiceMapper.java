@@ -13,6 +13,7 @@ public class LikeServiceMapper {
                 .id(like.getId())
                 .userId(like.getUserId())
                 .likeType(like.getLikeType())
+                .likeTarget(like.getLikeTarget())
                 .targetId(like.getTargetId())
                 .build();
     }
@@ -20,6 +21,7 @@ public class LikeServiceMapper {
     public static Like toEntity(Like like,LikeDto dto) {
         like.setUserId(dto.getUserId());
         like.setLikeType(dto.getLikeType());
+        like.setLikeTarget(dto.getLikeTarget());
         like.setTargetId(dto.getTargetId());
 
         return like;

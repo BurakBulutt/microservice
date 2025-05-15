@@ -11,4 +11,7 @@ public interface LikeFeignClient {
 
     @GetMapping("like-count/{targetId}")
     ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable String targetId);
+
+    @GetMapping("top-like")
+    ResponseEntity<String> getTopTarget(@RequestParam LikeType likeType);
 }

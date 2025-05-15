@@ -1,5 +1,6 @@
 package com.example.servicereaction.util;
 
+import com.example.servicereaction.auditlistener.service.EntityChangesListener;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -7,12 +8,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 @Getter
 @EqualsAndHashCode(of = "id")
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners({AuditingEntityListener.class, EntityChangesListener.class})
 public abstract class AbstractEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -20,9 +21,9 @@ public abstract class AbstractEntity {
 
     @CreatedDate
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    private LocalDateTime created;
 
     @LastModifiedDate
     @Temporal(TemporalType.TIMESTAMP)
-    private Date modified;
+    private LocalDateTime modified;
 }

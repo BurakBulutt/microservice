@@ -19,4 +19,6 @@ public interface UserService {
     void resetPassword(String id);
     void verifyEmail(String id);
 
+    Integer count();
+
 }

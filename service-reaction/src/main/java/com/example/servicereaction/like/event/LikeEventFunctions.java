@@ -24,17 +24,10 @@ public class LikeEventFunctions {
         };
     }
 
-    @Bean
-    public Consumer<Set<String>> deleteLikesDlq() {
-        return ids -> {
-            log.error("Delete likes message processing failed: {}, Message saving to document...",ids);
-        };
-    }
-
     @RabbitListener(queues = "deleteLikes.${spring.cloud.stream.default.group}.dlq")
     public void deleteLikesDlq(Message message) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        Set<?> payload = mapper.readValue(message.getBody(), Set.class);
+        final Set<?> payload = mapper.readValue(message.getBody(), Set.class);
         log.error("Delete likes message processing failed: {}, Message saving to document...",payload);
     }
 
@@ -43,13 +36,6 @@ public class LikeEventFunctions {
         return id -> {
             log.info("Delete user likes message consumed: {}",id);
             service.deleteUserLikes(id);
-        };
-    }
-
-    @Bean
-    public Consumer<String> deleteUserLikesDlq() {
-        return id -> {
-            log.error("Delete user likes message processing failed: {}, Message saving to document...",id);
         };
     }
 

@@ -68,10 +68,11 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto save(CommentDto commentDto) {
         Comment parent = null;
         if (commentDto.getType() == CommentType.REPLY) {
-            if (commentDto.getParent().getId() == null) {
+            if (commentDto.getParent().getId() == null || commentDto.getTargetId() != null) {
                 throw new BaseException(MessageResource.BAD_REQUEST);
             }
             parent = repository.findById(commentDto.getParent().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), commentDto.getParent().getId()));
+            commentDto.setTargetId(parent.getTargetId());
         } else {
             if (commentDto.getParent().getId() != null) {
                 throw new BaseException(MessageResource.BAD_REQUEST);
@@ -85,7 +86,7 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Caching(
             put = @CachePut(key = "'content-id:' + #id"),
-            evict = @CacheEvict(value = "contentPageCache", allEntries = true)
+            evict = @CacheEvict(value = "commentPageCache", allEntries = true)
     )
     public CommentDto update(String id, CommentDto commentDto) {
         Comment comment = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Comment.class.getSimpleName(), id));
@@ -106,7 +107,7 @@ public class CommentServiceImpl implements CommentService {
         repository.delete(comment);
 
         log.warn("Deleting comment likes: {}",id);
-        likeService.deleteLikesByTargetId(comment.getTargetId());
+        likeService.deleteLikesByTargetId(id);
     }
 
     @Override
@@ -155,7 +156,7 @@ public class CommentServiceImpl implements CommentService {
     private CommentDto toCommentDto(Comment comment) {
         CommentDto dto = CommentServiceMapper.toDto(comment, getUser(comment.getUserId()));
         dto.setLikeCount(likeService.findLikeCount(comment.getId()));
-        if (comment.getParent() != null && comment.getType() == CommentType.REPLY) {
+        if (comment.getParent() != null) {
             CommentDto parent = CommentServiceMapper.toDto(comment.getParent(), getUser(comment.getParent().getUserId()));
             parent.setLikeCount(likeService.findLikeCount(comment.getParent().getId()));
             dto.setParent(parent);
@@ -170,6 +171,6 @@ public class CommentServiceImpl implements CommentService {
 
     private UserResponse getUser(String userId) {
         ResponseEntity<UserResponse> userResponse = userFeignClient.getById(userId);
-        return userResponse.getBody() != null ? userResponse.getBody() : null;
+        return userResponse.hasBody() ? userResponse.getBody() : null;
     }
 }

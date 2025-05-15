@@ -1,5 +1,6 @@
 package com.example.servicemedia.media.service;
 
+import com.example.servicemedia.content.enums.ContentType;
 import com.example.servicemedia.content.mapper.ContentServiceMapper;
 import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.content.service.ContentService;
@@ -76,12 +77,8 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Cacheable(value = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
-    public List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId) {
-        log.info("Getting media media sources: {}", mediaId);
-        return mediaSourceRepository.findAllByMediaId(mediaId).stream()
-                .map(MediaServiceMapper::toMediaSourceDto)
-                .toList();
+    public Long getCount() {
+        return mediaRepository.count();
     }
 
     @Override
@@ -90,9 +87,8 @@ public class MediaServiceImpl implements MediaService {
         Media media = new Media();
         media.setMediaSources(Collections.emptyList());
         Content content = contentService.findById(mediaDto.getContent().getId());
-        mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
+        mediaDto.setName(nameGenerator(content.getName(),mediaDto.getCount(),content.getType()));
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
-        mediaDto.setNumberOfViews(0);
         log.warn("Saving media: {}", mediaDto);
         return MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
     }
@@ -110,9 +106,8 @@ public class MediaServiceImpl implements MediaService {
             media.setDescription(mediaDto.getDescription());
             media.setCount(mediaDto.getCount());
             media.setPublishDate(mediaDto.getPublishDate());
-            media.setNumberOfViews(0);
             media.setContent(content);
-            media.setName(content.getName() + " " + media.getCount() + ". Bölüm");
+            media.setName(nameGenerator(content.getName(),media.getCount(),content.getType()));
             media.setSlug(slugGenerator(media.getName()));
 
             List<MediaSource> mediaSources = new ArrayList<>();
@@ -141,12 +136,12 @@ public class MediaServiceImpl implements MediaService {
                     @CachePut(key = "'media-id:' + #id"),
                     @CachePut(key = "'media-slug:' + #result.slug")
             },
-            evict = @CacheEvict(value = {"mediaPageCache,","mediaSourceListCache"}, allEntries = true)
+            evict = @CacheEvict(value = {"mediaPageCache"}, allEntries = true)
     )
     public MediaDto update(String id, MediaDto mediaDto) {
         Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
         Content content = contentService.findById(mediaDto.getContent().getId());
-        mediaDto.setName(content.getName() + " " + mediaDto.getCount() + ". Bölüm");
+        mediaDto.setName(nameGenerator(content.getName(),media.getCount(),content.getType()));
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
 
         log.warn("Updating media: {}, updated: {}", id, mediaDto);
@@ -154,15 +149,23 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
+    public List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId) {
+        log.info("Getting media media sources: {}", mediaId);
+        return mediaSourceRepository.findAllByMediaId(mediaId).stream()
+                .map(MediaServiceMapper::toMediaSourceDto)
+                .toList();
+    }
+
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @CachePut(value = "mediaSourceListCache" ,key = "'media-source:' + #mediaId")
     public List<MediaSourceDto> updateMediaSources(String mediaId, MediaSourceRequest request) {
         Media media = mediaRepository.findById(mediaId).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), mediaId));
+        List<MediaSource> mediaSourceList = mediaSourceRepository.findAllByMediaId(media.getId());
         log.warn("Media sources clearing: {}", mediaId);
-        media.getMediaSources().clear();
-        mediaRepository.flush();
+        mediaSourceRepository.deleteAll(mediaSourceList);
+        mediaSourceRepository.flush();
         log.warn("Saving new media sources : {}", request.mediaSources().toString());
-        media.getMediaSources().addAll(request.mediaSources().stream()
+        List<MediaSource> savedSources = mediaSourceRepository.saveAll(request.mediaSources().stream()
                 .map(mediaSourceDto -> new MediaSource(mediaSourceDto.getUrl(), mediaSourceDto.getType(), media, mediaSourceDto.getFanSub()))
                 .toList());
         return media.getMediaSources().stream().map(MediaServiceMapper::toMediaSourceDto).toList();
@@ -170,17 +173,8 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    public void increaseNumberOfViews(String id) {
-        Media media = mediaRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Media.class.getSimpleName(), id));
-        media.setNumberOfViews(media.getNumberOfViews() + 1);
-        log.warn("Media views increased: {}, view count: {}", id, media.getNumberOfViews());
-        mediaRepository.save(media);
-    }
-
-    @Override
-    @Transactional
     @Caching(evict = {
-            @CacheEvict(value = {"mediaPageCache","mediaSourceListCache"}, allEntries = true),
+            @CacheEvict(value = {"mediaPageCache"}, allEntries = true),
             @CacheEvict(key = "'media-id:' + #id")
     })
     public void delete(String id) {
@@ -203,7 +197,7 @@ public class MediaServiceImpl implements MediaService {
         dto.setContent(ContentServiceMapper.toDto(media.getContent()));
         dto.setMediaSourceList(media.getMediaSources().stream().map(MediaServiceMapper::toMediaSourceDto).toList());
         ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(media.getId());
-        if (response.getBody() != null) {
+        if (response.hasBody()) {
             dto.setLikeCount(response.getBody());
         }
         return dto;
@@ -216,5 +210,15 @@ public class MediaServiceImpl implements MediaService {
                 .replaceAll("[^\\w\\s-]", "")
                 .replaceAll("[\\s_-]+", "-")
                 .replaceAll("^-+|-+$", "");
+    }
+
+    private String nameGenerator(String contentName, int count, ContentType type) {
+        final String name;
+        switch (type) {
+            case MOVIE -> name = contentName;
+            case SERIES -> name = contentName + " " + count + ". Bölüm";
+            default -> throw new IllegalStateException("Unexpected value: " + type);
+        }
+        return name;
     }
 }

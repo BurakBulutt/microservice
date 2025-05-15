@@ -19,7 +19,6 @@ public class MediaServiceMapper {
                 .count(media.getCount())
                 .publishDate(media.getPublishDate())
                 .slug(media.getSlug())
-                .numberOfViews(media.getNumberOfViews())
                 .build();
     }
 
@@ -40,7 +39,6 @@ public class MediaServiceMapper {
         media.setPublishDate(dto.getPublishDate());
         media.setSlug(dto.getSlug());
         media.setContent(content);
-        media.setNumberOfViews(dto.getNumberOfViews());
 
         return media;
     }

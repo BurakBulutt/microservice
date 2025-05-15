@@ -4,7 +4,7 @@ import com.example.servicemedia.content.enums.ContentType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Set;
 
 public record ContentRequest(
@@ -13,7 +13,7 @@ public record ContentRequest(
     String photoUrl,
     ContentType type,
     String subject,
-    Date startDate,
+    LocalDate startDate,
     String slug,
     @NotEmpty(message = "validation.content.category.empty")
     @NotNull(message = "validation.content.category.null")

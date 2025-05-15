@@ -50,6 +50,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public Long count() {
+        return repository.count();
+    }
+
+    @Override
     @Cacheable(key = "'category-id:' + #id")
     public CategoryDto getById(String id) {
         return repository.findById(id).map(CategoryServiceMapper::toDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));

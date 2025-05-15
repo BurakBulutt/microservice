@@ -7,7 +7,7 @@ import com.example.servicemedia.util.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -27,7 +27,7 @@ public class Content extends AbstractEntity {
     @Column(columnDefinition = "TEXT")
     private String subject;
     @Temporal(TemporalType.DATE)
-    private Date startDate;
+    private LocalDate startDate;
     @Column(unique = true,nullable = false)
     private String slug;
     @ManyToMany(fetch = FetchType.LAZY)

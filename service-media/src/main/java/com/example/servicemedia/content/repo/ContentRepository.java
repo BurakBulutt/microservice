@@ -24,5 +24,4 @@ public interface ContentRepository extends JpaRepository<Content, String> {
                     "AND (:name IS NULL OR UPPER(c.name) LIKE UPPER(CONCAT('%',:name,'%')))",
             nativeQuery = true)
     Page<Content> filter(@Param("name") String name, @Param("categoryId") String categoryId, Pageable pageable);
-
 }

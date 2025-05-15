@@ -1,5 +1,6 @@
 package com.example.servicereaction.like.model;
 
+import com.example.servicereaction.like.enums.LikeTarget;
 import com.example.servicereaction.like.enums.LikeType;
 import com.example.servicereaction.util.AbstractEntity;
 import jakarta.persistence.*;
@@ -17,5 +18,8 @@ public class Like extends AbstractEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LikeType likeType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LikeTarget likeTarget;
     private String targetId;
 }

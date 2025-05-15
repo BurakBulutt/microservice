@@ -10,6 +10,7 @@ import com.example.servicemedia.content.model.Content;
 import com.example.servicemedia.content.repo.ContentRepository;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
+import com.example.servicemedia.feign.like.LikeType;
 import com.example.servicemedia.media.dto.MediaDto;
 import com.example.servicemedia.media.dto.MediaSourceDto;
 import com.example.servicemedia.media.mapper.MediaServiceMapper;
@@ -67,6 +68,22 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
+    public ContentDto getByTop(LikeType likeType) {
+        ResponseEntity<String> getByTopTarget = likeFeignClient.getTopTarget(likeType);
+        if (getByTopTarget.hasBody()) {
+            String id = getByTopTarget.getBody();
+            assert id != null;
+            return repository.findById(id).map(this::toContentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
+        }
+        throw new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(),likeType);
+    }
+
+    @Override
+    public Long getCount() {
+        return repository.count();
+    }
+
+    @Override
     public Content findById(String id) {
         return repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
     }
@@ -114,10 +131,17 @@ public class ContentServiceImpl implements ContentService {
                 media.setDescription(mediaDto.getDescription());
                 media.setCount(mediaDto.getCount());
                 media.setPublishDate(mediaDto.getPublishDate());
-                media.setNumberOfViews(0);
                 media.setContent(content);
-                media.setName(content.getName() + " " + media.getCount() + ". Bölüm");
                 media.setSlug(slugGenerator(media.getName()));
+
+                final String name;
+                switch (content.getType()) {
+                    case MOVIE -> name = content.getName();
+                    case SERIES -> name = content.getName() + " " + media.getCount() + ". Bölüm";
+                    default -> throw new IllegalStateException("Unexpected value: " + content.getType());
+                }
+
+                media.setName(name);
 
                 List<MediaSource> mediaSources = new ArrayList<>();
                 media.setMediaSources(mediaSources);
@@ -214,7 +238,7 @@ public class ContentServiceImpl implements ContentService {
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
         dto.setMedias(content.getMedias().stream().map(MediaServiceMapper::toDto).toList());
         ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId());
-        if (response.getBody() != null) {
+        if (response.hasBody()) {
             dto.setLikeCount(response.getBody());
         }
         return dto;

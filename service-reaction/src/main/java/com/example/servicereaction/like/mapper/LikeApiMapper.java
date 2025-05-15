@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LikeApiMapper {
 
-
     public static LikeCountResponse toResponse(LikeCountDto dto) {
         return LikeCountResponse.builder()
                 .targetId(dto.getTargetId())
@@ -26,6 +25,7 @@ public class LikeApiMapper {
                 .userId(request.userId())
                 .targetId(request.targetId())
                 .likeType(request.likeType())
+                .likeTarget(request.likeTarget())
                 .build();
     }
 }

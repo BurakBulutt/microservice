@@ -12,9 +12,6 @@ import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +33,11 @@ public class LikeServiceImpl implements LikeService {
         Boolean isUserLiked = false;
         Boolean isUserDisliked = false;
 
-        final String userId = MDC.get("user");
+        final String user = MDC.get("user");
 
-        if (userId != null && !userId.equals("anonymous")) {
-            isUserLiked = repository.isUserLiked(targetId, userId, LikeType.LIKE);
-            isUserDisliked = repository.isUserLiked(targetId, userId, LikeType.DISLIKE);
+        if (user != null && !user.equals("ANONYMOUS")) {
+            isUserLiked = repository.isUserLiked(targetId, user, LikeType.LIKE);
+            isUserDisliked = repository.isUserLiked(targetId, user, LikeType.DISLIKE);
         }
 
         if (isUserLiked && isUserDisliked) {
@@ -56,6 +53,11 @@ public class LikeServiceImpl implements LikeService {
                 .isUserLiked(isUserLiked)
                 .isUserDisliked(isUserDisliked)
                 .build();
+    }
+
+    @Override
+    public String getTopContentLikeTarget(LikeType likeType) {
+        return repository.findTopContentLikeTarget(likeType.name()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Like.class.getSimpleName()));
     }
 
     @Override

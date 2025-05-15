@@ -15,6 +15,8 @@ import org.w3c.dom.NodeList;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -63,16 +65,10 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
         return null;
     }
 
-    private Date parseDate(String dateStr) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    private LocalDate parseDate(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
         if (dateStr != null) {
-            try {
-                return format.parse(dateStr);
-            } catch (ParseException e) {
-                String msg = e.getLocalizedMessage();
-                log.error("Date parsing failed: {}", msg);
-                throw new RuntimeException(msg);
-            }
+            return LocalDate.parse(dateStr,formatter);
         }
         log.warn("Date string is null");
         return null;

@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @NoArgsConstructor
@@ -21,8 +21,7 @@ public class MediaDto {
     private ContentDto content;
     private Integer count;
     private List<MediaSourceDto> mediaSourceList;
-    private Date publishDate;
+    private LocalDate publishDate;
     private String slug;
     private LikeCountResponse likeCount;
-    private Integer numberOfViews;
 }

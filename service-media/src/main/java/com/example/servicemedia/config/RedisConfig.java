@@ -39,7 +39,6 @@ public class RedisConfig {
                 .withCacheConfiguration("contentCache", dtoCacheConfig(ContentDto.class))
                 .withCacheConfiguration("contentPageCache", pageCacheConfig(ContentDto.class))
                 .withCacheConfiguration("mediaCache", dtoCacheConfig(MediaDto.class))
-                .withCacheConfiguration("mediaSourceListCache", listCacheConfig(MediaSourceDto.class))
                 .withCacheConfiguration("mediaPageCache", pageCacheConfig(MediaDto.class))
                 .withCacheConfiguration("categoryCache", dtoCacheConfig(CategoryDto.class))
                 .withCacheConfiguration("categoryPageCache", pageCacheConfig(CategoryDto.class))
@@ -100,13 +99,5 @@ public class RedisConfig {
         return defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(30))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,Page.class)));
-    }
-
-    private RedisCacheConfiguration listCacheConfig(Class<?> clazz) {
-        ObjectMapper mapper = serializerMapper(clazz);
-
-        return defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(30))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(mapper,List.class)));
     }
 }
