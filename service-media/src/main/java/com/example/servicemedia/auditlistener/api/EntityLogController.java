@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("entity-log")
+@RequestMapping("media-entity-log")
 @RequiredArgsConstructor
 public class EntityLogController {
     private final EntityLogService service;
