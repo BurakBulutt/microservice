@@ -6,6 +6,8 @@ import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,13 @@ import java.time.LocalDateTime;
 @Configuration
 @Profile("prod")
 public class GatewayProdConfig {
+    private final RedisRateLimiter redisRateLimiter;
+    private final KeyResolver keyResolver;
+
+    public GatewayProdConfig(RedisRateLimiter redisRateLimiter, KeyResolver keyResolver) {
+        this.redisRateLimiter = redisRateLimiter;
+        this.keyResolver = keyResolver;
+    }
 
     @Bean
     public RouteLocator routeConfig(RouteLocatorBuilder builder) {
@@ -33,6 +42,9 @@ public class GatewayProdConfig {
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
                                         .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                .requestRateLimiter(config -> config
+                                        .setKeyResolver(keyResolver)
+                                        .setRateLimiter(redisRateLimiter))
                         )
                         .uri("lb://SERVICE-MEDIA"))
                 .route(predicateSpec -> predicateSpec
@@ -45,6 +57,9 @@ public class GatewayProdConfig {
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
                                         .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                .requestRateLimiter(config -> config
+                                        .setKeyResolver(keyResolver)
+                                        .setRateLimiter(redisRateLimiter))
 
                         )
                         .uri("lb://SERVICE-REACTION"))
@@ -58,6 +73,9 @@ public class GatewayProdConfig {
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
                                         .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                .requestRateLimiter(config -> config
+                                        .setKeyResolver(keyResolver)
+                                        .setRateLimiter(redisRateLimiter))
                         )
                         .uri("lb://SERVICE-USERS"))
                 .build();
@@ -68,7 +86,7 @@ public class GatewayProdConfig {
         return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
                 .timeLimiterConfig(TimeLimiterConfig.custom()
-                        .timeoutDuration(Duration.ofSeconds(3L))
+                        .timeoutDuration(Duration.ofSeconds(1L))
                         .cancelRunningFuture(Boolean.TRUE)
                         .build())
                 .build());

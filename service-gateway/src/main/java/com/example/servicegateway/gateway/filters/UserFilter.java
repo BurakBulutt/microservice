@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,6 +27,7 @@ public class UserFilter implements GlobalFilter {
                     ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                             .header("X-User-Principal", username)
                             .build();
+                    logger.info("User: {}", username);
                     return chain.filter(exchange.mutate().request(mutatedRequest).build());
                 });
     }

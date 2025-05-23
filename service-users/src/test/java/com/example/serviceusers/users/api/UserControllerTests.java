@@ -1,6 +1,7 @@
 package com.example.serviceusers.users.api;
 
-import com.example.serviceusers.users.service.UserService;
+import com.example.serviceusers.domain.user.api.UserController;
+import com.example.serviceusers.domain.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.idm.UserRepresentation;
 
@@ -10,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,12 +33,14 @@ public class UserControllerTests {
     @Test
     void getAll_shouldReturnUserRepresentationPage() throws Exception {
         // Arrange
-        UserRepresentation user = new UserRepresentation();
-        user.setId("1");
+        UserRepresentation user1 = new UserRepresentation();
+        user1.setId("1");
+        UserRepresentation user2 = new UserRepresentation();
+        user2.setId("2");
 
         Pageable pageable = PageRequest.of(0, 10);
-        int totalElements = 1;
-        Page<UserRepresentation> page = new PageImpl<>(List.of(user),pageable,totalElements);
+        int totalElements = 2;
+        Page<UserRepresentation> page = new PageImpl<>(List.of(user1,user2),pageable,totalElements);
 
         when(userService.getAll(any(Pageable.class))).thenReturn(page);
 
@@ -49,8 +51,9 @@ public class UserControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.number").value(0))
                 .andExpect(jsonPath("$.page.size").value(10))
-                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.page.totalElements").value(2))
                 .andExpect(jsonPath("$.page.totalPages").value(1))
-                .andExpect(jsonPath("$.content[0].id").value("1"));
+                .andExpect(jsonPath("$.content[0].id").value("1"))
+                .andExpect(jsonPath("$.content[1].id").value("2"));
     }
 }

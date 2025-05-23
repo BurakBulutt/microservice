@@ -1,6 +1,7 @@
 package com.example.servicereaction.util.rest;
 
 
+import com.example.servicereaction.util.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -25,7 +26,7 @@ public class RestExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e,WebRequest request) {
         Map<String,Object> validationError = new HashMap<>();
-        HashSet<Map<String,String>> errors = new HashSet<>();
+        Set<Map<String,String>> errors = new HashSet<>();
         validationError.put("path", request.getDescription(false));
         validationError.put("errors",errors);
 

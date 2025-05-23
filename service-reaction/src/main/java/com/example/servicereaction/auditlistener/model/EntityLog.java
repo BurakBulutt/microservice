@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Document(EntityLog.TABLE)
 @Getter
@@ -22,16 +22,16 @@ import java.time.LocalDate;
 @ToString
 @EntityListeners(AuditingEntityListener.class)
 public class EntityLog {
-    public static final String TABLE = "entity_changes";
+    public static final String TABLE = "entity_log";
 
     @MongoId(FieldType.OBJECT_ID)
     private ObjectId id;
 
     @CreatedDate
-    private LocalDate created;
+    private LocalDateTime created;
 
     @LastModifiedDate
-    private LocalDate updated;
+    private LocalDateTime updated;
 
     @LastModifiedBy
     private String user;
@@ -40,8 +40,11 @@ public class EntityLog {
 
     private String entity;
 
-    public EntityLog(ProcessType process, String entity) {
+    private String entityId;
+
+    public EntityLog(ProcessType process, String entity,String entityId) {
         this.process = process;
         this.entity = entity;
+        this.entityId = entityId;
     }
 }

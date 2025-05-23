@@ -78,10 +78,12 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
+    connection-timeout: 1s
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: 6379
+      connect-timeout: 1s
     mongodb:
       uri: mongodb://${MONGO_USERNAME:root}:${MONGO_PASSWORD:mongodb}@${MONGO_HOST:localhost}:27017/${MONGO_DATABASE:service-reaction}?authSource=admin&authMechanism=SCRAM-SHA-256
 resilience4j:
@@ -97,6 +99,11 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 2
         failure-rate-threshold: 50
         wait-duration-in-open-state: 5s
+        minimum-number-of-calls: 10
+        ignore-exceptions:
+          - com.example.servicereaction.util.exception.BaseException
+          - feign.FeignException.BadRequest
+          - feign.FeignException.NotFound
   retry:
     configs:
       default:
@@ -105,8 +112,9 @@ resilience4j:
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
         ignore-exceptions:
-          - com.example.servicereaction.util.rest.BaseException
+          - com.example.servicereaction.util.exception.BaseException
           - feign.FeignException.BadRequest
+          - feign.FeignException.NotFound
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 20

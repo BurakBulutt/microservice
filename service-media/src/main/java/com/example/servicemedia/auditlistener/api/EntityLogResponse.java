@@ -1,6 +1,7 @@
 package com.example.servicemedia.auditlistener.api;
 
 import com.example.servicemedia.auditlistener.enums.ProcessType;
+import com.example.servicemedia.feign.user.UserResponse;
 import lombok.Builder;
 import lombok.Data;
 import org.bson.types.ObjectId;
@@ -11,4 +12,6 @@ public class EntityLogResponse {
     private ObjectId id;
     private ProcessType process;
     private String entity;
+    private String entityId;
+    private UserResponse user;
 }

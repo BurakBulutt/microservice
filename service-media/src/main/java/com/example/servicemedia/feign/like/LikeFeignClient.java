@@ -1,7 +1,6 @@
 package com.example.servicemedia.feign.like;
 
-import com.example.servicemedia.feign.FeignConfig;
-import com.example.servicemedia.feign.fallback.LikeFallbackFactory;
+import com.example.servicemedia.config.feign.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,45 +1,69 @@
 package com.example.servicereaction.auditlistener.service;
 
 import com.example.servicereaction.auditlistener.enums.ProcessType;
+import com.example.servicereaction.auditlistener.event.CreateEntityLogEvent;
+import com.example.servicereaction.auditlistener.event.DeleteEntityLogEvent;
+import com.example.servicereaction.auditlistener.event.UpdateEntityLogEvent;
 import com.example.servicereaction.auditlistener.model.EntityLog;
 import com.example.servicereaction.auditlistener.repo.EntityLogRepository;
-import com.example.servicereaction.util.AbstractEntity;
+import com.example.servicereaction.util.persistance.AbstractEntity;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.PostUpdate;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-@EnableMongoAuditing(auditorAwareRef = "auditorProvider")
 public class EntityLogListener {
     private final EntityLogRepository repository;
+    private final ApplicationEventPublisher publisher;
 
-    @Bean
+    @Bean("auditorProvider")
     public AuditorAware<String> auditorProvider() {
-        return () -> Optional.of(MDC.get("user"));
+        return () -> Optional.ofNullable(MDC.get("user"));
     }
 
     @PostPersist
     public void postPersist(AbstractEntity entity) {
-        repository.save(new EntityLog(ProcessType.CREATE,entity.getClass().getSimpleName()));
+        publisher.publishEvent(new CreateEntityLogEvent(ProcessType.CREATE, entity.getClass().getSimpleName(), entity.getId()));
     }
 
     @PostUpdate
     public void postUpdate(AbstractEntity entity) {
-        repository.save(new EntityLog(ProcessType.UPDATE,entity.getClass().getSimpleName()));
+        publisher.publishEvent(new UpdateEntityLogEvent(ProcessType.UPDATE, entity.getClass().getSimpleName(), entity.getId()));
     }
 
     @PostRemove
     public void postRemove(AbstractEntity entity) {
-        repository.save(new EntityLog(ProcessType.DELETE,entity.getClass().getSimpleName()));
+        publisher.publishEvent(new DeleteEntityLogEvent(ProcessType.DELETE, entity.getClass().getSimpleName(), entity.getId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = CreateEntityLogEvent.class)
+    public void createLog(CreateEntityLogEvent log) {
+        saveLog(new EntityLog(ProcessType.CREATE,log.getEntity(),log.getEntityId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = UpdateEntityLogEvent.class)
+    public void updateLog(UpdateEntityLogEvent log) {
+        saveLog(new EntityLog(ProcessType.UPDATE,log.getEntity(),log.getEntityId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = DeleteEntityLogEvent.class)
+    public void deleteLog(DeleteEntityLogEvent log) {
+        saveLog(new EntityLog(ProcessType.DELETE,log.getEntity(),log.getEntityId()));
+    }
+
+    private void saveLog(EntityLog log) {
+        repository.save(log);
     }
     
 }

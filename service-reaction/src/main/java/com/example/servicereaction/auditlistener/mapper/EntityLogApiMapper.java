@@ -14,6 +14,8 @@ public class EntityLogApiMapper {
                 .id(entityChanges.getId())
                 .process(entityChanges.getProcess())
                 .entity(entityChanges.getEntity())
+                .entityId(entityChanges.getEntityId())
+                .user(entityChanges.getUser())
                 .build();
     }
 

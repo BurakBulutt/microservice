@@ -13,6 +13,7 @@ public class EntityLogServiceMapper {
                 .id(entityLog.getId())
                 .process(entityLog.getProcess())
                 .entity(entityLog.getEntity())
+                .entityId(entityLog.getEntityId())
                 .build();
     }
 }

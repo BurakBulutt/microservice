@@ -6,6 +6,4 @@ import org.springframework.data.domain.Pageable;
 
 public interface EntityLogService {
     Page<EntityLogDto> getAll(Pageable pageable);
-    Page<EntityLogDto> getAllByUser(String user, Pageable pageable);
-    Page<EntityLogDto> getAllByEntity(String entity, Pageable pageable);
 }

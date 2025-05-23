@@ -1,6 +1,7 @@
 package com.example.serviceusers.users.service;
 
 
+import com.example.serviceusers.domain.user.service.UserServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -42,7 +43,10 @@ class UsersServiceTests {
         List<UserRepresentation> mockUsers = List.of(user1, user2);
         int totalUsers = 2;
 
-        when(usersResource.list(0, 10)).thenReturn(mockUsers);
+        int first = pageable.getPageNumber() * pageable.getPageSize();
+        int max = pageable.getPageSize();
+
+        when(usersResource.list(first, max)).thenReturn(mockUsers);
         when(usersResource.count()).thenReturn(totalUsers);
 
         // Act
