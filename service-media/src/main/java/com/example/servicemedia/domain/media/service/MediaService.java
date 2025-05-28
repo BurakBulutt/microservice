@@ -1,6 +1,5 @@
 package com.example.servicemedia.domain.media.service;
 
-import com.example.servicemedia.domain.media.api.UpdateMediaSourceRequest;
 import com.example.servicemedia.domain.media.dto.MediaDto;
 import com.example.servicemedia.domain.media.dto.MediaSourceDto;
 import org.springframework.data.domain.Page;
@@ -10,7 +9,7 @@ import java.util.List;
 
 public interface MediaService {
     Page<MediaDto> getAll(Pageable pageable);
-    Page<MediaDto> filter(Pageable pageable,String content);
+    Page<MediaDto> filter(Pageable pageable,String content,String query);
 
     List<MediaSourceDto> getMediaSourcesByMediaId(String mediaId);
 

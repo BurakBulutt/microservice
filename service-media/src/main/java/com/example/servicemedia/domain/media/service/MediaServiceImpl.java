@@ -1,12 +1,20 @@
 package com.example.servicemedia.domain.media.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import com.example.servicemedia.domain.content.constants.ContentConstants;
 import com.example.servicemedia.domain.content.enums.ContentType;
 import com.example.servicemedia.domain.content.mapper.ContentServiceMapper;
 import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.domain.content.service.ContentService;
 import com.example.servicemedia.domain.fansub.model.Fansub;
 import com.example.servicemedia.domain.fansub.service.FansubService;
-import com.example.servicemedia.domain.media.repo.MediaSpec;
+import com.example.servicemedia.domain.media.elasticsearch.event.BulkMediaCreateEvent;
+import com.example.servicemedia.domain.media.elasticsearch.event.CreateMediaEvent;
+import com.example.servicemedia.domain.media.elasticsearch.event.DeleteMediaEvent;
+import com.example.servicemedia.domain.media.elasticsearch.event.UpdateMediaEvent;
+import com.example.servicemedia.domain.media.elasticsearch.model.ElasticMedia;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
 import com.example.servicemedia.domain.media.constants.MediaConstants;
@@ -21,19 +29,25 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,6 +62,8 @@ public class MediaServiceImpl implements MediaService {
     private final StreamBridge streamBridge;
     private final CacheManager cacheManager;
     private final FansubService fansubService;
+    private final ElasticsearchOperations elasticsearchOperations;
+    private final ApplicationEventPublisher publisher;
 
     @Override
     @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
@@ -57,11 +73,31 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()",condition = "#content == null")
-    public Page<MediaDto> filter(Pageable pageable, String content) {
-        Specification<Media> spec = Specification.where(MediaSpec.byContentId(content));
-        log.info("Getting filtered medias: [content: {}]", content);
-        return mediaRepository.findAll(spec,pageable).map(this::toMediaDto);
+    @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()",condition = "#content == null and #query == null")
+    public Page<MediaDto> filter(Pageable pageable, String content,String query) {
+        log.info("Getting filtered medias: [content: {}, query: {}]", content,query);
+
+        BoolQuery.Builder queryBuilder = QueryBuilders.bool();
+
+        if (query != null && query.length() >= 2) {
+            queryBuilder.must(fullTextSearchQuery(query));
+        }
+
+        if (content != null) {
+            queryBuilder.filter(QueryBuilders.term()
+                    .field("contentId")
+                    .value(content)
+                    .build()
+                    ._toQuery());
+        }
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(queryBuilder.build()._toQuery())
+                .withPageable(pageable)
+                .build();
+        SearchHits<ElasticMedia> search = elasticsearchOperations.search(nativeQuery, ElasticMedia.class);
+        Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
+        return mediaRepository.findAllByIdIn(ids,pageable).map(this::toMediaDto);
     }
 
     @Override
@@ -93,7 +129,9 @@ public class MediaServiceImpl implements MediaService {
         mediaDto.setName(nameGenerator(content.getName(), mediaDto.getCount(), content.getType()));
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
         log.warn("Saving media: {}", mediaDto);
-        return MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+        MediaDto dto = MediaServiceMapper.toDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+        publisher.publishEvent(new CreateMediaEvent(dto));
+        return dto;
     }
 
     @Override
@@ -132,7 +170,8 @@ public class MediaServiceImpl implements MediaService {
             });
             mediaList.add(media);
         });
-        mediaRepository.saveAllAndFlush(mediaList);
+        List<MediaDto> savedList = mediaRepository.saveAllAndFlush(mediaList).stream().map(MediaServiceMapper::toDto).toList();
+        publisher.publishEvent(new BulkMediaCreateEvent(savedList));
     }
 
     @Override
@@ -151,7 +190,9 @@ public class MediaServiceImpl implements MediaService {
         mediaDto.setSlug(slugGenerator(mediaDto.getName()));
 
         log.warn("Updating media: {}, updated: {}", id, mediaDto);
-        return toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+        MediaDto dto =  toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
+        publisher.publishEvent(new UpdateMediaEvent(dto));
+        return dto;
     }
 
     @Override
@@ -190,6 +231,7 @@ public class MediaServiceImpl implements MediaService {
 
         log.warn("Deleting media : {}", id);
         mediaRepository.delete(media);
+        publisher.publishEvent(new DeleteMediaEvent(id));
 
         Cache cache = cacheManager.getCache(MediaConstants.CACHE_NAME_MEDIA);
 
@@ -225,9 +267,24 @@ public class MediaServiceImpl implements MediaService {
         final String name;
         switch (type) {
             case MOVIE -> name = contentName;
-            case SERIES -> name = contentName + " " + count + ". Bölüm";
+            case SERIES -> name = contentName + " " + count + ContentConstants.EPISODE_PREFIX;
             default -> throw new IllegalStateException("Unexpected value: " + type);
         }
         return name;
+    }
+
+    private Query fullTextSearchQuery(String query) {
+        return QueryBuilders.match()
+                        .field(ContentConstants.SEARCH_FIELD_NAME)
+                        .query(query)
+                        .fuzziness(ContentConstants.SEARCH_FUZZINESS)
+                        .build()
+                        ._toQuery();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void elasticDataEvent(){
+        List<Media> medias = mediaRepository.findAll();
+        medias.forEach(m -> publisher.publishEvent(new CreateMediaEvent(toMediaDto(m))));
     }
 }

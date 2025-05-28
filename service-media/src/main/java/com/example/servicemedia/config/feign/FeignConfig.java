@@ -23,10 +23,11 @@ public class FeignConfig {
         return requestTemplate -> {
             ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
-            assert requestAttributes != null;
-            HttpServletRequest httpRequest = requestAttributes.getRequest();
+            if (requestAttributes != null) {
+                HttpServletRequest httpRequest = requestAttributes.getRequest();
 
-            requestTemplate.header(FeignConfigConstants.HEADER_X_USER_PRINCIPAL, httpRequest.getHeader(FeignConfigConstants.HEADER_X_USER_PRINCIPAL));
+                requestTemplate.header(FeignConfigConstants.HEADER_X_USER_PRINCIPAL, httpRequest.getHeader(FeignConfigConstants.HEADER_X_USER_PRINCIPAL));
+            }
 
             if (tracer != null && tracer.currentSpan() != null) {
                 TraceContext context = Objects.requireNonNull(tracer.currentSpan()).context();

@@ -25,8 +25,9 @@ public class MediaController {
 
     @GetMapping("filter")
     public ResponseEntity<Page<MediaResponse>> filter(Pageable pageable,
-                                                      @RequestParam(required = false) String content) {
-        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.filter(pageable, content)));
+                                                      @RequestParam(required = false) String content,
+                                                      @RequestParam(required = false) String query) {
+        return ResponseEntity.ok(MediaApiMapper.toPageResponse(service.filter(pageable,content,query)));
     }
 
     @GetMapping("/{id}")

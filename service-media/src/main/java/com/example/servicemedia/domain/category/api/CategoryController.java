@@ -22,8 +22,8 @@ public class CategoryController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<CategoryResponse>> filter(Pageable pageable) {
-        return ResponseEntity.ok(CategoryApiMapper.toPageResponse(service.filter(pageable)));
+    public ResponseEntity<Page<CategoryResponse>> filter(Pageable pageable,@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(CategoryApiMapper.toPageResponse(service.filter(pageable,query)));
     }
 
     @GetMapping("{id}")

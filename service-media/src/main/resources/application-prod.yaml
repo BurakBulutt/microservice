@@ -35,7 +35,7 @@ management:
     port: 9000
   otlp:
     tracing:
-      endpoint: https://${OTLP_HOST}:4318
+      endpoint: https://${OTLP_HOST}:4318/v1/traces
 logging:
   level:
     com.example.servicemedia: info

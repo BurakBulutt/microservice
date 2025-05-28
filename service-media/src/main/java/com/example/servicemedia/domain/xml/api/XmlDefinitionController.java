@@ -23,6 +23,11 @@ public class XmlDefinitionController {
         return ResponseEntity.ok(XmlDefinitionApiMapper.toPageResponse(service.getAll(pageable)));
     }
 
+    @GetMapping("filter")
+    public ResponseEntity<Page<XmlDefinitionResponse>> getAll(Pageable pageable,@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(XmlDefinitionApiMapper.toPageResponse(service.filter(pageable,query)));
+    }
+
     @GetMapping("{id}/start-job")
     public ResponseEntity<Void> startJob(@PathVariable String id)  {
         service.startJob(id);

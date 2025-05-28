@@ -11,6 +11,8 @@ public class FansubServiceMapper {
     public static FansubDto toDto(Fansub fanSub) {
         return FansubDto.builder()
                 .id(fanSub.getId())
+                .created(fanSub.getCreated())
+                .modified(fanSub.getModified())
                 .name(fanSub.getName())
                 .url(fanSub.getUrl())
                 .build();

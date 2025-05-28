@@ -1,5 +1,6 @@
 package com.example.servicemedia.domain.content.api;
 
+import com.example.servicemedia.domain.content.enums.ContentType;
 import com.example.servicemedia.domain.content.mapper.ContentApiMapper;
 import com.example.servicemedia.domain.content.service.ContentService;
 import com.example.servicemedia.feign.like.LikeType;
@@ -10,6 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("contents")
@@ -24,8 +28,17 @@ public class ContentController {
 
     @GetMapping("filter")
     public ResponseEntity<Page<ContentResponse>> filter(Pageable pageable,
-                                                        @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(pageable, category)));
+                                                        @RequestParam(required = false) String category,
+                                                        @RequestParam(required = false) String query,
+                                                        @RequestParam(required = false) LocalDate firstDate,
+                                                        @RequestParam(required = false) LocalDate lastDate,
+                                                        @RequestParam(required = false) ContentType type) {
+        return ResponseEntity.ok(ContentApiMapper.toPageResponse(service.filter(pageable, category,query,firstDate,lastDate,type)));
+    }
+
+    @GetMapping("search")
+    public ResponseEntity<List<ContentSearchResponse>> filter(@RequestParam String query) {
+        return ResponseEntity.ok(ContentApiMapper.toSearchResponseList(service.search(query)));
     }
 
     @GetMapping("/{id}")

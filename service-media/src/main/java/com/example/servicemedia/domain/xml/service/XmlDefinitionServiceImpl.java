@@ -1,5 +1,13 @@
 package com.example.servicemedia.domain.xml.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import com.example.servicemedia.domain.content.constants.ContentConstants;
+import com.example.servicemedia.domain.xml.elasticsearch.event.CreateXmlDefinitionEvent;
+import com.example.servicemedia.domain.xml.elasticsearch.event.DeleteXmlDefinitionEvent;
+import com.example.servicemedia.domain.xml.elasticsearch.event.UpdateXmlDefinitionEvent;
+import com.example.servicemedia.domain.xml.elasticsearch.model.ElasticXmlDefinition;
 import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import com.example.servicemedia.domain.xml.api.XmlDefinitionRequest;
@@ -20,9 +28,14 @@ import org.springframework.batch.core.launch.NoSuchJobExecutionException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +44,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,12 +58,33 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     private final JobRepository jobRepository;
     private final JobExplorer jobExplorer;
     private final JobOperator jobOperator;
+    private final ElasticsearchOperations elasticsearchOperations;
 
     @Override
     @Transactional(readOnly = true)
     public Page<XmlDefinitionDto> getAll(Pageable pageable) {
         log.info("Getting all xml definitions");
         return repository.findAll(pageable).map(XmlDefinitionServiceMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<XmlDefinitionDto> filter(Pageable pageable, String query) {
+        log.info("Getting filtered xml definitions: [query: {}]",query);
+
+        BoolQuery.Builder queryBuilder = QueryBuilders.bool();
+
+        if (query != null && query.length() >= 2) {
+            queryBuilder.must(fullTextSearchQuery(query));
+        }
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(queryBuilder.build()._toQuery())
+                .withPageable(pageable)
+                .build();
+        SearchHits<ElasticXmlDefinition> search = elasticsearchOperations.search(nativeQuery, ElasticXmlDefinition.class);
+        Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
+        return repository.findAllByIdIn(ids,pageable).map(XmlDefinitionServiceMapper::toDto);
     }
 
     @Override
@@ -69,7 +106,7 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
         XmlDefinition xmlDefinition = new XmlDefinition();
         xmlDefinition.setXmlFile(file);
         xmlDefinition.setType(request.type());
-        xmlDefinition.setFileName(UUID.randomUUID().toString());
+        xmlDefinition.setFileName(request.fileName() != null ? request.fileName() : UUID.randomUUID().toString());
 
         log.info("Saving xml definition : {}", xmlDefinition);
         repository.save(xmlDefinition);
@@ -84,6 +121,8 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
             }
         };
         TransactionSynchronizationManager.registerSynchronization(synchronization);
+
+        eventPublisher.publishEvent(new CreateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(xmlDefinition)));
     }
 
     @Override
@@ -91,6 +130,7 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     public void update(XmlDefinition definition) {
         log.info("Updating xml definition : {}", definition);
         repository.save(definition);
+        eventPublisher.publishEvent(new UpdateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(definition)));
     }
 
     @Override
@@ -106,6 +146,7 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
 
         log.warn("Deleting xml definition : {}", xmlDefinition);
         repository.delete(xmlDefinition);
+        eventPublisher.publishEvent(new DeleteXmlDefinitionEvent(id));
     }
 
     @Override
@@ -126,5 +167,20 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
         final String xmlSignature = "<?xml";
         final String header = new String(xmlContent, 0, Math.min(5, xmlContent.length));
         return header.startsWith(xmlSignature);
+    }
+
+    private Query fullTextSearchQuery(String query) {
+        return QueryBuilders.match()
+                .field("fileName")
+                .query(query)
+                .fuzziness(ContentConstants.SEARCH_FUZZINESS)
+                .build()
+                ._toQuery();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void elasticDataEvent(){
+        List<XmlDefinition> xmlDefinitions = repository.findAll();
+        xmlDefinitions.forEach(xml -> eventPublisher.publishEvent(new CreateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(xml))));
     }
 }

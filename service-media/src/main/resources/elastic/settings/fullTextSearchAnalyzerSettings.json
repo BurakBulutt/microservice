@@ -1,0 +1,48 @@
+{
+  "analysis": {
+    "char_filter": {
+      "normalize_chars": {
+        "type": "mapping",
+        "mappings": [
+          "ö => o",
+          "ü => u",
+          "ğ => g",
+          "ç => c",
+          "ş => s",
+          "ı => i",
+          "İ => i",
+          "Ö => o",
+          "Ü => u",
+          "Ğ => g",
+          "Ç => c",
+          "Ş => s"
+        ]
+      }
+    },
+    "filter": {
+      "turkish_stop": {
+        "type": "stop",
+        "stopwords": "_turkish_"
+      },
+      "edge_ngram_filter": {
+        "type": "edge_ngram",
+        "min_gram": 1,
+        "max_gram": 20
+      }
+    },
+    "analyzer": {
+      "autocomplete_tr": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": ["lowercase", "turkish_stop", "edge_ngram_filter"],
+        "char_filter": ["normalize_chars"]
+      },
+      "autocomplete_tr_search": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": ["lowercase", "turkish_stop"],
+        "char_filter": ["normalize_chars"]
+      }
+    }
+  }
+}

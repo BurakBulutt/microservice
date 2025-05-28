@@ -1,6 +1,16 @@
 package com.example.servicemedia.domain.fansub.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import com.example.servicemedia.domain.content.constants.ContentConstants;
+import com.example.servicemedia.domain.content.elasticsearch.event.CreateContentEvent;
+import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.domain.fansub.dto.FansubDto;
+import com.example.servicemedia.domain.fansub.elasticsearch.event.CreateFansubEvent;
+import com.example.servicemedia.domain.fansub.elasticsearch.event.DeleteFansubEvent;
+import com.example.servicemedia.domain.fansub.elasticsearch.event.UpdateFansubEvent;
+import com.example.servicemedia.domain.fansub.elasticsearch.model.ElasticFansub;
 import com.example.servicemedia.domain.fansub.mapper.FansubServiceMapper;
 import com.example.servicemedia.domain.fansub.model.Fansub;
 import com.example.servicemedia.domain.fansub.repo.FansubRepository;
@@ -8,13 +18,23 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,6 +42,8 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class FansubServiceImpl implements FansubService {
     private final FansubRepository repository;
+    private final ApplicationEventPublisher publisher;
+    private final ElasticsearchOperations elasticsearchOperations;
 
     @Override
     public Page<FansubDto> getAll(Pageable pageable) {
@@ -30,9 +52,22 @@ public class FansubServiceImpl implements FansubService {
     }
 
     @Override
-    public Page<FansubDto> filter(Pageable pageable) {
-        log.info("Getting filtered fansubs");
-        return repository.findAll(pageable).map(FansubServiceMapper::toDto);
+    public Page<FansubDto> filter(Pageable pageable,String query) {
+        log.info("Getting filtered fansubs, [query: {}]",query);
+
+        BoolQuery.Builder queryBuilder = QueryBuilders.bool();
+
+        if (query != null && query.length() >= 2) {
+            queryBuilder.must(fullTextSearchQuery(query));
+        }
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(queryBuilder.build()._toQuery())
+                .withPageable(pageable)
+                .build();
+        SearchHits<ElasticFansub> search = elasticsearchOperations.search(nativeQuery, ElasticFansub.class);
+        Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
+        return repository.findAllByIdIn(ids,pageable).map(FansubServiceMapper::toDto);
     }
 
     @Override
@@ -64,7 +99,10 @@ public class FansubServiceImpl implements FansubService {
     @Transactional
     public FansubDto save(FansubDto fanSubDto) {
         log.info("Saving fansub: {}", fanSubDto);
-        return FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(new Fansub(),fanSubDto)));
+
+        FansubDto dto = FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(new Fansub(),fanSubDto)));
+        publisher.publishEvent(new CreateFansubEvent(dto));
+        return dto;
     }
 
     @Override
@@ -73,7 +111,9 @@ public class FansubServiceImpl implements FansubService {
         Fansub fanSub = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Fansub.class.getSimpleName(), id));
 
         log.info("Updating fansub: {}, updated: {}",id,fanSubDto);
-        return FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(fanSub,fanSubDto)));
+        FansubDto dto = FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(fanSub,fanSubDto)));
+        publisher.publishEvent(new UpdateFansubEvent(dto));
+        return dto;
     }
 
     @Override
@@ -83,5 +123,22 @@ public class FansubServiceImpl implements FansubService {
 
         log.warn("Deleting fansub: {}, updated: {}",id,fanSub);
         repository.delete(fanSub);
+        publisher.publishEvent(new DeleteFansubEvent(id));
+    }
+
+    private Query fullTextSearchQuery(String query) {
+        return QueryBuilders.match()
+                .field(ContentConstants.SEARCH_FIELD_NAME)
+                .query(query)
+                .fuzziness(ContentConstants.SEARCH_FUZZINESS)
+                .build()
+                ._toQuery();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(1)
+    public void elasticDataEvent(){
+        List<Fansub> fansubs = repository.findAll();
+        fansubs.forEach(c -> publisher.publishEvent(new CreateFansubEvent(FansubServiceMapper.toDto(c))));
     }
 }

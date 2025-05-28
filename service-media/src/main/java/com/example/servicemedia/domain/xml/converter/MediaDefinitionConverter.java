@@ -26,7 +26,7 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
     @Override
     public MediaDto convert(@NonNull Element element) {
         return MediaDto.builder()
-                .description(parseText(element, MEDIA))
+                .description(parseText(element, MEDIA_DESCRIPTION))
                 .count(parseInteger(parseText(element, MEDIA_COUNT)))
                 .publishDate(parseDate(parseText(element, MEDIA_PUBLISH_DATE)))
                 .content(ContentDto.builder().id(parseText(element, MEDIA_CONTENT_ID)).build())

@@ -11,6 +11,8 @@ public class ContentServiceMapper {
     public static ContentDto toDto(Content content) {
         return ContentDto.builder()
                 .id(content.getId())
+                .created(content.getCreated())
+                .modified(content.getModified())
                 .name(content.getName())
                 .description(content.getDescription())
                 .photoUrl(content.getPhotoUrl())

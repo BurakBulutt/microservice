@@ -9,6 +9,7 @@ public record XmlDefinitionRequest(
         DefinitionType type,
         @NotNull(message = "validation.xmlDefinition.base64.notNull")
         @NotBlank(message = "validation.xmlDefinition.base64.notBlank")
-        String base64
+        String base64,
+        String fileName
 ) {
 }

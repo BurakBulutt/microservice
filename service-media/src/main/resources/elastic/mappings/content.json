@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "created": {
+      "type": "date"
+    },
+    "name": {
+      "type": "text",
+      "analyzer": "autocomplete_tr",
+      "search_analyzer": "autocomplete_tr_search",
+      "term_vector": "with_positions_offsets",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "photoUrl": {
+      "type": "keyword"
+    },
+    "slug": {
+      "type": "keyword"
+    },
+    "type": {
+      "type": "keyword"
+    },
+    "categories": {
+      "type": "keyword"
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "_class": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    }
+  }
+}

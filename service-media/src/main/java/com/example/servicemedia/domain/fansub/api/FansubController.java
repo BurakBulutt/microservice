@@ -22,8 +22,8 @@ public class FansubController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<FansubResponse>> filter(Pageable pageable) {
-        return ResponseEntity.ok(FansubApiMapper.toPageResponse(service.filter(pageable)));
+    public ResponseEntity<Page<FansubResponse>> filter(Pageable pageable,@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(FansubApiMapper.toPageResponse(service.filter(pageable,query)));
     }
 
     @GetMapping("{id}")

@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface FansubService {
     Page<FansubDto> getAll(Pageable pageable);
-    Page<FansubDto> filter(Pageable pageable);
+    Page<FansubDto> filter(Pageable pageable,String query);
 
     Long count();
 

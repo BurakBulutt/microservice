@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor
@@ -16,6 +17,8 @@ import java.util.List;
 @Builder
 public class MediaDto {
     private String id;
+    private LocalDateTime created;
+    private LocalDateTime modified;
     private String name;
     private String description;
     private ContentDto content;

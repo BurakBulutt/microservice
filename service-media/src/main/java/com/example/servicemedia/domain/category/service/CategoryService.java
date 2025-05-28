@@ -10,7 +10,7 @@ import java.util.Set;
 
 public interface CategoryService {
     Page<CategoryDto> getAll(Pageable pageable);
-    Page<CategoryDto> filter(Pageable pageable);
+    Page<CategoryDto> filter(Pageable pageable,String query);
 
     Long count();
 

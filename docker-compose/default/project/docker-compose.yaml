@@ -99,16 +99,23 @@ services:
       file: ../common-config.yaml
       service: base-config
 
-  mongo-express:
-    image: mongo-express:latest
-    container_name: service-mongo-express
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: service-elasticsearch
     ports:
-      - "8089:8081"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    env_file:
-      - environments/mongo.env
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: "curl --fail --silent localhost:9200/health/ready | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     extends:
       file: ../common-config.yaml
       service: base-config
@@ -248,3 +255,5 @@ volumes:
     name: compose_rabbit_data
   mongo_data:
     name: compose_mongo_data
+  elastic_data:
+    name: compose_elastic_data

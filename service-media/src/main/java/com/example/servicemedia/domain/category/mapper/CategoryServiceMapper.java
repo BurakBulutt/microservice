@@ -11,6 +11,8 @@ public class CategoryServiceMapper {
     public static CategoryDto toDto(Category category) {
         return CategoryDto.builder()
                 .id(category.getId())
+                .created(category.getCreated())
+                .modified(category.getModified())
                 .name(category.getName())
                 .description(category.getDescription())
                 .slug(category.getSlug())

@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "created": {
+      "type": "date"
+    },
+    "name": {
+      "type": "text",
+      "analyzer": "autocomplete_tr",
+      "search_analyzer": "autocomplete_tr_search",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "slug": {
+      "type": "keyword"
+    },
+    "_class": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    }
+  }
+}

@@ -16,6 +16,8 @@ public class MediaServiceMapper {
     public static MediaDto toDto(Media media){
         return MediaDto.builder()
                 .id(media.getId())
+                .created(media.getCreated())
+                .modified(media.getModified())
                 .name(media.getName())
                 .description(media.getDescription())
                 .count(media.getCount())
