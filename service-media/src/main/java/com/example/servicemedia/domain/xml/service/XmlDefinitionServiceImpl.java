@@ -28,9 +28,7 @@ import org.springframework.batch.core.launch.NoSuchJobExecutionException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -176,11 +174,5 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
                 .fuzziness(ContentConstants.SEARCH_FUZZINESS)
                 .build()
                 ._toQuery();
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void elasticDataEvent(){
-        List<XmlDefinition> xmlDefinitions = repository.findAll();
-        xmlDefinitions.forEach(xml -> eventPublisher.publishEvent(new CreateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(xml))));
     }
 }

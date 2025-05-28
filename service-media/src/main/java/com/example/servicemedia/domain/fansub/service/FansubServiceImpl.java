@@ -4,8 +4,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.servicemedia.domain.content.constants.ContentConstants;
-import com.example.servicemedia.domain.content.elasticsearch.event.CreateContentEvent;
-import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.domain.fansub.dto.FansubDto;
 import com.example.servicemedia.domain.fansub.elasticsearch.event.CreateFansubEvent;
 import com.example.servicemedia.domain.fansub.elasticsearch.event.DeleteFansubEvent;
@@ -18,10 +16,7 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -32,7 +27,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,7 +87,8 @@ public class FansubServiceImpl implements FansubService {
     @Transactional
     public Fansub findOrCreateByName(String name) {
         log.info("Getting fansub by name: {}, if not found, it will be created with name", name);
-        return repository.findByName(name).orElse(repository.save(new Fansub(name,null, Collections.emptyList())));
+        Optional<Fansub> fansub = repository.findByName(name);
+        return fansub.orElseGet(() -> repository.save(new Fansub(name, null, Collections.emptyList())));
     }
 
     @Override
@@ -133,12 +129,5 @@ public class FansubServiceImpl implements FansubService {
                 .fuzziness(ContentConstants.SEARCH_FUZZINESS)
                 .build()
                 ._toQuery();
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(1)
-    public void elasticDataEvent(){
-        List<Fansub> fansubs = repository.findAll();
-        fansubs.forEach(c -> publisher.publishEvent(new CreateFansubEvent(FansubServiceMapper.toDto(c))));
     }
 }

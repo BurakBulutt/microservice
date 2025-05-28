@@ -29,13 +29,11 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -280,11 +278,5 @@ public class MediaServiceImpl implements MediaService {
                         .fuzziness(ContentConstants.SEARCH_FUZZINESS)
                         .build()
                         ._toQuery();
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void elasticDataEvent(){
-        List<Media> medias = mediaRepository.findAll();
-        medias.forEach(m -> publisher.publishEvent(new CreateMediaEvent(toMediaDto(m))));
     }
 }

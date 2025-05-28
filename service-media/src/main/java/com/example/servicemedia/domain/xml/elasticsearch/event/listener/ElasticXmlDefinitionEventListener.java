@@ -1,6 +1,9 @@
-package com.example.servicemedia.domain.xml.elasticsearch.event;
+package com.example.servicemedia.domain.xml.elasticsearch.event.listener;
 
 import com.example.servicemedia.domain.xml.dto.XmlDefinitionDto;
+import com.example.servicemedia.domain.xml.elasticsearch.event.CreateXmlDefinitionEvent;
+import com.example.servicemedia.domain.xml.elasticsearch.event.DeleteXmlDefinitionEvent;
+import com.example.servicemedia.domain.xml.elasticsearch.event.UpdateXmlDefinitionEvent;
 import com.example.servicemedia.domain.xml.elasticsearch.model.ElasticXmlDefinition;
 import com.example.servicemedia.domain.xml.elasticsearch.repo.ElasticXmlDefinitionRepository;
 import com.example.servicemedia.util.exception.BaseException;
@@ -20,20 +23,17 @@ import java.time.ZoneOffset;
 public class ElasticXmlDefinitionEventListener {
     private final ElasticXmlDefinitionRepository repository;
 
-    @Async
     @EventListener(CreateXmlDefinitionEvent.class)
     public void createContent(CreateXmlDefinitionEvent event) {
         repository.save(toEntity(new ElasticXmlDefinition(),event.xmlDefinition()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(UpdateXmlDefinitionEvent.class)
     public void updateContent(UpdateXmlDefinitionEvent event) {
         ElasticXmlDefinition elasticXmlDefinition = repository.findById(event.xmlDefinition().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticXmlDefinition.class.getSimpleName(), event.xmlDefinition().getId()));
         repository.save(toEntity(elasticXmlDefinition,event.xmlDefinition()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(DeleteXmlDefinitionEvent.class)
     public void deleteContent(DeleteXmlDefinitionEvent event) {
         ElasticXmlDefinition elasticXmlDefinition = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticXmlDefinition.class.getSimpleName(), event.id()));

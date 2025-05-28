@@ -9,7 +9,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import com.example.servicemedia.domain.category.dto.CategoryDto;
-import com.example.servicemedia.domain.category.elasticsearch.event.CreateCategoryEvent;
 import com.example.servicemedia.domain.category.mapper.CategoryServiceMapper;
 import com.example.servicemedia.domain.category.model.Category;
 import com.example.servicemedia.domain.category.service.CategoryService;
@@ -38,14 +37,11 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -400,12 +396,4 @@ public class ContentServiceImpl implements ContentService {
         }
         return fieldName;
     }
-
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(1)
-    public void elasticDataEvent(){
-        List<Content> contents = repository.findAll();
-        contents.forEach(c -> publisher.publishEvent(new CreateContentEvent(toContentDto(c))));
-    }
-
 }

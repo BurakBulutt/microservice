@@ -1,7 +1,10 @@
-package com.example.servicemedia.domain.content.elasticsearch.event;
+package com.example.servicemedia.domain.content.elasticsearch.event.listener;
 
 import com.example.servicemedia.domain.category.dto.CategoryDto;
 import com.example.servicemedia.domain.content.dto.ContentDto;
+import com.example.servicemedia.domain.content.elasticsearch.event.CreateContentEvent;
+import com.example.servicemedia.domain.content.elasticsearch.event.DeleteContentEvent;
+import com.example.servicemedia.domain.content.elasticsearch.event.UpdateContentEvent;
 import com.example.servicemedia.domain.content.elasticsearch.model.ElasticContent;
 import com.example.servicemedia.domain.content.elasticsearch.repo.ElasticContentRepository;
 import com.example.servicemedia.util.exception.BaseException;
@@ -9,7 +12,6 @@ import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -19,20 +21,17 @@ import java.time.ZoneOffset;
 public class ElasticContentEventListener {
     private final ElasticContentRepository repository;
 
-    @Async
     @EventListener(CreateContentEvent.class)
     public void createContent(CreateContentEvent event) {
         repository.save(toEntity(new ElasticContent(),event.content()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(UpdateContentEvent.class)
     public void updateContent(UpdateContentEvent event) {
         ElasticContent elasticContent = repository.findById(event.content().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticContent.class.getSimpleName(), event.content().getId()));
         repository.save(toEntity(elasticContent,event.content()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(DeleteContentEvent.class)
     public void deleteContent(DeleteContentEvent event) {
         ElasticContent elasticContent = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticContent.class.getSimpleName(), event.id()));

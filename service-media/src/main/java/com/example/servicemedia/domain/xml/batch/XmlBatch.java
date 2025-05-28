@@ -4,12 +4,10 @@ import com.example.servicemedia.domain.content.dto.ContentDto;
 import com.example.servicemedia.domain.content.service.ContentService;
 import com.example.servicemedia.domain.media.dto.MediaDto;
 import com.example.servicemedia.domain.media.service.MediaService;
-import com.example.servicemedia.util.exception.BaseException;
+import com.example.servicemedia.domain.xml.enums.DefinitionType;
 import com.example.servicemedia.domain.xml.factory.DefinitionConverterFactory;
 import com.example.servicemedia.domain.xml.converter.ContentDefinitionConverter;
 import com.example.servicemedia.domain.xml.converter.MediaDefinitionConverter;
-import com.example.servicemedia.domain.xml.model.XmlDefinition;
-import com.example.servicemedia.domain.xml.service.XmlDefinitionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -18,7 +16,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.context.MessageSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -33,7 +31,6 @@ import java.io.ByteArrayInputStream;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static com.example.servicemedia.domain.xml.constants.XmlConstants.*;
 
@@ -44,71 +41,56 @@ public class XmlBatch {
     private final PlatformTransactionManager transactionManager;
     private final JobRepository jobRepository;
 
-    private final XmlDefinitionService xmlDefinitionService;
     private final ContentService contentService;
     private final MediaService mediaService;
-    private final MessageSource messageSource;
+    private final XmlBatchChunkListener xmlBatchChunkListener;
 
     @Bean
-    public Job importXmlJob(Step step) {
+    public Job importXmlJob(@Qualifier(BATCH_IMPORT_XML_STEP) Step step) {
         return new JobBuilder(BATCH_IMPORT_XML_JOB, jobRepository)
                 .start(step)
                 .build();
     }
 
-    @Bean(name = BATCH_IMPORT_XML_STEP)
-    public Step importXmlStep(Tasklet importXmlTask) {
+    @Bean(BATCH_IMPORT_XML_STEP)
+    public Step importXmlStep(@Qualifier(BATCH_IMPORT_XML_TASK) Tasklet task) {
         return new StepBuilder(BATCH_IMPORT_XML_STEP, jobRepository)
-                .tasklet(importXmlTask, transactionManager)
+                .tasklet(task, transactionManager)
+                .listener(xmlBatchChunkListener)
                 .build();
     }
 
-    @Bean
+    @Bean(BATCH_IMPORT_XML_TASK)
     public Tasklet importXmlTask() {
         return (contribution, chunkContext) -> {
-            final String definitionId = (String) chunkContext.getStepContext().getJobParameters().get(BATCH_DEFINITION_ID);
+            byte[] file = (byte[]) chunkContext.getAttribute("file");
+            assert file != null;
 
-            XmlDefinition definition = xmlDefinitionService.getById(definitionId);
-            definition.setJobExecutionId(String.valueOf(contribution.getStepExecution().getJobExecutionId()));
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(file);
 
-            try {
-                byte[] file = definition.getXmlFile();
-                ByteArrayInputStream inputStream = new ByteArrayInputStream(file);
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(inputStream);
+            document.getDocumentElement().normalize();
 
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document document = builder.parse(inputStream);
-                document.getDocumentElement().normalize();
+            NodeList nodeList = document.getElementsByTagName(BATCH_DEFINITION);
 
-                NodeList nodeList = document.getElementsByTagName(BATCH_DEFINITION);
+            DefinitionType type = (DefinitionType) chunkContext.getAttribute("type");
+            assert type != null;
 
-                switch (definition.getType()) {
-                    case CONTENT -> {
-                        ContentDefinitionConverter contentStrategy = DefinitionConverterFactory.getContentConverter();
-                        processXml(nodeList, contentStrategy);
-                    }
-                    case MEDIA -> {
-                        MediaDefinitionConverter mediaStrategy = DefinitionConverterFactory.getMediaConverter();
-                        processXml(nodeList, mediaStrategy);
-                    }
-                    default -> throw new IllegalArgumentException("Unsupported definition type: " + definition.getType());
+            switch (type) {
+                case CONTENT -> {
+                    ContentDefinitionConverter contentStrategy = DefinitionConverterFactory.getContentConverter();
+                    processXml(nodeList, contentStrategy);
                 }
-                inputStream.close();
-                definition.setSuccess(Boolean.TRUE);
-            } catch (Exception e) {
-                final String msg;
-                if (e instanceof BaseException) {
-                    msg = messageSource.getMessage(((BaseException) e).getMessageResource().getMessage(),((BaseException) e).getArgs(), Locale.getDefault());
-                }else {
-                    msg = e.getLocalizedMessage();
+                case MEDIA -> {
+                    MediaDefinitionConverter mediaStrategy = DefinitionConverterFactory.getMediaConverter();
+                    processXml(nodeList, mediaStrategy);
                 }
-                definition.setSuccess(Boolean.FALSE);
-                definition.setErrorMessage(msg);
-                log.error("Task Failed: {}", msg);
-                throw new RuntimeException(e);
-            } finally {
-                xmlDefinitionService.update(definition);
+                default -> throw new IllegalArgumentException("Unsupported definition type: " + type);
             }
+            inputStream.close();
+
             return RepeatStatus.FINISHED;
         };
     }

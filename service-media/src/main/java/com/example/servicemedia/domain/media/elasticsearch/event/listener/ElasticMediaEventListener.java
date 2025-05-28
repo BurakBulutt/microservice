@@ -1,6 +1,9 @@
-package com.example.servicemedia.domain.media.elasticsearch.event;
+package com.example.servicemedia.domain.media.elasticsearch.event.listener;
 
 import com.example.servicemedia.domain.media.dto.MediaDto;
+import com.example.servicemedia.domain.media.elasticsearch.event.CreateMediaEvent;
+import com.example.servicemedia.domain.media.elasticsearch.event.DeleteMediaEvent;
+import com.example.servicemedia.domain.media.elasticsearch.event.UpdateMediaEvent;
 import com.example.servicemedia.domain.media.elasticsearch.model.ElasticMedia;
 import com.example.servicemedia.domain.media.elasticsearch.repo.ElasticMediaRepository;
 import com.example.servicemedia.util.exception.BaseException;
@@ -18,20 +21,17 @@ import java.time.ZoneOffset;
 public class ElasticMediaEventListener {
     private final ElasticMediaRepository repository;
 
-    @Async
     @EventListener(CreateMediaEvent.class)
     public void createContent(CreateMediaEvent event) {
         repository.save(toEntity(new ElasticMedia(),event.media()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(UpdateMediaEvent.class)
     public void updateContent(UpdateMediaEvent event) {
         ElasticMedia elasticMedia = repository.findById(event.media().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticMedia.class.getSimpleName(), event.media().getId()));
         repository.save(toEntity(elasticMedia,event.media()), RefreshPolicy.IMMEDIATE);
     }
 
-    @Async
     @EventListener(DeleteMediaEvent.class)
     public void deleteContent(DeleteMediaEvent event) {
         ElasticMedia elasticMedia = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticMedia.class.getSimpleName(), event.id()));

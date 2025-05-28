@@ -1,7 +1,6 @@
 package com.example.servicemedia.domain.xml.event;
 
-import com.example.servicemedia.domain.xml.model.XmlDefinition;
-import com.example.servicemedia.domain.xml.service.XmlDefinitionService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;

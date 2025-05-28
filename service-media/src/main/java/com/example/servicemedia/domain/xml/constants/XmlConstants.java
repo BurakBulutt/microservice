@@ -32,6 +32,7 @@ public class XmlConstants {
 
     public static final String BATCH_IMPORT_XML_JOB = "importXmlJob";
     public static final String BATCH_IMPORT_XML_STEP = "importXmlStep";
+    public static final String BATCH_IMPORT_XML_TASK = "importXmlTask";
     public static final String BATCH_DEFINITION_ID = "definitionId";
     public static final String BATCH_DEFINITION = "definition";
 }

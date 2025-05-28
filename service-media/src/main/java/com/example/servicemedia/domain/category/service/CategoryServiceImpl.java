@@ -19,13 +19,10 @@ import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -173,11 +170,5 @@ public class CategoryServiceImpl implements CategoryService {
                 .fuzziness(ContentConstants.SEARCH_FUZZINESS)
                 .build()
                 ._toQuery();
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void elasticDataEvent(){
-        List<Category> categories = repository.findAll();
-        categories.forEach(c -> publisher.publishEvent(new CreateCategoryEvent(CategoryServiceMapper.toDto(c))));
     }
 }

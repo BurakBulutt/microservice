@@ -13,7 +13,6 @@ public interface FansubService {
 
     FansubDto getById(String id);
 
-
     Fansub findByName(String name);
     Fansub findOrCreateByName(String name);
 
