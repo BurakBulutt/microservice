@@ -8,10 +8,6 @@ import com.example.servicemedia.domain.content.service.ContentService;
 import com.example.servicemedia.domain.fansub.mapper.FansubServiceMapper;
 import com.example.servicemedia.domain.fansub.model.Fansub;
 import com.example.servicemedia.domain.fansub.service.FansubService;
-import com.example.servicemedia.domain.media.elasticsearch.event.BulkMediaCreateEvent;
-import com.example.servicemedia.domain.media.elasticsearch.event.CreateMediaEvent;
-import com.example.servicemedia.domain.media.elasticsearch.event.DeleteMediaEvent;
-import com.example.servicemedia.domain.media.elasticsearch.event.UpdateMediaEvent;
 import com.example.servicemedia.domain.media.elasticsearch.model.ElasticMedia;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
@@ -31,7 +27,6 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -62,7 +57,6 @@ public class MediaServiceImpl implements MediaService {
     private final CacheManager cacheManager;
     private final FansubService fansubService;
     private final ElasticsearchOperations elasticsearchOperations;
-    private final ApplicationEventPublisher publisher;
 
     @Override
     @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-all:' +#pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
@@ -72,9 +66,9 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()",condition = "#content == null and #query == null")
-    public Page<MediaDto> filter(Pageable pageable, String content,String query) {
-        log.info("Getting filtered medias: [content: {}, query: {}]", content,query);
+    @Cacheable(value = MediaConstants.CACHE_NAME_MEDIA_PAGE, key = "'media-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()", condition = "#content == null and #query == null")
+    public Page<MediaDto> filter(Pageable pageable, String content, String query) {
+        log.info("Getting filtered medias: [content: {}, query: {}]", content, query);
 
         BoolQuery.Builder queryBuilder = QueryBuilders.bool();
 
@@ -96,7 +90,7 @@ public class MediaServiceImpl implements MediaService {
                 .build();
         SearchHits<ElasticMedia> search = elasticsearchOperations.search(nativeQuery, ElasticMedia.class);
         Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
-        return new PageImpl<>(mediaRepository.findAllByIdIn(ids,nativeQuery.getSort()),pageable,search.getTotalHits()).map(this::toMediaDto);
+        return new PageImpl<>(mediaRepository.findAllByIdIn(ids, nativeQuery.getSort()), pageable, search.getTotalHits()).map(this::toMediaDto);
     }
 
     @Override
@@ -132,9 +126,7 @@ public class MediaServiceImpl implements MediaService {
         media.setMediaSources(Collections.emptyList());
         Content content = contentService.findById(mediaDto.getContent().getId());
         log.warn("Saving media: {}", mediaDto);
-        MediaDto dto = toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
-        publisher.publishEvent(new CreateMediaEvent(dto));
-        return dto;
+        return toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
     }
 
     @Override
@@ -146,32 +138,20 @@ public class MediaServiceImpl implements MediaService {
 
         mediaDtoList.forEach(mediaDto -> {
             Content content = contentService.findById(mediaDto.getContent().getId());
-
-            Media media = MediaServiceMapper.toEntity(new Media(),content,mediaDto);
-
             List<MediaSource> mediaSources = new ArrayList<>();
+
+            Media media = MediaServiceMapper.toEntity(new Media(), content, mediaDto);
             media.setMediaSources(mediaSources);
 
             mediaDto.getMediaSourceList().forEach(mediaSourceDto -> {
-                MediaSource mediaSource = new MediaSource();
                 Fansub fansub = fansubService.findOrCreateByName(mediaSourceDto.getFansub().getName());
 
-                mediaSource.setMedia(media);
-                mediaSource.setFansub(fansub);
-                mediaSource.setUrl(mediaSourceDto.getUrl());
-                mediaSource.setType(mediaSourceDto.getType());
-
-                mediaSources.add(mediaSource);
+                mediaSources.add(MediaServiceMapper.toMediaSourceEntity(new MediaSource(), mediaSourceDto, media, fansub));
             });
             mediaList.add(media);
         });
 
-        List<MediaDto> savedList = mediaRepository.saveAllAndFlush(mediaList).stream().map(media -> {
-            MediaDto dto = MediaServiceMapper.toDto(media);
-            dto.setContent(ContentServiceMapper.toDto(media.getContent()));
-            return dto;
-        }).toList();
-        publisher.publishEvent(new BulkMediaCreateEvent(savedList));
+        mediaRepository.saveAllAndFlush(mediaList);
     }
 
     @Override
@@ -188,9 +168,7 @@ public class MediaServiceImpl implements MediaService {
         Content content = contentService.findById(mediaDto.getContent().getId());
 
         log.warn("Updating media: {}, updated: {}", id, mediaDto);
-        MediaDto dto =  toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
-        publisher.publishEvent(new UpdateMediaEvent(dto));
-        return dto;
+        return toMediaDto(mediaRepository.save(MediaServiceMapper.toEntity(media, content, mediaDto)));
     }
 
     @Override
@@ -229,7 +207,6 @@ public class MediaServiceImpl implements MediaService {
 
         log.warn("Deleting media : {}", id);
         mediaRepository.delete(media);
-        publisher.publishEvent(new DeleteMediaEvent(id));
 
         Cache cache = cacheManager.getCache(MediaConstants.CACHE_NAME_MEDIA);
 

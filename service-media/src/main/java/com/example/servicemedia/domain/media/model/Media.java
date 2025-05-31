@@ -1,6 +1,7 @@
 package com.example.servicemedia.domain.media.model;
 
 import com.example.servicemedia.domain.content.model.Content;
+import com.example.servicemedia.domain.media.elasticsearch.event.listener.ElasticMediaEventListener;
 import com.example.servicemedia.util.persistance.AbstractEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@EntityListeners({ElasticMediaEventListener.class})
 public class Media extends AbstractEntity {
     @Column(nullable = false)
     private String name;

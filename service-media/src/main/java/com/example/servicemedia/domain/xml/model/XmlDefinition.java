@@ -1,5 +1,6 @@
 package com.example.servicemedia.domain.xml.model;
 
+import com.example.servicemedia.domain.xml.elasticsearch.event.listener.ElasticXmlDefinitionEventListener;
 import com.example.servicemedia.util.persistance.AbstractEntity;
 import com.example.servicemedia.domain.xml.enums.DefinitionType;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners({ElasticXmlDefinitionEventListener.class})
 public class XmlDefinition extends AbstractEntity {
     private String fileName;
     @Enumerated(EnumType.STRING)
@@ -19,7 +21,7 @@ public class XmlDefinition extends AbstractEntity {
     @Column(nullable = false)
     private byte[] xmlFile;
     private Boolean success = Boolean.FALSE;
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 2500)
     private String errorMessage;
-    private String JobExecutionId;
+    private Long JobExecutionId;
 }

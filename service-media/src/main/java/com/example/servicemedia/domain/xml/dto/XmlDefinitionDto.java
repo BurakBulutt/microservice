@@ -18,5 +18,5 @@ public class XmlDefinitionDto {
     private byte[] xmlFile;
     private Boolean success;
     private String errorMessage;
-    private String JobExecutionId;
+    private Long JobExecutionId;
 }

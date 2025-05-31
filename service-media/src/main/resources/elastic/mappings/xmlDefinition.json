@@ -21,7 +21,7 @@
       "type": "boolean"
     },
     "jobExecutionId": {
-      "type": "keyword"
+      "type": "long"
     },
     "type": {
       "type": "keyword"

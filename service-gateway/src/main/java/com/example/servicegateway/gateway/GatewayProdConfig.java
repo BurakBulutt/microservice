@@ -41,7 +41,7 @@ public class GatewayProdConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(5), 2, true))
                                 .requestRateLimiter(config -> config
                                         .setKeyResolver(keyResolver)
                                         .setRateLimiter(redisRateLimiter))
@@ -56,7 +56,7 @@ public class GatewayProdConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(5), 2, true))
                                 .requestRateLimiter(config -> config
                                         .setKeyResolver(keyResolver)
                                         .setRateLimiter(redisRateLimiter))
@@ -72,7 +72,7 @@ public class GatewayProdConfig {
                                 .retry(config -> config
                                         .setMethods(HttpMethod.GET)
                                         .setRetries(3)
-                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true))
+                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(5), 2, true))
                                 .requestRateLimiter(config -> config
                                         .setKeyResolver(keyResolver)
                                         .setRateLimiter(redisRateLimiter))
@@ -86,7 +86,7 @@ public class GatewayProdConfig {
         return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
                 .timeLimiterConfig(TimeLimiterConfig.custom()
-                        .timeoutDuration(Duration.ofSeconds(1L))
+                        .timeoutDuration(Duration.ofSeconds(5L))
                         .cancelRunningFuture(Boolean.TRUE)
                         .build())
                 .build());

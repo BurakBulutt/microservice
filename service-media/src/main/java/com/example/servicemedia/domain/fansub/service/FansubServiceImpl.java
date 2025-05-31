@@ -4,9 +4,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.servicemedia.domain.fansub.constants.FansubConstants;
 import com.example.servicemedia.domain.fansub.dto.FansubDto;
-import com.example.servicemedia.domain.fansub.elasticsearch.event.CreateFansubEvent;
+import com.example.servicemedia.domain.fansub.elasticsearch.event.SaveFansubEvent;
 import com.example.servicemedia.domain.fansub.elasticsearch.event.DeleteFansubEvent;
-import com.example.servicemedia.domain.fansub.elasticsearch.event.UpdateFansubEvent;
 import com.example.servicemedia.domain.fansub.elasticsearch.model.ElasticFansub;
 import com.example.servicemedia.domain.fansub.mapper.FansubServiceMapper;
 import com.example.servicemedia.domain.fansub.model.Fansub;
@@ -87,13 +86,10 @@ public class FansubServiceImpl implements FansubService {
     @Override
     @Transactional
     public Fansub findOrCreateByName(String name) {
-        log.info("Getting fansub by name: {}, if not found, it will be created with name", name);
         Optional<Fansub> fansub = repository.findByNameContainsIgnoreCase(name);
-        return fansub.orElseGet(() -> {
-            Fansub f = repository.save(new Fansub(name, null, Collections.emptyList()));
-            publisher.publishEvent(new CreateFansubEvent(FansubServiceMapper.toDto(f)));
-            return f;
-        });
+
+        log.info("Getting fansub by name: {}, if not found, it will be created with name", name);
+        return fansub.orElseGet(() -> repository.save(new Fansub(name, null, Collections.emptyList())));
     }
 
     @Override
@@ -104,10 +100,7 @@ public class FansubServiceImpl implements FansubService {
     )
     public FansubDto save(FansubDto fanSubDto) {
         log.info("Saving fansub: {}", fanSubDto);
-
-        FansubDto dto = FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(new Fansub(),fanSubDto)));
-        publisher.publishEvent(new CreateFansubEvent(dto));
-        return dto;
+        return FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(new Fansub(),fanSubDto)));
     }
 
     @Override
@@ -120,9 +113,7 @@ public class FansubServiceImpl implements FansubService {
         Fansub fanSub = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Fansub.class.getSimpleName(), id));
 
         log.info("Updating fansub: {}, updated: {}",id,fanSubDto);
-        FansubDto dto = FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(fanSub,fanSubDto)));
-        publisher.publishEvent(new UpdateFansubEvent(dto));
-        return dto;
+        return FansubServiceMapper.toDto(repository.save(FansubServiceMapper.toEntity(fanSub,fanSubDto)));
     }
 
     @Override
@@ -136,6 +127,5 @@ public class FansubServiceImpl implements FansubService {
 
         log.warn("Deleting fansub: {}, updated: {}",id,fanSub);
         repository.delete(fanSub);
-        publisher.publishEvent(new DeleteFansubEvent(id));
     }
 }

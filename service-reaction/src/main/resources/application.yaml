@@ -4,14 +4,6 @@ spring:
   application:
     name: service-reaction
     version: 0.0.1-SNAPSHOT
-  elasticsearch:
-    connection-timeout: 1s
-    uris: http://${ESC_HOST:localhost}:9200
-  batch:
-    jdbc:
-      initialize-schema: always
-    job:
-      enabled: false
   datasource:
     username: ${DB_USER:reaction_admin}
     password: ${DB_PASSWORD:Reaction_admin123}
@@ -22,6 +14,30 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME:reaction_admin}:${MONGO_PASSWORD:Reaction_admin123}@${MONGO_HOST:localhost}:27017/${MONGO_DATABASE:service-reaction}?authSource=admin&authMechanism=SCRAM-SHA-256
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      connect-timeout: 1s
+    elasticsearch:
+      repositories:
+        enabled: true
+  rabbitmq:
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    connection-timeout: 1s
+  elasticsearch:
+    connection-timeout: 1s
+    uris: http://${ESC_HOST:localhost}:9200
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
   cloud:
     openfeign:
       circuitbreaker:
@@ -82,19 +98,6 @@ spring:
             consumer:
               auto-bind-dlq: true
               dlq-ttl: 3600000
-  rabbitmq:
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-    host: ${RABBITMQ_HOST:localhost}
-    port: 5672
-    connection-timeout: 1s
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
-      connect-timeout: 1s
-    mongodb:
-      uri: mongodb://${MONGO_USERNAME:root}:${MONGO_PASSWORD:mongodb}@${MONGO_HOST:localhost}:27017/${MONGO_DATABASE:service-reaction}?authSource=admin&authMechanism=SCRAM-SHA-256
 resilience4j:
   timelimiter:
     configs:

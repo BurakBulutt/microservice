@@ -15,9 +15,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.repeat.RepeatContext;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.batch.repeat.support.RepeatSynchronizationManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +45,7 @@ public class XmlBatch {
     private final ContentService contentService;
     private final MediaService mediaService;
     private final XmlBatchChunkListener xmlBatchChunkListener;
-    private final XmlBatchExceptionHandler xmlBatchExceptionHandler;
+    private final XmlBatchStepExecutionListener xmlBatchStepExecutionListener;
 
     @Bean
     public Job importXmlJob(@Qualifier(BATCH_IMPORT_XML_STEP) Step step) {
@@ -61,7 +59,7 @@ public class XmlBatch {
         return new StepBuilder(BATCH_IMPORT_XML_STEP, jobRepository)
                 .tasklet(task, transactionManager)
                 .listener(xmlBatchChunkListener)
-                .exceptionHandler(xmlBatchExceptionHandler)
+                .listener(xmlBatchStepExecutionListener)
                 .build();
     }
 
@@ -69,9 +67,6 @@ public class XmlBatch {
     @Transactional
     public Tasklet importXmlTask() {
         return (contribution, chunkContext) -> {
-            RepeatContext repeatContext = RepeatSynchronizationManager.getContext();
-            repeatContext.setAttribute("id",chunkContext.getStepContext().getJobParameters().get(BATCH_DEFINITION_ID));
-
             byte[] file = (byte[]) chunkContext.getAttribute("file");
             assert file != null;
 

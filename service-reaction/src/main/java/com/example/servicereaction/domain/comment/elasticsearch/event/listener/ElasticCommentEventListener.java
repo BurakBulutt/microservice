@@ -1,18 +1,22 @@
 package com.example.servicereaction.domain.comment.elasticsearch.event.listener;
 
 
-import com.example.servicereaction.domain.comment.dto.CommentDto;
-import com.example.servicereaction.domain.comment.elasticsearch.event.CreateCommentEvent;
+import com.example.servicereaction.domain.comment.elasticsearch.event.SaveCommentEvent;
 import com.example.servicereaction.domain.comment.elasticsearch.event.DeleteCommentEvent;
-import com.example.servicereaction.domain.comment.elasticsearch.event.UpdateCommentEvent;
 import com.example.servicereaction.domain.comment.elasticsearch.model.ElasticComment;
 import com.example.servicereaction.domain.comment.elasticsearch.repo.ElasticCommentRepository;
+import com.example.servicereaction.domain.comment.model.Comment;
 import com.example.servicereaction.util.exception.BaseException;
 import com.example.servicereaction.util.exception.MessageResource;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.ZoneOffset;
 
@@ -20,37 +24,46 @@ import java.time.ZoneOffset;
 @RequiredArgsConstructor
 public class ElasticCommentEventListener {
     private final ElasticCommentRepository repository;
+    private final ApplicationEventPublisher publisher;
 
-    @EventListener(CreateCommentEvent.class)
-    public void createContent(CreateCommentEvent event) {
+    @PostPersist
+    public void postPersist(Comment entity) {
+        publisher.publishEvent(new SaveCommentEvent(entity));
+    }
+
+    @PostUpdate
+    public void postUpdate(Comment entity) {
+        publisher.publishEvent(new SaveCommentEvent(entity));
+    }
+
+    @PostRemove
+    public void postRemove(Comment entity) {
+        publisher.publishEvent(new DeleteCommentEvent(entity.getId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = SaveCommentEvent.class,fallbackExecution = true)
+    public void saveContent(SaveCommentEvent event) {
         repository.save(toEntity(new ElasticComment(),event.comment()), RefreshPolicy.IMMEDIATE);
     }
 
-    @EventListener(UpdateCommentEvent.class)
-    public void updateContent(UpdateCommentEvent event) {
-        ElasticComment elasticComment = repository.findById(event.comment().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticComment.class.getSimpleName(), event.comment().getId()));
-        repository.save(toEntity(elasticComment,event.comment()), RefreshPolicy.IMMEDIATE);
-    }
-
-    @EventListener(DeleteCommentEvent.class)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = DeleteCommentEvent.class,fallbackExecution = true)
     public void deleteContent(DeleteCommentEvent event) {
         ElasticComment elasticComment = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticComment.class.getSimpleName(), event.id()));
         repository.delete(elasticComment, RefreshPolicy.IMMEDIATE);
     }
 
-    private ElasticComment toEntity(ElasticComment entity, CommentDto dto) {
-        entity.setId(dto.getId());
-        entity.setCreated(dto.getCreated().atOffset(ZoneOffset.UTC));
-        entity.setCommentType(dto.getCommentType().name());
-        entity.setTargetType(dto.getTargetType().name());
-        entity.setTargetId(dto.getTargetId());
-        entity.setUserId(dto.getUserId());
+    private ElasticComment toEntity(ElasticComment elasticComment, Comment comment) {
+        elasticComment.setId(comment.getId());
+        elasticComment.setCreated(comment.getCreated().atOffset(ZoneOffset.UTC));
+        elasticComment.setCommentType(comment.getCommentType().name());
+        elasticComment.setTargetType(comment.getTargetType().name());
+        elasticComment.setTargetId(comment.getTargetId());
+        elasticComment.setUserId(comment.getUserId());
 
-        if (dto.getParent() != null) {
-            entity.setParentId(dto.getParent().getId());
+        if (comment.getParent() != null) {
+            elasticComment.setParentId(comment.getParent().getId());
         }
 
-        return entity;
+        return elasticComment;
     }
-
 }

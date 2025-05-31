@@ -5,15 +5,16 @@ import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.OffsetDateTime;
 
-@Document(indexName = "comment")
+@Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@Document(indexName = ElasticComment.INDEX_NAME, aliases = {@Alias(alias = "comment")})
 @Mapping(mappingPath = "elastic/mappings/comment.json")
 public class ElasticComment {
-    @Field(type = FieldType.Keyword)
+    public static final String INDEX_NAME = "comment_v1";
+
     private String id;
     @Field(type = FieldType.Date, format = DateFormat.date_optional_time)
     private OffsetDateTime created;

@@ -1,49 +1,54 @@
 package com.example.servicemedia.domain.category.elasticsearch.event.listener;
 
-import com.example.servicemedia.domain.category.dto.CategoryDto;
-import com.example.servicemedia.domain.category.elasticsearch.event.CreateCategoryEvent;
+
 import com.example.servicemedia.domain.category.elasticsearch.event.DeleteCategoryEvent;
-import com.example.servicemedia.domain.category.elasticsearch.event.UpdateCategoryEvent;
+import com.example.servicemedia.domain.category.elasticsearch.event.SaveCategoryEvent;
 import com.example.servicemedia.domain.category.elasticsearch.model.ElasticCategory;
 import com.example.servicemedia.domain.category.elasticsearch.repo.ElasticCategoryRepository;
+import com.example.servicemedia.domain.category.model.Category;
+import com.example.servicemedia.elasticsearch.ElasticEntityMapper;
 import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.time.ZoneOffset;
 
 @Component
 @RequiredArgsConstructor
 public class ElasticCategoryEventListener {
     private final ElasticCategoryRepository repository;
+    private final ApplicationEventPublisher publisher;
 
-    @EventListener(CreateCategoryEvent.class)
-    public void createContent(CreateCategoryEvent event) {
-        repository.save(toEntity(new ElasticCategory(),event.category()), RefreshPolicy.IMMEDIATE);
+    @PostPersist
+    public void postPersist(Category entity) {
+        publisher.publishEvent(new SaveCategoryEvent(entity));
     }
 
-    @EventListener(UpdateCategoryEvent.class)
-    public void updateContent(UpdateCategoryEvent event) {
-        ElasticCategory elasticCategory = repository.findById(event.category().getId()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticCategory.class.getSimpleName(), event.category().getId()));
-        repository.save(toEntity(elasticCategory,event.category()), RefreshPolicy.IMMEDIATE);
+    @PostUpdate
+    public void postUpdate(Category entity) {
+        publisher.publishEvent(new SaveCategoryEvent(entity));
     }
 
-    @EventListener(DeleteCategoryEvent.class)
-    public void deleteContent(DeleteCategoryEvent event) {
+    @PostRemove
+    public void postRemove(Category entity) {
+        publisher.publishEvent(new DeleteCategoryEvent(entity.getId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = SaveCategoryEvent.class,fallbackExecution = true)
+    public void saveCategory(SaveCategoryEvent event) {
+        repository.save(ElasticEntityMapper.toElasticCategory(event.category()), RefreshPolicy.IMMEDIATE);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = DeleteCategoryEvent.class,fallbackExecution = true)
+    public void deleteCategory(DeleteCategoryEvent event) {
         ElasticCategory elasticCategory = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticCategory.class.getSimpleName(), event.id()));
         repository.delete(elasticCategory, RefreshPolicy.IMMEDIATE);
     }
-
-    private ElasticCategory toEntity(ElasticCategory entity, CategoryDto dto) {
-        entity.setId(dto.getId());
-        entity.setCreated(dto.getCreated().atOffset(ZoneOffset.UTC));
-        entity.setName(dto.getName());
-        entity.setSlug(dto.getSlug());
-
-        return entity;
-    }
-
 }

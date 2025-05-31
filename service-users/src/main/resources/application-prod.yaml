@@ -1,20 +1,23 @@
 server:
   port: 8080
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      connect-timeout: 2s
   rabbitmq:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     host: ${RABBITMQ_HOST}
     port: 5672
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: 6379
-  cloud:
-    stream:
-      bindings:
-        deleteUserComments-out-0:
-          destination: deleteUserComments
+    connection-timeout: 2s
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: false
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 10
@@ -32,7 +35,8 @@ management:
     enabled: true
   otlp:
     tracing:
-      endpoint: https://${OTLP_HOST}:4318
+      endpoint: https://${OTLP_HOST}:4318/v1/traces
+      connect-timeout: 2s
 keycloak:
   auth-server-url: https://${KC_HOST}:${KC_PORT}
   realm: ${KC_REALM}

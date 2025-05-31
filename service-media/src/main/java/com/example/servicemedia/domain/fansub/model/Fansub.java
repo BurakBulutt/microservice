@@ -1,5 +1,6 @@
 package com.example.servicemedia.domain.fansub.model;
 
+import com.example.servicemedia.domain.fansub.elasticsearch.event.listener.ElasticFansubEventListener;
 import com.example.servicemedia.domain.media.model.MediaSource;
 import com.example.servicemedia.util.persistance.AbstractEntity;
 import jakarta.persistence.*;
@@ -13,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@EntityListeners({ElasticFansubEventListener.class})
 public class Fansub extends AbstractEntity {
     @Column(unique = true,nullable = false)
     private String name;

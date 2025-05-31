@@ -3,6 +3,7 @@ package com.example.servicemedia.elasticsearch.batch.category;
 import com.example.servicemedia.domain.category.elasticsearch.model.ElasticCategory;
 import com.example.servicemedia.domain.category.elasticsearch.repo.ElasticCategoryRepository;
 import com.example.servicemedia.domain.category.model.Category;
+import com.example.servicemedia.elasticsearch.ElasticEntityMapper;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.time.ZoneOffset;
 
 @Configuration
 @RequiredArgsConstructor
@@ -51,15 +51,7 @@ public class CategoryStepConfig {
 
     @Bean("categoryItemProcessor")
     public ItemProcessor<Category, ElasticCategory> categoryItemProcessor() {
-        return ( category) -> {
-            ElasticCategory elasticCategory = new ElasticCategory();
-            elasticCategory.setId(category.getId());
-            elasticCategory.setCreated(category.getCreated().atOffset(ZoneOffset.UTC));
-            elasticCategory.setName(category.getName());
-            elasticCategory.setSlug(category.getSlug());
-
-            return elasticCategory;
-        };
+        return ElasticEntityMapper::toElasticCategory;
     }
 
     @Bean("categoryItemWriter")

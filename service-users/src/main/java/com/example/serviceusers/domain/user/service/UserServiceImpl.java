@@ -81,7 +81,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @CacheEvict(value = UserConstants.CACHE_NAME_USER_PAGE, allEntries = true)
+    @Caching(
+            put = {
+                    @CachePut(key = "'user-id:' + #result.id"),
+                    @CachePut(key = "'user-username:' + #result.username")
+            },
+            evict = @CacheEvict(value = UserConstants.CACHE_NAME_USER_PAGE, allEntries = true)
+    )
     public UserRepresentation save(CreateUserRequest request) {
         UserRepresentation userRepresentation = new UserRepresentation();
         userRepresentation.setUsername(request.username());

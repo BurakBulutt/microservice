@@ -3,6 +3,7 @@ package com.example.servicemedia.elasticsearch.batch.xml;
 import com.example.servicemedia.domain.xml.elasticsearch.model.ElasticXmlDefinition;
 import com.example.servicemedia.domain.xml.elasticsearch.repo.ElasticXmlDefinitionRepository;
 import com.example.servicemedia.domain.xml.model.XmlDefinition;
+import com.example.servicemedia.elasticsearch.ElasticEntityMapper;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +18,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.time.ZoneOffset;
 
 @Configuration
 @RequiredArgsConstructor
@@ -51,17 +50,7 @@ public class XmlDefinitionStepConfig {
 
     @Bean("xmlDefinitionItemProcessor")
     public ItemProcessor<XmlDefinition, ElasticXmlDefinition> xmlDefinitionItemProcessor() {
-        return (xmlDefinition) -> {
-            ElasticXmlDefinition elasticXmlDefinition = new ElasticXmlDefinition();
-            elasticXmlDefinition.setId(xmlDefinition.getId());
-            elasticXmlDefinition.setCreated(xmlDefinition.getCreated().atOffset(ZoneOffset.UTC));
-            elasticXmlDefinition.setFileName(xmlDefinition.getFileName());
-            elasticXmlDefinition.setType(xmlDefinition.getType().name());
-            elasticXmlDefinition.setSuccess(xmlDefinition.getSuccess());
-            elasticXmlDefinition.setJobExecutionId(xmlDefinition.getJobExecutionId());
-
-            return elasticXmlDefinition;
-        };
+        return ElasticEntityMapper::toElasticXmlDefinition;
     }
 
     @Bean("xmlDefinitionItemWriter")

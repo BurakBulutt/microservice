@@ -12,5 +12,5 @@ public class XmlDefinitionResponse {
     private DefinitionType type;
     private Boolean success;
     private String errorMessage;
-    private String JobExecutionId;
+    private Long JobExecutionId;
 }

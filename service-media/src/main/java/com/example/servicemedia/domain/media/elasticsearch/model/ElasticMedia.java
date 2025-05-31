@@ -1,24 +1,22 @@
 package com.example.servicemedia.domain.media.elasticsearch.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
-
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-//@Document(indexName = "media",aliases = {@Alias(alias = "media")})
-@Document(indexName = "media")
+@Document(indexName = ElasticMedia.INDEX_NAME,aliases = {@Alias(alias = "media")})
 @Mapping(mappingPath = "elastic/mappings/media.json")
 @Setting(settingPath = "elastic/settings/fullTextSearchAnalyzerSettings.json")
 public class ElasticMedia {
+    public static final String INDEX_NAME = "media_v1";
+
     private String id;
     @Field(type = FieldType.Date, format = DateFormat.date_optional_time)
     private OffsetDateTime created;

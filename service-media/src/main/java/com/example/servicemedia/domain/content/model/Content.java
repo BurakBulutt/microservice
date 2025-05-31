@@ -1,6 +1,7 @@
 package com.example.servicemedia.domain.content.model;
 
 import com.example.servicemedia.domain.category.model.Category;
+import com.example.servicemedia.domain.content.elasticsearch.event.listener.ElasticContentEventListener;
 import com.example.servicemedia.domain.content.enums.ContentType;
 import com.example.servicemedia.domain.media.model.Media;
 import com.example.servicemedia.util.persistance.AbstractEntity;
@@ -16,6 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@EntityListeners({ElasticContentEventListener.class})
 public class Content extends AbstractEntity {
     @Column(nullable = false)
     private String name;

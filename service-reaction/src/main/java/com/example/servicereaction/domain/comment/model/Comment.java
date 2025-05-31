@@ -1,5 +1,6 @@
 package com.example.servicereaction.domain.comment.model;
 
+import com.example.servicereaction.domain.comment.elasticsearch.event.listener.ElasticCommentEventListener;
 import com.example.servicereaction.domain.comment.enums.CommentTargetType;
 import com.example.servicereaction.domain.comment.enums.CommentType;
 import com.example.servicereaction.util.persistance.AbstractEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString(exclude = {"commentList", "parent"})
+@EntityListeners({ElasticCommentEventListener.class})
 public class Comment extends AbstractEntity {
     @Column(columnDefinition = "TEXT",nullable = false)
     private String content;

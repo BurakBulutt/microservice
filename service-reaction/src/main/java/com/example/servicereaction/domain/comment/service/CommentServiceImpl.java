@@ -6,10 +6,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.servicereaction.domain.comment.constants.CommentConstants;
 import com.example.servicereaction.domain.comment.elasticsearch.model.ElasticComment;
 import com.example.servicereaction.feign.TargetResponse;
-import com.example.servicereaction.domain.comment.elasticsearch.event.BulkCommentDeleteEvent;
-import com.example.servicereaction.domain.comment.elasticsearch.event.CreateCommentEvent;
-import com.example.servicereaction.domain.comment.elasticsearch.event.DeleteCommentEvent;
-import com.example.servicereaction.domain.comment.elasticsearch.event.UpdateCommentEvent;
 import com.example.servicereaction.domain.comment.enums.CommentTargetType;
 import com.example.servicereaction.feign.content.ContentFeignClient;
 import com.example.servicereaction.feign.media.MediaFeignClient;
@@ -28,7 +24,6 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -62,7 +57,6 @@ public class CommentServiceImpl implements CommentService {
     private final LikeService likeService;
     private final StreamBridge streamBridge;
     private final CacheManager cacheManager;
-    private final ApplicationEventPublisher publisher;
     private final ElasticsearchOperations elasticsearchOperations;
 
     @Override
@@ -80,7 +74,7 @@ public class CommentServiceImpl implements CommentService {
         BoolQuery.Builder queryBuilder = QueryBuilders.bool();
 
         if (StringUtils.hasLength(query)) {
-            List<Query> queries = Stream.of("userId", "targetId")
+            List<Query> queries = Stream.of("userId", "targetId","parentId")
                     .map(field -> QueryBuilders.term(builder -> builder.field(field).value(query)))
                     .toList();
 
@@ -132,9 +126,7 @@ public class CommentServiceImpl implements CommentService {
         }
 
         log.info("Saving comment: {}", commentDto);
-        CommentDto dto = toCommentDto(repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent)));
-        publisher.publishEvent(new CreateCommentEvent(dto));
-        return dto;
+        return toCommentDto(repository.save(CommentServiceMapper.toEntity(new Comment(), commentDto, parent)));
     }
 
     @Override
@@ -148,9 +140,7 @@ public class CommentServiceImpl implements CommentService {
         comment.setContent(commentDto.getContent());
 
         log.info("Updating comment: {}, updated: {}", id, commentDto);
-        CommentDto dto = toCommentDto(repository.save(comment));
-        publisher.publishEvent(new UpdateCommentEvent(dto));
-        return dto;
+        return toCommentDto(repository.save(comment));
     }
 
     @Override
@@ -164,7 +154,6 @@ public class CommentServiceImpl implements CommentService {
 
         log.warn("Deleting comment: {}", id);
         repository.delete(comment);
-        publisher.publishEvent(new DeleteCommentEvent(comment.getId()));
 
         log.warn("Deleting comment likes: {}", id);
         likeService.deleteLikesByTargetId(id);
@@ -200,7 +189,6 @@ public class CommentServiceImpl implements CommentService {
 
         log.warn("Deleting comments: {}", commentIds);
         repository.deleteAllById(commentIds);
-        publisher.publishEvent(new BulkCommentDeleteEvent(commentList.stream().map(Comment::getId).collect(Collectors.toSet())));
 
         log.warn("Deleting comments likes: {}", commentIds);
         likeService.deleteLikesByTargetIdIn(commentIds);

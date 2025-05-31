@@ -1,23 +1,21 @@
 package com.example.servicemedia.domain.fansub.elasticsearch.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.OffsetDateTime;
 
-
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-//@Document(indexName = "fansub",aliases = {@Alias(alias = "fansub")})
-@Document(indexName = "fansub")
+@Document(indexName = ElasticFansub.INDEX_NAME,aliases = {@Alias(alias = "fansub")})
 @Mapping(mappingPath = "elastic/mappings/fansub.json")
 @Setting(settingPath = "elastic/settings/fullTextSearchAnalyzerSettings.json")
 public class ElasticFansub {
+    public static final String INDEX_NAME = "fansub_v1";
+
     private String id;
     @Field(type = FieldType.Date, format = DateFormat.date_optional_time)
     private OffsetDateTime created;

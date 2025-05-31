@@ -3,6 +3,7 @@ package com.example.servicemedia.elasticsearch.batch.fansub;
 import com.example.servicemedia.domain.fansub.elasticsearch.model.ElasticFansub;
 import com.example.servicemedia.domain.fansub.elasticsearch.repo.ElasticFansubRepository;
 import com.example.servicemedia.domain.fansub.model.Fansub;
+import com.example.servicemedia.elasticsearch.ElasticEntityMapper;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.time.ZoneOffset;
 
 @Configuration
 @RequiredArgsConstructor
@@ -51,14 +51,7 @@ public class FansubStepConfig {
 
     @Bean("fansubItemProcessor")
     public ItemProcessor<Fansub, ElasticFansub> fansubItemProcessor() {
-        return ( fansub) -> {
-            ElasticFansub elasticFansub = new ElasticFansub();
-            elasticFansub.setId(fansub.getId());
-            elasticFansub.setCreated(fansub.getCreated().atOffset(ZoneOffset.UTC));
-            elasticFansub.setName(fansub.getName());
-
-            return elasticFansub;
-        };
+        return ElasticEntityMapper::toElasticFansub;
     }
 
     @Bean("fansubItemWriter")

@@ -5,9 +5,7 @@ import com.example.servicemedia.domain.xml.service.XmlDefinitionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.repeat.RepeatContext;
 import org.springframework.batch.repeat.exception.ExceptionHandler;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 public class XmlBatchExceptionHandler implements ExceptionHandler {
     private final XmlDefinitionService xmlDefinitionService;

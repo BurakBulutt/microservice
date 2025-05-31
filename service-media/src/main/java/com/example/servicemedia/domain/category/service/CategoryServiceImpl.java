@@ -4,9 +4,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.servicemedia.domain.category.constants.CategoryConstants;
 import com.example.servicemedia.domain.category.dto.CategoryDto;
-import com.example.servicemedia.domain.category.elasticsearch.event.CreateCategoryEvent;
-import com.example.servicemedia.domain.category.elasticsearch.event.DeleteCategoryEvent;
-import com.example.servicemedia.domain.category.elasticsearch.event.UpdateCategoryEvent;
 import com.example.servicemedia.domain.category.elasticsearch.model.ElasticCategory;
 import com.example.servicemedia.domain.category.mapper.CategoryServiceMapper;
 import com.example.servicemedia.domain.category.model.Category;
@@ -20,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -46,7 +42,6 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
     private final CacheManager cacheManager;
     private final ElasticsearchOperations elasticsearchOperations;
-    private final ApplicationEventPublisher publisher;
 
     @Override
     @Cacheable(value = CategoryConstants.CACHE_NAME_CATEGORY_PAGE, key = "'category-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
@@ -92,11 +87,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public Category findOrCreateByName(String name) {
         Optional<Category> category = repository.findByNameContainsIgnoreCase(name).stream().findAny();
-        return category.orElseGet(() -> {
-            Category c = repository.save(new Category(name, name, slugGenerator(name), Collections.emptyList()));
-            publisher.publishEvent(new CreateCategoryEvent(CategoryServiceMapper.toDto(c)));
-            return c;
-        });
+        return category.orElseGet(() -> repository.save(new Category(name, name, slugGenerator(name), Collections.emptyList())));
     }
 
     @Override
@@ -127,9 +118,7 @@ public class CategoryServiceImpl implements CategoryService {
     )
     public CategoryDto save(CategoryDto categoryDto) {
         log.info("Saving category: {}", categoryDto);
-        CategoryDto dto = CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto)));
-        publisher.publishEvent(new CreateCategoryEvent(dto));
-        return dto;
+        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto)));
     }
 
     @Override
@@ -145,9 +134,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Category.class.getSimpleName(), id));
 
         log.info("Updating category: {}, updated: {}",id,categoryDto);
-        CategoryDto dto = CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(category,categoryDto)));
-        publisher.publishEvent(new UpdateCategoryEvent(dto));
-        return dto;
+        return CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(category,categoryDto)));
     }
 
     @Override
@@ -165,7 +152,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         log.info("Deleting category: {}, updated: {}",id,category);
         repository.delete(category);
-        publisher.publishEvent(new DeleteCategoryEvent(id));
 
         Cache cache = cacheManager.getCache(CategoryConstants.CACHE_NAME_CATEGORY);
 

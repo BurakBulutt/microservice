@@ -1,28 +1,41 @@
 server:
   port: 8080
 spring:
-  elasticsearch:
-    connection-timeout: 1s
-    uris: https://${ESC_HOST}:9200
   datasource:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 2000
+      maximum-pool-size: 10
   jpa:
     database: postgresql
     hibernate:
       ddl-auto: update
     show-sql: true
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:27017/${MONGO_DATABASE}?authSource=admin&authMechanism=SCRAM-SHA-256
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      connect-timeout: 2s
   rabbitmq:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     host: ${RABBITMQ_HOST}
     port: 5672
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: 6379
+    connection-timeout: 2s
+  elasticsearch:
+    connection-timeout: 2s
+    uris: https://${ESC_HOST}:9200
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: false
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 10
@@ -40,9 +53,11 @@ management:
     enabled: true
   otlp:
     tracing:
-      endpoint: https://${OTLP_HOST}:4318
+      endpoint: https://${OTLP_HOST}:4318/v1/traces
+      connect-timeout: 2s
 logging:
   level:
     com.example.servicereaction: info
+    org.springframework.batch: info
 
 

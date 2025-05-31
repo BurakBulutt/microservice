@@ -1,8 +1,7 @@
 package com.example.servicemedia.domain.media.mapper;
 
 import com.example.servicemedia.domain.content.model.Content;
-import com.example.servicemedia.domain.fansub.dto.FansubDto;
-import com.example.servicemedia.domain.fansub.mapper.FansubServiceMapper;
+import com.example.servicemedia.domain.fansub.model.Fansub;
 import com.example.servicemedia.domain.media.dto.MediaDto;
 import com.example.servicemedia.domain.media.dto.MediaSourceDto;
 import com.example.servicemedia.domain.media.model.Media;
@@ -35,6 +34,15 @@ public class MediaServiceMapper {
                 .url(mediaSource.getUrl())
                 .type(mediaSource.getType())
                 .build();
+    }
+
+    public static MediaSource toMediaSourceEntity(MediaSource mediaSource, MediaSourceDto dto, Media media, Fansub fansub) {
+        mediaSource.setMedia(media);
+        mediaSource.setFansub(fansub);
+        mediaSource.setUrl(dto.getUrl());
+        mediaSource.setType(dto.getType());
+
+        return mediaSource;
     }
 
     public static Media toEntity(Media media, Content content,MediaDto dto) {

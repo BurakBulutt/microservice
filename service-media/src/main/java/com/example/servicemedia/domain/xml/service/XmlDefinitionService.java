@@ -11,8 +11,6 @@ import java.io.IOException;
 
 public interface XmlDefinitionService {
     Page<XmlDefinitionDto> getAll(Pageable pageable);
-
-    @Transactional(readOnly = true)
     Page<XmlDefinitionDto> filter(Pageable pageable, String query);
 
     XmlDefinition getById(String id);

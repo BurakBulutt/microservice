@@ -1,5 +1,6 @@
 package com.example.servicemedia.domain.category.model;
 
+import com.example.servicemedia.domain.category.elasticsearch.event.listener.ElasticCategoryEventListener;
 import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.util.persistance.AbstractEntity;
 import jakarta.persistence.*;
@@ -13,6 +14,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners({ElasticCategoryEventListener.class})
 public class Category extends AbstractEntity {
     @Column(nullable = false)
     private String name;

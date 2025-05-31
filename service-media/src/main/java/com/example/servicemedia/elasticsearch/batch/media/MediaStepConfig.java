@@ -4,6 +4,7 @@ package com.example.servicemedia.elasticsearch.batch.media;
 import com.example.servicemedia.domain.media.elasticsearch.model.ElasticMedia;
 import com.example.servicemedia.domain.media.elasticsearch.repo.ElasticMediaRepository;
 import com.example.servicemedia.domain.media.model.Media;
+import com.example.servicemedia.elasticsearch.ElasticEntityMapper;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.time.ZoneOffset;
 
 @Configuration
 @RequiredArgsConstructor
@@ -52,17 +52,7 @@ public class MediaStepConfig {
 
     @Bean("mediaItemProcessor")
     public ItemProcessor<Media, ElasticMedia> mediaItemProcessor() {
-        return (media) -> {
-            ElasticMedia elasticMedia = new ElasticMedia();
-            elasticMedia.setId(media.getId());
-            elasticMedia.setCreated(media.getCreated().atOffset(ZoneOffset.UTC));
-            elasticMedia.setName(media.getName());
-            elasticMedia.setSlug(media.getSlug());
-            elasticMedia.setContentId(media.getContent().getId());
-            elasticMedia.setPublishDate(media.getPublishDate());
-
-            return elasticMedia;
-        };
+        return ElasticEntityMapper::toElasticMedia;
     }
 
     @Bean("mediaItemWriter")

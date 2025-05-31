@@ -4,22 +4,56 @@ spring:
   application:
     name: service-users
     version: 0.0.1-SNAPSHOT
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      connect-timeout: 1s
   rabbitmq:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
     connection-timeout: 1s
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
-      connect-timeout: 1s
   cloud:
     stream:
       bindings:
         deleteUserComments-out-0:
           destination: deleteUserComments
+      rabbit:
+        bindings:
+          deleteUserComments-out-0:
+            producer:
+              ttl: 10000
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 2s
+        cancel-running-future: false
+  circuitbreaker:
+    configs:
+      default:
+        minimum-number-of-calls: 10
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+        ignore-exceptions:
+          - jakarta.ws.rs.WebApplicationException
+          - jakarta.ws.rs.NotFoundException
+          - java.util.NoSuchElementException
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        ignore-exceptions:
+          - jakarta.ws.rs.WebApplicationException
+          - jakarta.ws.rs.NotFoundException
+          - java.util.NoSuchElementException
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 10
@@ -30,11 +64,6 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
-keycloak:
-  auth-server-url: http://${KC_HOST:localhost}:${KC_PORT:8090}
-  realm: ${KC_REALM:dev}
-  client-id: ${KC_CLIENT:app-callcenter-client}
-  client-secret: ${KC_SECRET:bgahwKLV8HoGll32ZLjmRPVYQOO57Ebc}
 management:
   server:
     port: 9001
@@ -72,30 +101,6 @@ management:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
       connect-timeout: 1s
       timeout: 10s
-resilience4j:
-  timelimiter:
-    configs:
-      default:
-        timeout-duration: 2s
-        cancel-running-future: false
-  circuitbreaker:
-    configs:
-      default:
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 2
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 5s
-  retry:
-    configs:
-      default:
-        max-attempts: 3
-        wait-duration: 100ms
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-        ignore-exceptions:
-          - jakarta.ws.rs.WebApplicationException
-          - jakarta.ws.rs.NotFoundException
-          - java.util.NoSuchElementException
 logging:
   level:
     com.example.serviceusers: debug
@@ -104,3 +109,8 @@ info:
     name: ${spring.application.name}
     description: ${spring.application.name}
     version: ${spring.application.version}
+keycloak:
+  auth-server-url: http://${KC_HOST:localhost}:${KC_PORT:8090}
+  realm: ${KC_REALM:dev}
+  client-id: ${KC_CLIENT:app-callcenter-client}
+  client-secret: ${KC_SECRET:bgahwKLV8HoGll32ZLjmRPVYQOO57Ebc}

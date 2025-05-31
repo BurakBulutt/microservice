@@ -2,9 +2,6 @@ package com.example.servicemedia.domain.xml.service;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
-import com.example.servicemedia.domain.xml.elasticsearch.event.CreateXmlDefinitionEvent;
-import com.example.servicemedia.domain.xml.elasticsearch.event.DeleteXmlDefinitionEvent;
-import com.example.servicemedia.domain.xml.elasticsearch.event.UpdateXmlDefinitionEvent;
 import com.example.servicemedia.domain.xml.elasticsearch.model.ElasticXmlDefinition;
 import com.example.servicemedia.util.exception.BaseException;
 import com.example.servicemedia.util.exception.MessageResource;
@@ -50,9 +47,10 @@ import static com.example.servicemedia.util.CreatorComponent.fullTextSearchQuery
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class XmlDefinitionServiceImpl implements XmlDefinitionService {
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher publisher;
     private final XmlDefinitionRepository repository;
     private final JobRepository jobRepository;
     private final JobExplorer jobExplorer;
@@ -60,14 +58,12 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     private final ElasticsearchOperations elasticsearchOperations;
 
     @Override
-    @Transactional(readOnly = true)
     public Page<XmlDefinitionDto> getAll(Pageable pageable) {
         log.info("Getting all xml definitions");
         return repository.findAll(pageable).map(XmlDefinitionServiceMapper::toDto);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<XmlDefinitionDto> filter(Pageable pageable, String query) {
         log.info("Getting filtered xml definitions: [query: {}]",query);
 
@@ -87,7 +83,7 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public XmlDefinition getById(String id) {
         log.info("Getting xml definition by id : {}", id);
         return repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
@@ -115,13 +111,11 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
             @Override
             public void afterCommit() {
                 log.info("Publishing start job event : {}", definitionId);
-                eventPublisher.publishEvent(new StartJobEvent(definitionId));
+                publisher.publishEvent(new StartJobEvent(definitionId));
                 TransactionSynchronization.super.afterCommit();
             }
         };
         TransactionSynchronizationManager.registerSynchronization(synchronization);
-
-        eventPublisher.publishEvent(new CreateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(xmlDefinition)));
     }
 
     @Override
@@ -129,15 +123,14 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
     public void update(XmlDefinition definition) {
         log.info("Updating xml definition : {}", definition);
         repository.save(definition);
-        eventPublisher.publishEvent(new UpdateXmlDefinitionEvent(XmlDefinitionServiceMapper.toDto(definition)));
     }
 
     @Override
     @Transactional
     public void delete(String id) {
         XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
-        JobExecution execution = jobExplorer.getJobExecution(Long.parseLong(xmlDefinition.getJobExecutionId()));
-        if (execution != null && StringUtils.hasLength(xmlDefinition.getJobExecutionId())) {
+        JobExecution execution = jobExplorer.getJobExecution(xmlDefinition.getJobExecutionId());
+        if (execution != null) {
             JobInstance instance = execution.getJobInstance();
             log.warn("Deleting job instance : {}", instance);
             jobRepository.deleteJobInstance(instance);
@@ -145,20 +138,18 @@ public class XmlDefinitionServiceImpl implements XmlDefinitionService {
 
         log.warn("Deleting xml definition : {}", xmlDefinition);
         repository.delete(xmlDefinition);
-        eventPublisher.publishEvent(new DeleteXmlDefinitionEvent(id));
     }
 
     @Override
-    @Transactional(readOnly = true,propagation = Propagation.NEVER)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public void startJob(String id) {
         XmlDefinition xmlDefinition = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, XmlDefinition.class.getSimpleName(), id));
-        long executionId = Long.parseLong(xmlDefinition.getJobExecutionId());
         try {
-            log.info("Restarting job with executionId {} for xml definition : {}", executionId,xmlDefinition);
-            jobOperator.restart(executionId);
+            log.info("Restarting job with executionId {} for xml definition : {}", xmlDefinition.getJobExecutionId(),xmlDefinition);
+            jobOperator.restart(xmlDefinition.getJobExecutionId());
         } catch (JobInstanceAlreadyCompleteException | NoSuchJobExecutionException | NoSuchJobException |
                  JobRestartException | JobParametersInvalidException e) {
-            log.error("Failed to restart job with executionId {}. Error: {}", executionId, e.getLocalizedMessage());
+            log.error("Failed to restart job with executionId {}. Error: {}", xmlDefinition.getJobExecutionId(), e.getLocalizedMessage());
         }
     }
 
