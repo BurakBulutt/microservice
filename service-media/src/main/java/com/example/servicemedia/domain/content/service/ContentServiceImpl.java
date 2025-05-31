@@ -1,13 +1,8 @@
 package com.example.servicemedia.domain.content.service;
 
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
-import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
-import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import com.example.servicemedia.domain.category.dto.CategoryDto;
 import com.example.servicemedia.domain.category.mapper.CategoryServiceMapper;
 import com.example.servicemedia.domain.category.model.Category;
@@ -25,11 +20,11 @@ import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.domain.content.repo.ContentRepository;
 import com.example.servicemedia.domain.fansub.model.Fansub;
 import com.example.servicemedia.domain.fansub.service.FansubService;
+import com.example.servicemedia.domain.media.dto.MediaDto;
+import com.example.servicemedia.domain.media.elasticsearch.event.BulkMediaCreateEvent;
 import com.example.servicemedia.feign.like.LikeCountResponse;
 import com.example.servicemedia.feign.like.LikeFeignClient;
 import com.example.servicemedia.feign.like.LikeType;
-import com.example.servicemedia.domain.media.dto.MediaDto;
-import com.example.servicemedia.domain.media.dto.MediaSourceDto;
 import com.example.servicemedia.domain.media.mapper.MediaServiceMapper;
 import com.example.servicemedia.domain.media.model.Media;
 import com.example.servicemedia.domain.media.model.MediaSource;
@@ -56,10 +51,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.example.servicemedia.util.CreatorComponent.*;
 
 
 @Service
@@ -76,7 +72,6 @@ public class ContentServiceImpl implements ContentService {
     private final FansubService fansubService;
     private final ElasticsearchOperations elasticsearchOperations;
     private final ApplicationEventPublisher publisher;
-    private final ElasticsearchClient elasticsearchClient;
 
     @Override
     @Cacheable(cacheNames = ContentConstants.CACHE_NAME_CONTENT_PAGE, key = "'content-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
@@ -86,9 +81,10 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    @Cacheable(cacheNames = ContentConstants.CACHE_NAME_CONTENT_PAGE, key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()", condition = "#category == null and #query == null and #firstDate == null and #lastDate == null and #type == null")
+    @Cacheable(cacheNames = ContentConstants.CACHE_NAME_CONTENT_PAGE, key = "'content-filter:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()",
+            condition = "#category == null and #query == null and #firstDate == null and #lastDate == null and #type == null")
     public Page<ContentDto> filter(Pageable pageable, String category, String query, LocalDate firstDate, LocalDate lastDate, ContentType type) {
-        log.info("Getting filtered contents: [category: {}, firstDate: {}, lastDate: {}, query: {}]", category,firstDate,lastDate,query);
+        log.info("Getting filtered contents: [category: {}, firstDate: {}, lastDate: {}, query: {}]", category, firstDate, lastDate, query);
 
         BoolQuery.Builder queryBuilder = QueryBuilders.bool();
 
@@ -128,7 +124,7 @@ public class ContentServiceImpl implements ContentService {
                 .build();
         SearchHits<ElasticContent> search = elasticsearchOperations.search(nativeQuery, ElasticContent.class);
         Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
-        return repository.findAllByIdIn(pageable,ids).map(this::toContentDto);
+        return new PageImpl<>(repository.findAllByIdIn(ids,nativeQuery.getSort()),pageable,search.getTotalHits()).map(this::toContentDto);
     }
 
     @Override
@@ -139,10 +135,14 @@ public class ContentServiceImpl implements ContentService {
                 .withPostTags(ContentConstants.HIGHLIGHT_POST_TAG)
                 .withType("fvh")
                 .build();
-        Highlight highlight = new Highlight(parameters,fields);
+        Highlight highlight = new Highlight(parameters, fields);
         NativeQuery nativeQuery = NativeQuery.builder().withQuery(fullTextSearchQuery(query)).withHighlightQuery(new HighlightQuery(highlight, ElasticContent.class)).withMaxResults(4).build();
         SearchHits<ElasticContent> search = elasticsearchOperations.search(nativeQuery, ElasticContent.class);
-        return getContentDtoList(search);
+
+        List<ContentDto> contentDtoList = new ArrayList<>();
+
+        search.getSearchHits().forEach(hit -> createContentDtoFromHit(contentDtoList, hit));
+        return contentDtoList;
     }
 
     @Override
@@ -181,18 +181,26 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     @Transactional
-    @CacheEvict(value = ContentConstants.CACHE_NAME_CONTENT_PAGE, allEntries = true)
+    @Caching(
+            put = {
+                    @CachePut(key = "'content-id:' + #result.id"),
+                    @CachePut(key = "'content-slug:' + #result.slug")
+            },
+            evict = @CacheEvict(value = ContentConstants.CACHE_NAME_CONTENT_PAGE, allEntries = true)
+    )
     public ContentDto save(ContentDto contentDto) {
         Content content = ContentServiceMapper.toEntity(new Content(), contentDto);
+        content.setMedias(Collections.emptyList());
+        content.setCategories(Collections.emptyList());
         if (!contentDto.getCategories().isEmpty()) {
             Set<String> requestCategoryIds = contentDto.getCategories().stream()
                     .map(CategoryDto::getId)
                     .collect(Collectors.toSet());
-            List<Category> categories = categoryService.getAllByIds(requestCategoryIds).stream().toList();
+            List<Category> categories = categoryService.findAllByIds(requestCategoryIds).stream().toList();
             content.setCategories(categories);
         }
         log.warn("Saving content: {}", contentDto);
-        ContentDto dto = ContentServiceMapper.toDto(repository.save(content));
+        ContentDto dto = toContentDto(repository.save(content));
         publisher.publishEvent(new CreateContentEvent(dto));
         return dto;
     }
@@ -211,28 +219,19 @@ public class ContentServiceImpl implements ContentService {
             List<Media> medias = new ArrayList<>();
             content.setMedias(medias);
 
-            List<MediaDto> mediaDtoList = contentDto.getMedias();
-            mediaDtoList.forEach(mediaDto -> {
-                Media media = new Media();
-
-                media.setDescription(mediaDto.getDescription());
-                media.setCount(mediaDto.getCount());
-                media.setPublishDate(mediaDto.getPublishDate());
-                media.setContent(content);
-                media.setName(nameGenerator(content.getName(), media.getCount(), content.getType()));
-                media.setSlug(slugGenerator(media.getName()));
+            contentDto.getMedias().forEach(mediaDto -> {
+                Media media = MediaServiceMapper.toEntity(new Media(), content, mediaDto);
 
                 List<MediaSource> mediaSources = new ArrayList<>();
                 media.setMediaSources(mediaSources);
 
-                List<MediaSourceDto> mediaSourceDtoList = mediaDto.getMediaSourceList();
-                mediaSourceDtoList.forEach(mediaSourceDto -> {
+                mediaDto.getMediaSourceList().forEach(mediaSourceDto -> {
                     MediaSource mediaSource = new MediaSource();
                     Fansub fansub = fansubService.findOrCreateByName(mediaSourceDto.getFansub().getName());
 
                     mediaSource.setMedia(media);
-                    mediaSource.setUrl(mediaSourceDto.getUrl());
                     mediaSource.setFansub(fansub);
+                    mediaSource.setUrl(mediaSourceDto.getUrl());
                     mediaSource.setType(mediaSourceDto.getType());
 
                     mediaSources.add(mediaSource);
@@ -241,26 +240,30 @@ public class ContentServiceImpl implements ContentService {
             });
 
             if (contentDto.getCategories() != null && !contentDto.getCategories().isEmpty()) {
-                Set<String> categoryIds = new HashSet<>();
+                Set<String> categoryIds = getCategoryIds(new HashSet<>(), contentDto);
 
-                List<CategoryDto> categoryDtoList = contentDto.getCategories();
-                categoryDtoList.forEach(categoryDto -> {
-                    Optional<Category> category = categoryService.getByName(categoryDto.getName()).stream().findAny();
-                    category.ifPresentOrElse(category1 -> categoryIds.add(category1.getId()), () -> {
-                        categoryDto.setSlug(slugGenerator(categoryDto.getName()));
-                        CategoryDto dto1 = categoryService.save(categoryDto);
-                        categoryIds.add(dto1.getId());
-                    });
-                });
-
-                List<Category> categories = categoryService.getAllByIds(categoryIds).stream().toList();
+                List<Category> categories = categoryService.findAllByIds(categoryIds).stream().toList();
                 content.setCategories(categories);
             }
-
             contentList.add(content);
         });
-        List<ContentDto> savedDtoList = repository.saveAllAndFlush(contentList).stream().map(ContentServiceMapper::toDto).toList();
+
+        List<Content> savedList = repository.saveAllAndFlush(contentList);
+        List<ContentDto> savedDtoList = savedList.stream()
+                .map(c -> {
+                    ContentDto dto = ContentServiceMapper.toDto(c);
+                    dto.setCategories(c.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
+                    return dto;
+                }).toList();
+        List<MediaDto> savedMediaDtoList = savedList.stream()
+                .flatMap(c -> c.getMedias().stream().map(media -> {
+                    MediaDto dto = MediaServiceMapper.toDto(media);
+                    dto.setContent(ContentServiceMapper.toDto(c));
+                    return dto;
+                }))
+                .toList();
         publisher.publishEvent(new BulkContentCreateEvent(savedDtoList));
+        publisher.publishEvent(new BulkMediaCreateEvent(savedMediaDtoList));
     }
 
     @Override
@@ -274,6 +277,7 @@ public class ContentServiceImpl implements ContentService {
     )
     public ContentDto update(String id, ContentDto contentDto) {
         Content content = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
+        content.setName(contentDto.getName());
         Set<String> requestCategoryIds = contentDto.getCategories().stream()
                 .map(CategoryDto::getId)
                 .collect(Collectors.toSet());
@@ -284,8 +288,12 @@ public class ContentServiceImpl implements ContentService {
                         .noneMatch(category -> category.getId().equals(id1)))
                 .collect(Collectors.toSet());
         if (!willSaveCategories.isEmpty()) {
-            categories.addAll(categoryService.getAllByIds(willSaveCategories));
+            categories.addAll(categoryService.findAllByIds(willSaveCategories));
         }
+        content.getMedias().forEach(media -> {
+            media.setName(nameGenerator(media.getCount(), content));
+            media.setSlug(slugGenerator(media.getName()));
+        });
         log.warn("Updating content: {}", id);
         ContentDto dto = toContentDto(repository.save(ContentServiceMapper.toEntity(content, contentDto)));
         publisher.publishEvent(new UpdateContentEvent(dto));
@@ -322,78 +330,33 @@ public class ContentServiceImpl implements ContentService {
         ContentDto dto = ContentServiceMapper.toDto(content);
         dto.setCategories(content.getCategories().stream().map(CategoryServiceMapper::toDto).toList());
         dto.setMedias(content.getMedias().stream().map(MediaServiceMapper::toDto).toList());
-        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(dto.getId());
-        if (response.hasBody()) {
-            dto.setLikeCount(response.getBody());
-        }
+        dto.setLikeCount(getLikeCount(content.getId()));
+
         return dto;
     }
 
-    private String slugGenerator(String name) {
-        return name
-                .toLowerCase()
-                .trim()
-                .replaceAll("[^\\w\\s-]", "")
-                .replaceAll("[\\s_-]+", "-")
-                .replaceAll("^-+|-+$", "");
+    private LikeCountResponse getLikeCount(String id) {
+        ResponseEntity<LikeCountResponse> response = likeFeignClient.getLikeCount(id);
+        return response.getBody();
     }
 
-    private String nameGenerator(String contentName, int count, ContentType type) {
-        final String name;
-        switch (type) {
-            case MOVIE -> name = contentName;
-            case SERIES -> name = contentName + " " + count + ContentConstants.EPISODE_PREFIX;
-            default -> throw new IllegalStateException("Unexpected value: " + type);
-        }
-        return name;
+    private void createContentDtoFromHit(List<ContentDto> contentDtoList, SearchHit<ElasticContent> hit) {
+        List<String> highLightField = hit.getHighlightField(ContentConstants.SEARCH_FIELD_NAME);
+        ElasticContent elasticContent = hit.getContent();
+        ContentDto contentDto = new ContentDto();
+        contentDto.setId(elasticContent.getId());
+        contentDto.setName(highLightField.get(0) != null ? highLightField.get(0) : elasticContent.getName());
+        contentDto.setSlug(elasticContent.getSlug());
+        contentDto.setPhotoUrl(elasticContent.getPhotoUrl());
+        contentDtoList.add(contentDto);
     }
 
-    private List<ContentDto> getContentDtoList(SearchHits<ElasticContent> search) {
-        List<ContentDto> contentDtoList = new ArrayList<>();
-        List<SearchHit<ElasticContent>> hits = search.getSearchHits();
-        hits.forEach(hit -> {
-            List<String> highLightField = hit.getHighlightField(ContentConstants.SEARCH_FIELD_NAME);
-            ElasticContent elasticContent = hit.getContent();
-            ContentDto contentDto = new ContentDto();
-            contentDto.setId(elasticContent.getId());
-            contentDto.setName(highLightField.get(0) != null ? highLightField.get(0) : elasticContent.getName());
-            contentDto.setSlug(elasticContent.getSlug());
-            contentDto.setPhotoUrl(elasticContent.getPhotoUrl());
-            contentDtoList.add(contentDto);
+    private Set<String> getCategoryIds(Set<String> categoryIds, ContentDto contentDto) {
+        List<CategoryDto> categoryDtoList = contentDto.getCategories();
+        categoryDtoList.forEach(categoryDto -> {
+            Category c = categoryService.findOrCreateByName(categoryDto.getName());
+            categoryIds.add(c.getId());
         });
-        return contentDtoList;
-    }
-
-    private Query fullTextSearchQuery(String query) {
-        return QueryBuilders.match()
-                .field(ContentConstants.SEARCH_FIELD_NAME)
-                .query(query)
-                .fuzziness(ContentConstants.SEARCH_FUZZINESS)
-                .build()
-                ._toQuery();
-    }
-
-    private String resolveFieldName(String fieldName) {
-        try {
-            GetMappingRequest request = new GetMappingRequest.Builder()
-                    .index(ContentConstants.ELASTIC_CONTENT_INDEX)
-                    .build();
-
-            GetMappingResponse response = elasticsearchClient.indices().getMapping(request);
-            Map<String, Property> properties = response.result()
-                    .get(ContentConstants.ELASTIC_CONTENT_INDEX)
-                    .mappings()
-                    .properties();
-
-            Property property = properties.get(fieldName);
-            if (property != null && property._kind() == Property.Kind.Text) {
-                if (property.text().fields() != null && property.text().fields().containsKey("keyword")) {
-                    return fieldName + ".keyword";
-                }
-            }
-        } catch (IOException e) {
-            log.error("Failed to resolve index information: {}, message: {}", ContentConstants.ELASTIC_CONTENT_INDEX,e.getMessage());
-        }
-        return fieldName;
+        return categoryIds;
     }
 }

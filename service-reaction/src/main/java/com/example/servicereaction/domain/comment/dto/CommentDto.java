@@ -1,10 +1,13 @@
 package com.example.servicereaction.domain.comment.dto;
 
+import com.example.servicereaction.domain.comment.enums.CommentTargetType;
+import com.example.servicereaction.feign.TargetResponse;
 import com.example.servicereaction.feign.user.UserResponse;
 import com.example.servicereaction.domain.comment.enums.CommentType;
 import com.example.servicereaction.domain.like.dto.LikeCountDto;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -15,11 +18,15 @@ import java.util.List;
 @ToString
 public class CommentDto {
     private String id;
+    private LocalDateTime created;
     private String content;
-    private UserResponse user;
     private CommentDto parent;
     private List<CommentDto> commentList;
-    private CommentType type;
-    private String targetId;
+    private CommentType commentType;
+    private CommentTargetType targetType;
     private LikeCountDto likeCount;
+    private TargetResponse target;
+    private UserResponse user;
+    private String targetId;
+    private String userId;
 }

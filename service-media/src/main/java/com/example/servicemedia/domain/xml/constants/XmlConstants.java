@@ -28,7 +28,7 @@ public class XmlConstants {
     public static final String MEDIA_SOURCE = "mediaSource";
     public static final String MEDIA_SOURCE_TYPE = "type";
     public static final String MEDIA_SOURCE_URL = "url";
-    public static final String MEDIA_SOURCE_FANSUB = "fanSub";
+    public static final String MEDIA_SOURCE_FANSUB = "fansub";
 
     public static final String BATCH_IMPORT_XML_JOB = "importXmlJob";
     public static final String BATCH_IMPORT_XML_STEP = "importXmlStep";

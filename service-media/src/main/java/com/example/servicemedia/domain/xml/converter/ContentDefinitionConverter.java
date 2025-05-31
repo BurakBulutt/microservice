@@ -42,7 +42,7 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
 
     private String parseText(Element element, String tag) {
         Node node = element.getElementsByTagName(tag).item(0);
-        return node.getTextContent();
+        return node != null ? node.getTextContent() : null;
     }
 
     private ContentType parseType(String typeStr) {
@@ -54,7 +54,7 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
                 return null;
             }
         }
-        log.warn("Content type string is null");
+        log.warn("Content type is null");
         return null;
     }
 
@@ -62,7 +62,7 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
         if (integerStr != null) {
             return Integer.parseInt(integerStr);
         }
-        log.warn("Integer string is null");
+        log.warn("Integer is null");
         return null;
     }
 
@@ -71,12 +71,18 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
         if (dateStr != null) {
             return LocalDate.parse(dateStr, formatter);
         }
-        log.warn("Date string is null");
+        log.warn("Date is null");
         return null;
     }
 
     private List<CategoryDto> parseCategories(Element element) {
         Node node = element.getElementsByTagName(CONTENT_CATEGORY_LIST).item(0);
+
+        if (node == null) {
+            log.warn("Categories is null");
+            return Collections.emptyList();
+        }
+
         List<CategoryDto> categoryList = new ArrayList<>();
 
         NodeList categoryNodes = ((Element) node).getElementsByTagName(CATEGORY);
@@ -89,11 +95,18 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
 
             categoryList.add(category);
         }
+
         return categoryList;
     }
 
     private List<MediaDto> parseMedias(Element element) {
         Node node = element.getElementsByTagName(CONTENT_MEDIA_LIST).item(0);
+
+        if (node == null) {
+            log.warn("Medias is null");
+            return Collections.emptyList();
+        }
+
         List<MediaDto> mediaList = new ArrayList<>();
 
         NodeList mediaNodes = ((Element) node).getElementsByTagName(MEDIA);
@@ -116,15 +129,17 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
     }
 
     private List<MediaSourceDto> parseMediaSources(Element element) {
+        Node node = element.getElementsByTagName(MEDIA_MEDIA_SOURCE_LIST).item(0);
 
-        if (element.getElementsByTagName(MEDIA_MEDIA_SOURCE_LIST).item(0) == null) {
+        if (node == null) {
+            log.warn("Media sources is null");
             return Collections.emptyList();
         }
 
-        Node node = element.getElementsByTagName(MEDIA_MEDIA_SOURCE_LIST).item(0);
         List<MediaSourceDto> mediaSourceList = new ArrayList<>();
 
         NodeList mediaSourceNodes = ((Element) node).getElementsByTagName(MEDIA_SOURCE);
+
         for (int i = 0; i < mediaSourceNodes.getLength(); i++) {
             Node mediaSourceNode = mediaSourceNodes.item(i);
 
@@ -132,12 +147,15 @@ public class ContentDefinitionConverter implements Converter<Element, ContentDto
 
             SourceType sourceType = SourceType.valueOf(mediaSourceElement.getElementsByTagName(MEDIA_SOURCE_TYPE).item(0).getTextContent());
 
+            Node fansubNode = mediaSourceElement.getElementsByTagName(MEDIA_SOURCE_FANSUB).item(0);
+
+            FansubDto fansub = new FansubDto();
+            fansub.setName(fansubNode.getTextContent().trim());
+
             MediaSourceDto mediaSource = new MediaSourceDto();
             mediaSource.setUrl(parseText(mediaSourceElement, MEDIA_SOURCE_URL));
             mediaSource.setType(sourceType);
-            mediaSource.setFansub(FansubDto.builder()
-                    .name(parseText(mediaSourceElement, MEDIA_SOURCE_FANSUB))
-                    .build());
+            mediaSource.setFansub(fansub);
 
             mediaSourceList.add(mediaSource);
         }

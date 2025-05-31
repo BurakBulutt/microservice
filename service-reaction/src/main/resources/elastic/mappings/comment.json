@@ -1,0 +1,34 @@
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "created": {
+      "type": "date"
+    },
+    "userId": {
+      "type": "keyword"
+    },
+    "parentId": {
+      "type": "keyword"
+    },
+    "targetId": {
+      "type": "keyword"
+    },
+    "targetType": {
+      "type": "keyword"
+    },
+    "commentType": {
+      "type": "keyword"
+    },
+    "_class": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    }
+  }
+}

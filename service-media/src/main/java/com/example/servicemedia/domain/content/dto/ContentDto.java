@@ -30,6 +30,6 @@ public class ContentDto {
     private String slug;
     private List<MediaDto> medias;
     private List<CategoryDto> categories;
-    private LikeCountResponse likeCount;
     private Integer episodeTime;
+    private LikeCountResponse likeCount;
 }

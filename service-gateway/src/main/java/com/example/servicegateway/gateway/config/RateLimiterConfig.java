@@ -17,11 +17,11 @@ import java.util.Objects;
 @Configuration
 @Profile("default")
 public class RateLimiterConfig {
-    private static final Logger log = LoggerFactory.getLogger(RateLimiterConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(RateLimiterConfig.class);
 
     @Bean
     public RedisRateLimiter rateLimiter() {
-        return new RedisRateLimiter(5,20,1);
+        return new RedisRateLimiter(5,10,1);
     }
 
     @Bean

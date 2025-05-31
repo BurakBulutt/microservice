@@ -16,6 +16,7 @@ import org.w3c.dom.NodeList;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.example.servicemedia.domain.xml.constants.XmlConstants.*;
@@ -36,7 +37,7 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
 
     private String parseText(Element element, String tag) {
         Node node = element.getElementsByTagName(tag).item(0);
-        return node.getTextContent();
+        return node != null ? node.getTextContent() : null;
     }
 
     private SourceType parseType(String typeStr) {
@@ -48,7 +49,7 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
                 return null;
             }
         }
-        log.warn("Source type string is null");
+        log.warn("Source type is null");
         return null;
     }
 
@@ -56,7 +57,7 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
         if (integerStr != null) {
             return Integer.parseInt(integerStr);
         }
-        log.warn("Integer string is null");
+        log.warn("Integer is null");
         return null;
     }
 
@@ -65,15 +66,22 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
         if (dateStr != null) {
             return LocalDate.parse(dateStr,formatter);
         }
-        log.warn("Date string is null");
+        log.warn("Date is null");
         return null;
     }
 
     private List<MediaSourceDto> parseMediaSources(Element element) {
         Node node = element.getElementsByTagName(MEDIA_MEDIA_SOURCE_LIST).item(0);
+
+        if (node == null) {
+            log.warn("Media sources is null");
+            return Collections.emptyList();
+        }
+
         List<MediaSourceDto> mediaSourceList = new ArrayList<>();
 
         NodeList mediaSourceNodes = ((Element) node).getElementsByTagName(MEDIA_SOURCE);
+
         for (int i = 0; i < mediaSourceNodes.getLength(); i++) {
             Node mediaSourceNode = mediaSourceNodes.item(i);
 
@@ -81,12 +89,15 @@ public class MediaDefinitionConverter implements Converter<Element, MediaDto> {
 
             SourceType sourceType = parseType(parseText(mediaSourceElement,MEDIA_SOURCE_TYPE));
 
+            Node fansubNode = mediaSourceElement.getElementsByTagName(MEDIA_SOURCE_FANSUB).item(0);
+
+            FansubDto fansub = new FansubDto();
+            fansub.setName(fansubNode.getTextContent().trim());
+
             MediaSourceDto mediaSource = new MediaSourceDto();
             mediaSource.setUrl(parseText(mediaSourceElement, MEDIA_SOURCE_URL));
             mediaSource.setType(sourceType);
-            mediaSource.setFansub(FansubDto.builder()
-                    .name(parseText(mediaSourceElement, MEDIA_SOURCE_FANSUB))
-                    .build());
+            mediaSource.setFansub(fansub);
 
             mediaSourceList.add(mediaSource);
         }

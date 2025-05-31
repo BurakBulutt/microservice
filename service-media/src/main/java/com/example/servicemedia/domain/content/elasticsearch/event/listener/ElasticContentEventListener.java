@@ -2,6 +2,7 @@ package com.example.servicemedia.domain.content.elasticsearch.event.listener;
 
 import com.example.servicemedia.domain.category.dto.CategoryDto;
 import com.example.servicemedia.domain.content.dto.ContentDto;
+import com.example.servicemedia.domain.content.elasticsearch.event.BulkContentCreateEvent;
 import com.example.servicemedia.domain.content.elasticsearch.event.CreateContentEvent;
 import com.example.servicemedia.domain.content.elasticsearch.event.DeleteContentEvent;
 import com.example.servicemedia.domain.content.elasticsearch.event.UpdateContentEvent;
@@ -36,6 +37,11 @@ public class ElasticContentEventListener {
     public void deleteContent(DeleteContentEvent event) {
         ElasticContent elasticContent = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticContent.class.getSimpleName(), event.id()));
         repository.delete(elasticContent, RefreshPolicy.IMMEDIATE);
+    }
+
+    @EventListener(BulkContentCreateEvent.class)
+    public void createAllContent(BulkContentCreateEvent event) {
+        repository.saveAll(event.contents().stream().map(dto -> toEntity(new ElasticContent(), dto)).toList(), RefreshPolicy.IMMEDIATE);
     }
 
     private ElasticContent toEntity(ElasticContent entity,ContentDto dto) {

@@ -1,7 +1,6 @@
 package com.example.servicemedia.domain.category.service;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.servicemedia.domain.category.constants.CategoryConstants;
 import com.example.servicemedia.domain.category.dto.CategoryDto;
@@ -12,7 +11,6 @@ import com.example.servicemedia.domain.category.elasticsearch.model.ElasticCateg
 import com.example.servicemedia.domain.category.mapper.CategoryServiceMapper;
 import com.example.servicemedia.domain.category.model.Category;
 import com.example.servicemedia.domain.category.repo.CategoryRepository;
-import com.example.servicemedia.domain.content.constants.ContentConstants;
 import com.example.servicemedia.domain.content.mapper.ContentServiceMapper;
 import com.example.servicemedia.domain.content.model.Content;
 import com.example.servicemedia.util.exception.BaseException;
@@ -24,6 +22,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -32,10 +31,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.example.servicemedia.util.CreatorComponent.fullTextSearchQuery;
+import static com.example.servicemedia.util.CreatorComponent.slugGenerator;
 
 @Slf4j
 @Service
@@ -72,7 +72,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
         SearchHits<ElasticCategory> search = elasticsearchOperations.search(nativeQuery, ElasticCategory.class);
         Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
-        return repository.findAllByIdIn(ids,pageable).map(CategoryServiceMapper::toDto);
+        return new PageImpl<>(repository.findAllByIdIn(ids,nativeQuery.getSort()),pageable,search.getTotalHits()).map(CategoryServiceMapper::toDto);
     }
 
     @Override
@@ -89,15 +89,20 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Set<Category> getAllByIds(Set<String> ids) {
-        log.info("Getting categories by ids: {}", ids);
-        return new HashSet<>(repository.findAllById(ids));
+    @Transactional
+    public Category findOrCreateByName(String name) {
+        Optional<Category> category = repository.findByNameContainsIgnoreCase(name).stream().findAny();
+        return category.orElseGet(() -> {
+            Category c = repository.save(new Category(name, name, slugGenerator(name), Collections.emptyList()));
+            publisher.publishEvent(new CreateCategoryEvent(CategoryServiceMapper.toDto(c)));
+            return c;
+        });
     }
 
     @Override
-    public List<Category> getByName(String name) {
-        log.info("Getting categories by name: {}", name);
-        return repository.findByNameContainsIgnoreCase(name);
+    public Set<Category> findAllByIds(Set<String> ids) {
+        log.info("Getting categories by ids: {}", ids);
+        return new HashSet<>(repository.findAllById(ids));
     }
 
     @Override
@@ -113,7 +118,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = CategoryConstants.CACHE_NAME_CATEGORY_PAGE, allEntries = true)
+    @Caching(
+            put = {
+                    @CachePut(key = "'category-id:' + #result.id"),
+                    @CachePut(key = "'category-slug:' + #result.slug")
+            },
+            evict = @CacheEvict(value = CategoryConstants.CACHE_NAME_CATEGORY_PAGE, allEntries = true)
+    )
     public CategoryDto save(CategoryDto categoryDto) {
         log.info("Saving category: {}", categoryDto);
         CategoryDto dto = CategoryServiceMapper.toDto(repository.save(CategoryServiceMapper.toEntity(new Category(),categoryDto)));
@@ -161,14 +172,5 @@ public class CategoryServiceImpl implements CategoryService {
         if (cache != null) {
             cache.evict("category-slug:" + category.getSlug());
         }
-    }
-
-    private Query fullTextSearchQuery(String query) {
-        return QueryBuilders.match()
-                .field(ContentConstants.SEARCH_FIELD_NAME)
-                .query(query)
-                .fuzziness(ContentConstants.SEARCH_FUZZINESS)
-                .build()
-                ._toQuery();
     }
 }

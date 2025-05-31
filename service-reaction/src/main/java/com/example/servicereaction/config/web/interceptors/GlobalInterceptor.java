@@ -21,7 +21,7 @@ public class GlobalInterceptor implements HandlerInterceptor {
             log.error("Principal is null");
             return false;
         }
-        log.info("Principal: {}", principalName);
+
         MDC.put("user", principalName);
 
         return HandlerInterceptor.super.preHandle(request, response, handler);

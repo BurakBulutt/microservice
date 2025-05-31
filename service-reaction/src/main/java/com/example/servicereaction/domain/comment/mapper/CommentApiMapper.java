@@ -3,7 +3,6 @@ package com.example.servicereaction.domain.comment.mapper;
 import com.example.servicereaction.domain.comment.api.AddCommentRequest;
 import com.example.servicereaction.domain.comment.api.CommentResponse;
 import com.example.servicereaction.domain.comment.api.UpdateCommentRequest;
-import com.example.servicereaction.feign.user.UserResponse;
 import com.example.servicereaction.domain.comment.dto.CommentDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -16,22 +15,24 @@ public class CommentApiMapper {
         return CommentResponse.builder()
                 .id(commentDto.getId())
                 .content(commentDto.getContent())
-                .user(commentDto.getUser())
-                .type(commentDto.getType())
-                .targetId(commentDto.getTargetId())
+                .commentType(commentDto.getCommentType())
+                .targetType(commentDto.getTargetType())
                 .commentList(commentDto.getCommentList())
                 .parent(commentDto.getParent())
                 .likeCount(commentDto.getLikeCount())
+                .user(commentDto.getUser())
+                .target(commentDto.getTarget())
                 .build();
     }
 
     public static CommentDto toDto(AddCommentRequest request) {
         return CommentDto.builder()
                 .content(request.content())
-                .targetId(request.targetId())
-                .type(request.type())
+                .targetType(request.targetType())
+                .commentType(request.type())
                 .parent(CommentDto.builder().id(request.parentId()).build())
-                .user(UserResponse.builder().id(request.userId()).build())
+                .userId(request.userId())
+                .targetId(request.targetId())
                 .build();
     }
 

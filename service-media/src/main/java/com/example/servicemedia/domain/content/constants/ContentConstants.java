@@ -10,7 +10,7 @@ public class ContentConstants {
 
     public static final String EPISODE_PREFIX = ". Bölüm";
 
-    public static final String ELASTIC_CONTENT_INDEX = "content_v1";
+    public static final String ELASTIC_CONTENT_INDEX = "content";
 
     public static final String SEARCH_FIELD_NAME = "name";
     public static final String SEARCH_FUZZINESS = "AUTO";

@@ -3,6 +3,7 @@ server:
 spring:
   application:
     name: service-gateway
+    version: 0.0.1-SNAPSHOT
   security:
     oauth2:
       resourceserver:
@@ -24,10 +25,10 @@ spring:
       connect-timeout: 1s
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 20
-    lease-expiration-duration-in-seconds: 60
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
-    registry-fetch-interval-seconds: 20
+    registry-fetch-interval-seconds: 10
     register-with-eureka: true
     fetch-registry: true
     service-url:
@@ -67,6 +68,8 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+      connect-timeout: 1s
+      timeout: 10s
 resilience4j:
   circuitbreaker:
     configs:
@@ -80,10 +83,10 @@ resilience4j:
         slow-call-duration-threshold: 2s
 logging:
   level:
-    org.springframework.security: info
+    org.springframework.security: debug
     com.example.servicegateway: debug
 info:
   application:
-    name: service-gateway
-    description: service-gateway
-    version: 0.0.1-SNAPSHOT
+    name: ${spring.application.name}
+    description: ${spring.application.name}
+    version: ${spring.application.version}

@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,8 +22,8 @@ public class CommentController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<CommentResponse>> filter(Pageable pageable,@RequestParam(required = false) String target) {
-        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.filter(pageable,target)));
+    public ResponseEntity<Page<CommentResponse>> filter(Pageable pageable,@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.filter(pageable,query)));
     }
 
     @GetMapping("/{id}")

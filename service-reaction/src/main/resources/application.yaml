@@ -3,6 +3,15 @@ server:
 spring:
   application:
     name: service-reaction
+    version: 0.0.1-SNAPSHOT
+  elasticsearch:
+    connection-timeout: 1s
+    uris: http://${ESC_HOST:localhost}:9200
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
   datasource:
     username: ${DB_USER:reaction_admin}
     password: ${DB_PASSWORD:Reaction_admin123}
@@ -117,10 +126,10 @@ resilience4j:
           - feign.FeignException.NotFound
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 20
-    lease-expiration-duration-in-seconds: 60
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
-    registry-fetch-interval-seconds: 20
+    registry-fetch-interval-seconds: 10
     register-with-eureka: true
     fetch-registry: true
     service-url:
@@ -160,13 +169,14 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+      connect-timeout: 1s
+      timeout: 10s
 logging:
   level:
     com.example.servicereaction: debug
+    org.springframework.batch: debug
 info:
   application:
-    name: service-reaction
-    description: service-reaction
-    version: 0.0.1-SNAPSHOT
-
-
+    name: ${spring.application.name}
+    description: ${spring.application.name}
+    version: ${spring.application.version}

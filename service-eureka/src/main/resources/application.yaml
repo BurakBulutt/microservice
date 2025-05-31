@@ -3,9 +3,12 @@ server:
 spring:
   application:
     name: service-eureka
+    version: 0.0.1-SNAPSHOT
 eureka:
   server:
-    enable-self-preservation: true
+    enable-self-preservation: false
+    metrics:
+      enabled: true
   instance:
     hostname: ${EUREKA_HOST:localhost}
   client:
@@ -46,8 +49,14 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+      connect-timeout: 1s
+      timeout: 10s
+logging:
+  level:
+    org.springframework.security: debug
+    com.example.serviceeureka: debug
 info:
   application:
-    name: service-eureka
-    description: service-eureka
-    version: 0.0.1-SNAPSHOT
+    name: ${spring.application.name}
+    description: ${spring.application.name}
+    version: ${spring.application.version}

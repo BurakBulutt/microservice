@@ -1,5 +1,6 @@
 package com.example.servicereaction.domain.comment.api;
 
+import com.example.servicereaction.domain.comment.enums.CommentTargetType;
 import com.example.servicereaction.domain.comment.enums.CommentType;
 import com.example.servicereaction.domain.comment.validator.AddCommentValidation;
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +18,8 @@ public record AddCommentRequest(
         String userId,
         @NotNull(message = "validation.comment.type.notNull")
         CommentType type,
+        @NotNull(message = "validation.comment.type.notNull")
+        CommentTargetType targetType,
         String targetId,
         String parentId
 ) {

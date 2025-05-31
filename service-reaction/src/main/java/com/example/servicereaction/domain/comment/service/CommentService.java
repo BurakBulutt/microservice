@@ -8,7 +8,7 @@ import java.util.Set;
 
 public interface CommentService {
     Page<CommentDto> getAll(Pageable pageable);
-    Page<CommentDto> filter(Pageable pageable,String target);
+    Page<CommentDto> filter(Pageable pageable,String query);
 
     CommentDto getById(String id);
 

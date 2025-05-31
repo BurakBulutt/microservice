@@ -1,5 +1,6 @@
 package com.example.servicereaction.domain.comment.model;
 
+import com.example.servicereaction.domain.comment.enums.CommentTargetType;
 import com.example.servicereaction.domain.comment.enums.CommentType;
 import com.example.servicereaction.util.persistance.AbstractEntity;
 import jakarta.persistence.*;
@@ -26,7 +27,10 @@ public class Comment extends AbstractEntity {
     private Comment parent;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private CommentType type;
-    @Column(nullable = true)
+    private CommentType commentType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CommentTargetType targetType;
+    @Column(nullable = false)
     private String targetId;
 }

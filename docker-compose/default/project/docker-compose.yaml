@@ -38,7 +38,7 @@ services:
       - environments/keycloak.env
     extends:
       file: ../common-config.yaml
-      service: base-config
+      service: extended-config
 
   redis:
     image: redis:latest
@@ -108,7 +108,9 @@ services:
     volumes:
       - elastic_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: "curl --fail --silent localhost:9200/health/ready | grep UP || exit 1"
+      test: >
+        curl --fail --silent http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s |
+        grep -q '"status":"yellow"\|"status":"green"' || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
@@ -118,19 +120,13 @@ services:
       - xpack.security.enabled=false
     extends:
       file: ../common-config.yaml
-      service: base-config
+      service: extended-config
 
   app-eureka:
     image: microservice/service-eureka:0.0.1-SNAPSHOT
     container_name: service-eureka
     ports:
       - "8761:8761"
-    healthcheck:
-      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     env_file:
       - environments/globalproject.env
     extends:
@@ -151,12 +147,6 @@ services:
         condition: service_healthy
       app-media:
         condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     env_file:
       - environments/globalproject.env
       - environments/gateway.env
@@ -176,12 +166,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     env_file:
       - environments/globalproject.env
       - environments/users.env
@@ -204,12 +188,6 @@ services:
     env_file:
       - environments/globalproject.env
       - environments/media.env
-    healthcheck:
-      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     extends:
       file: ../common-config.yaml
       service: app-base-config
@@ -229,12 +207,6 @@ services:
     env_file:
       - environments/globalproject.env
       - environments/reaction.env
-    healthcheck:
-      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     extends:
       file: ../common-config.yaml
       service: app-base-config

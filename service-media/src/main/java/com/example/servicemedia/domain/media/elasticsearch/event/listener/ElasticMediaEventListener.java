@@ -1,6 +1,7 @@
 package com.example.servicemedia.domain.media.elasticsearch.event.listener;
 
 import com.example.servicemedia.domain.media.dto.MediaDto;
+import com.example.servicemedia.domain.media.elasticsearch.event.BulkMediaCreateEvent;
 import com.example.servicemedia.domain.media.elasticsearch.event.CreateMediaEvent;
 import com.example.servicemedia.domain.media.elasticsearch.event.DeleteMediaEvent;
 import com.example.servicemedia.domain.media.elasticsearch.event.UpdateMediaEvent;
@@ -11,7 +12,6 @@ import com.example.servicemedia.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -36,6 +36,11 @@ public class ElasticMediaEventListener {
     public void deleteContent(DeleteMediaEvent event) {
         ElasticMedia elasticMedia = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticMedia.class.getSimpleName(), event.id()));
         repository.delete(elasticMedia, RefreshPolicy.IMMEDIATE);
+    }
+
+    @EventListener(BulkMediaCreateEvent.class)
+    public void createAllContent(BulkMediaCreateEvent event) {
+        repository.saveAll(event.medias().stream().map(dto -> toEntity(new ElasticMedia(), dto)).toList(), RefreshPolicy.IMMEDIATE);
     }
 
     private ElasticMedia toEntity(ElasticMedia entity, MediaDto dto) {

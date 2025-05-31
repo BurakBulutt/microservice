@@ -10,6 +10,9 @@ import com.example.servicemedia.domain.media.model.MediaSource;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import static com.example.servicemedia.util.CreatorComponent.nameGenerator;
+import static com.example.servicemedia.util.CreatorComponent.slugGenerator;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MediaServiceMapper {
 
@@ -27,24 +30,21 @@ public class MediaServiceMapper {
     }
 
     public static MediaSourceDto toMediaSourceDto(MediaSource mediaSource) {
-        FansubDto fansub = FansubServiceMapper.toDto(mediaSource.getFansub());
-
         return MediaSourceDto.builder()
                 .id(mediaSource.getId())
                 .url(mediaSource.getUrl())
                 .type(mediaSource.getType())
-                .mediaId(mediaSource.getMedia().getId())
-                .fansub(fansub)
                 .build();
     }
 
     public static Media toEntity(Media media, Content content,MediaDto dto) {
-        media.setName(dto.getName());
         media.setDescription(dto.getDescription());
         media.setCount(dto.getCount());
         media.setPublishDate(dto.getPublishDate());
-        media.setSlug(dto.getSlug());
         media.setContent(content);
+
+        media.setName(nameGenerator(dto.getCount(),content));
+        media.setSlug(slugGenerator(media.getName()));
 
         return media;
     }

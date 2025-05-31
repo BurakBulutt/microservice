@@ -6,3 +6,5 @@ eureka:
 management:
   server:
     port: 9000
+  tracing:
+    enabled: true

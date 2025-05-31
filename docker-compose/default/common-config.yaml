@@ -10,5 +10,17 @@ services:
       service: network-deploy-service
 
   app-base-config:
+    healthcheck:
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     extends:
       service: base-config
+
+  extended-config:
+    mem_limit: 1024m
+    cpus: '1'
+    extends:
+      service: network-deploy-service

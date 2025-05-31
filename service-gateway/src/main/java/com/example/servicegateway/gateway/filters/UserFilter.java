@@ -27,7 +27,6 @@ public class UserFilter implements GlobalFilter {
                     ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                             .header("X-User-Principal", username)
                             .build();
-                    logger.info("User: {}", username);
                     return chain.filter(exchange.mutate().request(mutatedRequest).build());
                 });
     }

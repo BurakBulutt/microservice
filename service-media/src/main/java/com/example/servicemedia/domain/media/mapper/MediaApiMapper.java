@@ -36,7 +36,7 @@ public class MediaApiMapper {
                 .id(dto.getId())
                 .type(dto.getType())
                 .url(dto.getUrl())
-                .mediaId(dto.getMediaId())
+                .media(dto.getMedia())
                 .fansub(dto.getFansub())
                 .build();
     }
@@ -44,7 +44,7 @@ public class MediaApiMapper {
     public static MediaDto toDto(MediaRequest request) {
         return MediaDto.builder()
                 .description(request.description())
-                .content(ContentDto.builder().id(request.contentId().trim()).build())
+                .content(ContentDto.builder().id(request.contentId()).build())
                 .publishDate(request.publishDate())
                 .count(request.count())
                 .build();
@@ -54,7 +54,7 @@ public class MediaApiMapper {
         return request.mediaSourceRequestList().stream().map(mediaSourceRequest -> MediaSourceDto.builder()
                 .url(mediaSourceRequest.url())
                 .type(mediaSourceRequest.type())
-                .mediaId(mediaSourceRequest.mediaId())
+                .media(MediaDto.builder().id(mediaSourceRequest.mediaId()).build())
                 .fansub(FansubDto.builder()
                         .name(mediaSourceRequest.fansub().name())
                         .url(mediaSourceRequest.fansub().url())

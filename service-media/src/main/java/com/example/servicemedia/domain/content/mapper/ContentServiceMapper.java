@@ -36,5 +36,4 @@ public class ContentServiceMapper {
 
         return content;
     }
-
 }

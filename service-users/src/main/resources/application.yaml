@@ -3,6 +3,7 @@ server:
 spring:
   application:
     name: service-users
+    version: 0.0.1-SNAPSHOT
   rabbitmq:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
@@ -21,10 +22,10 @@ spring:
           destination: deleteUserComments
 eureka:
   instance:
-    lease-renewal-interval-in-seconds: 20
-    lease-expiration-duration-in-seconds: 60
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
-    registry-fetch-interval-seconds: 20
+    registry-fetch-interval-seconds: 10
     register-with-eureka: true
     fetch-registry: true
     service-url:
@@ -69,6 +70,8 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
+      connect-timeout: 1s
+      timeout: 10s
 resilience4j:
   timelimiter:
     configs:
@@ -98,6 +101,6 @@ logging:
     com.example.serviceusers: debug
 info:
   application:
-    name: service-users
-    description: service-users
-    version: 0.0.1-SNAPSHOT
+    name: ${spring.application.name}
+    description: ${spring.application.name}
+    version: ${spring.application.version}
