@@ -1,0 +1,21 @@
+appName: service-gateway
+appLabel: service-gateway
+
+replicaCount: 2
+
+image:
+  registry: wraithkage/service-gateway
+  tag: 1.0.0-SNAPSHOT
+
+containerPort: 8080
+containerManagementPort: 9000
+
+service:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: management
+      port: 9000
+      targetPort: 9000

@@ -52,15 +52,20 @@ spring:
       bindings:
         deleteLikes-out-0:
           destination: deleteLikes
-        deleteUserLikes-out-0:
-          destination: deleteUserLikes
-        deleteComments-in-0:
-          destination: deleteComments
+        deleteLikes-in-0:
+          destination: deleteLikes
           consumer:
             max-attempts: 3
             default-retryable: true
-        deleteLikes-in-0:
-          destination: deleteLikes
+        deleteUserLikes-out-0:
+          destination: deleteUserLikes
+        deleteUserLikes-in-0:
+          destination: deleteUserLikes
+          consumer:
+            max-attempts: 3
+            default-retryable: true
+        deleteComments-in-0:
+          destination: deleteComments
           consumer:
             max-attempts: 3
             default-retryable: true
@@ -69,24 +74,23 @@ spring:
           consumer:
             max-attempts: 3
             default-retryable: true
-        deleteUserLikes-in-0:
-          destination: deleteUserLikes
-          consumer:
-            max-attempts: 3
-            default-retryable: true
       rabbit:
         bindings:
           deleteLikes-out-0:
             producer:
               ttl: 10000
-          deleteUserLikes-out-0:
-            producer:
-              ttl: 10000
-          deleteComments-in-0:
+          deleteLikes-in-0:
             consumer:
               auto-bind-dlq: true
               dlq-ttl: 3600000
-          deleteLikes-in-0:
+          deleteUserLikes-out-0:
+            producer:
+              ttl: 10000
+          deleteUserLikes-in-0:
+            consumer:
+              auto-bind-dlq: true
+              dlq-ttl: 3600000
+          deleteComments-in-0:
             consumer:
               auto-bind-dlq: true
               dlq-ttl: 3600000
@@ -94,10 +98,11 @@ spring:
             consumer:
               auto-bind-dlq: true
               dlq-ttl: 3600000
-          deleteUserLikes-in-0:
-            consumer:
-              auto-bind-dlq: true
-              dlq-ttl: 3600000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/dev/protocol/openid-connect/certs}
 resilience4j:
   timelimiter:
     configs:

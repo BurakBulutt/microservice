@@ -20,7 +20,6 @@ services:
 
   auth:
     image: bitnami/keycloak:latest
-    container_name: service-authserver
     ports:
       - "8090:8080"
     volumes:
@@ -88,7 +87,7 @@ services:
       test: >
         bash -c "
         echo 'db.runCommand({ ping: 1 })' |
-        mongosh --username root --password example --authenticationDatabase admin --quiet"
+        mongosh --username root --password mongodb --authenticationDatabase admin --quiet"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -109,8 +108,8 @@ services:
       - elastic_data:/usr/share/elasticsearch/data
     healthcheck:
       test: >
-        curl --fail --silent http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s |
-        grep -q '"status":"yellow"\|"status":"green"' || exit 1
+        curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s
+        | grep -q '"status":"yellow"\|"status":"green"'
       interval: 10s
       timeout: 5s
       retries: 5

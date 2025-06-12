@@ -1,0 +1,21 @@
+appName: service-eureka
+appLabel: service-eureka
+
+replicaCount: 1
+
+image:
+    registry: wraithkage/service-eureka
+    tag: 1.0.0-SNAPSHOT
+
+containerPort: 8761
+containerManagementPort: 9000
+
+service:
+    type: LoadBalancer
+    ports:
+      - name: http
+        port: 8761
+        targetPort: 8761
+      - name: management
+        port: 9000
+        targetPort: 9000

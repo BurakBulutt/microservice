@@ -1,0 +1,48 @@
+global:
+  configMapName: commonConfigMap
+  activeProfile: default
+  managementServerPort: 9000
+  managementTracingEnabled: false
+  eurekaHost: http://eureka:8761/eureka
+  rabbitHost: rabbitmq # will change right hosting
+  rabbitUser: guest
+  rabbitPassword: guest
+  redisHost: redis # will change right hosting
+  otlpHost: otlp
+  oauth2IssuerUri: http://localhost:8090/realms/master
+  oauth2JwkSetUri: http://keycloak:8080/realms/master/protocol/openid-connect/certs # will change right hosting
+
+users:
+  configMapName: usersConfigMap
+  serverPort: 8080
+  kcHost: keycloak # will change right hosting
+  kcPort: 8080
+  kcRealm: dev
+  kcClient: app-callcenter-client
+  kcSecret: secret
+
+media:
+  configMapName: mediaConfigMap
+  serverPort: 8080
+  dbUser: postgres
+  dbPassword: postgres
+  dbHost: database # will change right hosting
+  dbName: app-media
+  escHost: elasticsearch # will change right hosting
+  mongoUsername: root
+  mongoPassword: password
+  mongoHost: mongo # will change right hosting
+  mongoDatabase: service-media
+
+reaction:
+  configMapName: reactionConfigMap
+  serverPort: 8080
+  dbUser: postgres
+  dbPassword: postgres
+  dbHost: database # will change right hosting
+  dbName: app-reaction
+  escHost: elasticsearch # will change right hosting
+  mongoUsername: root
+  mongoPassword: password
+  mongoHost: mongo # will change right hosting
+  mongoDatabase: service-reaction

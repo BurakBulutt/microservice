@@ -25,6 +25,11 @@ spring:
           deleteUserComments-out-0:
             producer:
               ttl: 10000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/dev/protocol/openid-connect/certs}
 resilience4j:
   timelimiter:
     configs:

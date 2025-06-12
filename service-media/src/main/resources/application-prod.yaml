@@ -30,6 +30,11 @@ spring:
   elasticsearch:
     connection-timeout: 2s
     uris: https://${ESC_HOST}:9200
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI}
 resilience4j:
   timelimiter:
     configs:

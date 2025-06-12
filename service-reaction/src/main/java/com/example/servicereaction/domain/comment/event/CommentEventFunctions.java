@@ -24,9 +24,9 @@ public class CommentEventFunctions {
 
     @Bean
     public Consumer<Set<String>> deleteComments(CommentService service) {
-        return id -> {
-            log.info("Delete comments message consumed: {}", id);
-            service.deleteAllByTargetIdIn(id);
+        return ids -> {
+            log.info("Delete comments message consumed: {}", ids);
+            service.deleteAllByTargetIdIn(ids);
         };
     }
 

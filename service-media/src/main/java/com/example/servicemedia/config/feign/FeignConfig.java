@@ -3,11 +3,14 @@ package com.example.servicemedia.config.feign;
 import feign.RequestInterceptor;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -21,12 +24,16 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
-            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
 
-            if (requestAttributes != null) {
-                HttpServletRequest httpRequest = requestAttributes.getRequest();
+            if (requestAttributes instanceof ServletRequestAttributes) {
+                HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
 
-                requestTemplate.header(FeignConfigConstants.HEADER_X_USER_PRINCIPAL, httpRequest.getHeader(FeignConfigConstants.HEADER_X_USER_PRINCIPAL));
+                final String token = request.getHeader(FeignConfigConstants.HEADER_AUTHORIZATION);
+
+                if (StringUtils.hasLength(token)) {
+                    requestTemplate.header(FeignConfigConstants.HEADER_AUTHORIZATION,token);
+                }
             }
 
             if (tracer != null && tracer.currentSpan() != null) {

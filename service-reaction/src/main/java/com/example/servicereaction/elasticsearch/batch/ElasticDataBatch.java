@@ -3,6 +3,7 @@ package com.example.servicereaction.elasticsearch.batch;
 import com.example.servicereaction.domain.comment.elasticsearch.model.ElasticComment;
 import com.example.servicereaction.domain.comment.elasticsearch.repo.ElasticCommentRepository;
 import com.example.servicereaction.domain.comment.model.Comment;
+import com.example.servicereaction.elasticsearch.ElasticEntityMapper;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -19,8 +20,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.RefreshPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.time.ZoneOffset;
 
 @Configuration
 @RequiredArgsConstructor
@@ -59,18 +58,7 @@ public class ElasticDataBatch {
 
     @Bean("commentItemProcessor")
     public ItemProcessor<Comment, ElasticComment> commentItemProcessor() {
-        return ( comment) -> {
-            ElasticComment elasticComment = new ElasticComment();
-            elasticComment.setId(comment.getId());
-            elasticComment.setCreated(comment.getCreated().atOffset(ZoneOffset.UTC));
-            elasticComment.setUserId(comment.getUserId());
-            elasticComment.setTargetId(comment.getTargetId());
-            elasticComment.setParentId(comment.getParent().getId());
-            elasticComment.setCommentType(comment.getCommentType().name());
-            elasticComment.setTargetType(comment.getTargetType().name());
-
-            return elasticComment;
-        };
+        return ElasticEntityMapper::toElasticComment;
     }
 
     @Bean("commentItemWriter")

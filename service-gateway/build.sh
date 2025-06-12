@@ -1,5 +1,3 @@
 #!/bin/bash
 
-#./mvnw compile jib:dockerBuild
-
-mvn compile jib:dockerBuild
+./mvnw compile jib:dockerBuild

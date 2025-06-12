@@ -5,5 +5,5 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LikeConstants {
-    public static final String ANONYMOUS = "ANONYMOUS";
+    public static final String ANONYMOUS = "anonymousUser";
 }

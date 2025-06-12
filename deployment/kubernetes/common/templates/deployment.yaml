@@ -1,0 +1,32 @@
+{{- define "common.deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{ .Values.appName }}
+    labels:
+        app: {{ .Values.appLabel }}
+spec:
+  replicas: {{.Values.replicaCount}}
+  selector:
+    matchLabels:
+      app: {{ .Values.appLabel }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appLabel }}
+    spec:
+      containers:
+        - name: {{.Values.appLabel}}
+          image: "{{.Values.image.registry}}:{{.Values.image.tag}}"
+          ports:
+            - containerPort: {{.Values.containerPort}}
+              protocol: TCP
+            - containerPort: {{.Values.containerManagementPort}}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{.Values.global.configMapName}}
+            - configMapRef:
+                name: {{.Values.environment.configMapName}}
+
+{{- end -}}

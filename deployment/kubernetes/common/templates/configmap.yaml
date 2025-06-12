@@ -1,0 +1,18 @@
+{{- define "common.configmap" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.global.configMapName }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.activeProfile }}
+  MANAGEMENT_SERVER_PORT: {{ .Values.global.managementServerPort }}
+  MANAGEMENT_TRACING_ENABLED: {{ .Values.global.managementTracingEnabled }}
+  EUREKA_HOST: {{ .Values.global.eurekaHost }}
+  RABBITMQ_HOST: {{ .Values.global.rabbitHost }}
+  RABBITMQ_USER: {{ .Values.global.rabbitUser }}
+  RABBITMQ_PASSWORD: {{ .Values.global.rabbitPassword }}
+  REDIS_HOST: {{ .Values.global.redisHost }}
+  OTLP_HOST: {{ .Values.global.otlpHost }}
+  OAUTH2_ISSUER_URI: {{ .Values.global.oauth2IssuerUri }}
+  OAUTH2_JWK_SET_URI: {{ .Values.global.oauth2JwkSetUri }}
+{{- end -}}

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.time.ZoneOffset;
+import static com.example.servicereaction.elasticsearch.ElasticEntityMapper.toElasticComment;
 
 @Component
 @RequiredArgsConstructor
@@ -43,27 +43,12 @@ public class ElasticCommentEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = SaveCommentEvent.class,fallbackExecution = true)
     public void saveContent(SaveCommentEvent event) {
-        repository.save(toEntity(new ElasticComment(),event.comment()), RefreshPolicy.IMMEDIATE);
+        repository.save(toElasticComment(event.comment()), RefreshPolicy.IMMEDIATE);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT,value = DeleteCommentEvent.class,fallbackExecution = true)
     public void deleteContent(DeleteCommentEvent event) {
         ElasticComment elasticComment = repository.findById(event.id()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, ElasticComment.class.getSimpleName(), event.id()));
         repository.delete(elasticComment, RefreshPolicy.IMMEDIATE);
-    }
-
-    private ElasticComment toEntity(ElasticComment elasticComment, Comment comment) {
-        elasticComment.setId(comment.getId());
-        elasticComment.setCreated(comment.getCreated().atOffset(ZoneOffset.UTC));
-        elasticComment.setCommentType(comment.getCommentType().name());
-        elasticComment.setTargetType(comment.getTargetType().name());
-        elasticComment.setTargetId(comment.getTargetId());
-        elasticComment.setUserId(comment.getUserId());
-
-        if (comment.getParent() != null) {
-            elasticComment.setParentId(comment.getParent().getId());
-        }
-
-        return elasticComment;
     }
 }

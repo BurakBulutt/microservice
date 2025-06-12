@@ -12,7 +12,8 @@ import com.example.servicereaction.util.exception.MessageResource;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,8 @@ public class LikeServiceImpl implements LikeService {
         Boolean isUserLiked = false;
         Boolean isUserDisliked = false;
 
-        final String user = MDC.get("user");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String user = auth.getName();
 
         if (user != null && !user.equals(LikeConstants.ANONYMOUS)) {
             isUserLiked = repository.isUserLiked(targetId, user, LikeType.LIKE);
@@ -58,23 +60,26 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     public String getTopContentLikeTarget(LikeType likeType) {
+        log.info("Getting top content like target: {}",likeType.toString());
         return repository.findTopContentLikeTarget(likeType.name()).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Like.class.getSimpleName()));
     }
 
     @Override
     @Transactional
     public void save(LikeDto likeDto) {
-        Like like = repository.findByTargetIdAndUserIdAndLikeType(likeDto.getTargetId(), likeDto.getUserId(), likeDto.getLikeType()).orElse(null);
-        if (like == null) {
-            repository.save(LikeServiceMapper.toEntity(new Like(), likeDto));
-            return;
-        }
-        repository.save(LikeServiceMapper.toEntity(like, likeDto));
+        repository.findByTargetIdAndUserId(likeDto.getTargetId(),likeDto.getUserId()).ifPresentOrElse(like -> {
+            if (like.getLikeType().equals(likeDto.getLikeType())) {
+                repository.delete(like);
+            } else {
+                repository.save(LikeServiceMapper.toEntity(like, likeDto));
+            }
+        },() -> repository.save(LikeServiceMapper.toEntity(new Like(), likeDto)));
     }
 
     @Override
     @Transactional
     public void delete(String id) {
+        log.info("Deleting like with id: {}",id);
         Like like = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Like.class.getSimpleName(), id));
         repository.delete(like);
     }

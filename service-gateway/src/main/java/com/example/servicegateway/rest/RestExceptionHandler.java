@@ -4,6 +4,7 @@ import io.netty.channel.ConnectTimeoutException;
 import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -34,6 +35,17 @@ public class RestExceptionHandler {
                 .body(new ErrorResponse(
                         exchange.getRequest().getPath().value(),
                         HttpStatus.GATEWAY_TIMEOUT.getReasonPhrase(),
+                        e.getLocalizedMessage(),
+                        LocalDateTime.now()
+                )));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleAccessDeniedException(AccessDeniedException e,ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(new ErrorResponse(
+                        exchange.getRequest().getPath().value(),
+                        HttpStatus.FORBIDDEN.getReasonPhrase(),
                         e.getLocalizedMessage(),
                         LocalDateTime.now()
                 )));

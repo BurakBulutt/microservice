@@ -74,7 +74,7 @@ public class CommentServiceImpl implements CommentService {
         BoolQuery.Builder queryBuilder = QueryBuilders.bool();
 
         if (StringUtils.hasLength(query)) {
-            List<Query> queries = Stream.of("userId", "targetId","parentId")
+            List<Query> queries = Stream.of("userId", "targetId", "parentId")
                     .map(field -> QueryBuilders.term(builder -> builder.field(field).value(query)))
                     .toList();
 
@@ -87,7 +87,14 @@ public class CommentServiceImpl implements CommentService {
                 .build();
         SearchHits<ElasticComment> search = elasticsearchOperations.search(nativeQuery, ElasticComment.class);
         Set<String> ids = search.getSearchHits().stream().map(hit -> hit.getContent().getId()).collect(Collectors.toSet());
-        return new PageImpl<>(repository.findAllByIdIn(ids,nativeQuery.getSort()), pageable, search.getTotalHits()).map(this::toCommentDto);
+        return new PageImpl<>(repository.findAllByIdIn(ids, nativeQuery.getSort()), pageable, search.getTotalHits()).map(this::toCommentDto);
+    }
+
+    @Override
+    @Cacheable(value = CommentConstants.CACHE_NAME_COMMENT_PAGE, key = "'comment-target:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString() + '_' + #target")
+    public Page<CommentDto> getByTarget(Pageable pageable, String target) {
+        log.info("Getting all comments for target: {}", target);
+        return repository.findAllByTargetIdAndParentIsNull(pageable, target).map(this::toCommentDto);
     }
 
     @Override

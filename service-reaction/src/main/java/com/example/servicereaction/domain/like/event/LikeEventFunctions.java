@@ -24,9 +24,9 @@ public class LikeEventFunctions {
 
     @Bean
     public Consumer<Set<String>> deleteLikes(LikeService service) {
-        return id -> {
-            log.info("Delete likes message consumed: {}", id);
-            service.deleteLikesByTargetIdIn(id);
+        return ids -> {
+            log.info("Delete likes message consumed: {}", ids);
+            service.deleteLikesByTargetIdIn(ids);
         };
     }
 
