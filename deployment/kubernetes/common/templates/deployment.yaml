@@ -17,16 +17,22 @@ spec:
     spec:
       containers:
         - name: {{.Values.appLabel}}
-          image: "{{.Values.image.registry}}:{{.Values.image.tag}}"
+          image: "{{.Values.image.repository}}:{{.Values.image.tag}}"
+          imagePullPolicy: Never
           ports:
             - containerPort: {{.Values.containerPort}}
               protocol: TCP
             - containerPort: {{.Values.containerManagementPort}}
               protocol: TCP
           envFrom:
+          {{- range .Values.environmentSpecific }}
+            {{- if .configmapName }}
             - configMapRef:
-                name: {{.Values.global.configMapName}}
-            - configMapRef:
-                name: {{.Values.environment.configMapName}}
-
+                name: {{ .configmapName }}
+            {{- end }}
+            {{- if .secretName }}
+            - secretRef:
+                name: {{ .secretName }}
+            {{- end }}
+          {{- end }}
 {{- end -}}

@@ -5,13 +5,4 @@ metadata:
   name: {{ .Values.media.configMapName }}
 data:
   SERVER_PORT: {{ .Values.media.serverPort }}
-  DB_USER: {{ .Values.media.dbUser }}
-  DB_PASSWORD: {{ .Values.media.dbPassword }}
-  DB_HOST: {{ .Values.media.dbHost }}
-  DB_NAME: {{ .Values.media.dbName }}
-  ESC_HOST: {{ .Values.media.escHost }}
-  MONGO_USERNAME: {{ .Values.media.mongoUser }}
-  MONGO_PASSWORD: {{ .Values.media.mongoPassword }}
-  MONGO_HOST: {{ .Values.media.mongoHost }}
-  MONGO_DATABASE: {{ .Values.media.mongoDatabase }}
 {{- end -}}

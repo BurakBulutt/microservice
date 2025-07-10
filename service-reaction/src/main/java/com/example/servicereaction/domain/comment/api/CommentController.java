@@ -30,8 +30,15 @@ public class CommentController {
     }
 
     @GetMapping("target-comments")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<Page<CommentResponse>> getByTarget(Pageable pageable,@RequestParam String target) {
         return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getByTarget(pageable,target)));
+    }
+
+    @GetMapping("main-comments")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Page<CommentResponse>> getByMainComments(Pageable pageable) {
+        return ResponseEntity.ok(CommentApiMapper.toPageResponse(service.getAllByParentIsNull(pageable)));
     }
 
     @GetMapping("/{id}")

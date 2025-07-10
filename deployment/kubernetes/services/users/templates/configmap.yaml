@@ -7,7 +7,4 @@ data:
   SERVER_PORT: {{ .Values.users.serverPort }}
   KC_HOST: {{ .Values.users.kcHost }}
   KC_PORT: {{ .Values.users.kcPort }}
-  KC_REALM: {{ .Values.users.kcRealm }}
-  KC_CLIENT: {{ .Values.users.kcClient }}
-  KC_SECRET: {{ .Values.users.kcSecret }}
 {{- end -}}

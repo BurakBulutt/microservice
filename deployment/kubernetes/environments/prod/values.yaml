@@ -1,9 +1,9 @@
 global:
   configMapName: commonConfigMap
   secretName: commonSecret
-  activeProfile: default
+  activeProfile: prod
   managementServerPort: 9000
-  managementTracingEnabled: false
+  managementTracingEnabled: true
   eurekaHost: ""
   rabbitHost: ""
   redisHost: ""

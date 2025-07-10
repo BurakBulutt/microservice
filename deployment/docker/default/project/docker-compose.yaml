@@ -20,6 +20,7 @@ services:
 
   auth:
     image: bitnami/keycloak:latest
+    container_name: service-auth
     ports:
       - "8090:8080"
     volumes:

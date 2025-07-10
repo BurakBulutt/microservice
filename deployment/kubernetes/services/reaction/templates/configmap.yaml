@@ -5,13 +5,4 @@ metadata:
   name: {{ .Values.reaction.configMapName }}
 data:
   SERVER_PORT: {{ .Values.reaction.serverPort }}
-  DB_USER: {{ .Values.reaction.dbUser }}
-  DB_PASSWORD: {{ .Values.reaction.dbPassword }}
-  DB_HOST: {{ .Values.reaction.dbHost }}
-  DB_NAME: {{ .Values.reaction.dbName }}
-  ESC_HOST: {{ .Values.reaction.escHost }}
-  MONGO_USERNAME: {{ .Values.reaction.mongoUser }}
-  MONGO_PASSWORD: {{ .Values.reaction.mongoPassword }}
-  MONGO_HOST: {{ .Values.reaction.mongoHost }}
-  MONGO_DATABASE: {{ .Values.reaction.mongoDatabase }}
 {{- end -}}

@@ -91,6 +91,13 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Cacheable(value = CommentConstants.CACHE_NAME_COMMENT_PAGE, key = "'comment-main:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
+    public Page<CommentDto> getAllByParentIsNull(Pageable pageable) {
+        log.info("Getting all comments by parent is null");
+        return repository.findAllByParentIsNull(pageable).map(this::toCommentDto);
+    }
+
+    @Override
     @Cacheable(value = CommentConstants.CACHE_NAME_COMMENT_PAGE, key = "'comment-target:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString() + '_' + #target")
     public Page<CommentDto> getByTarget(Pageable pageable, String target) {
         log.info("Getting all comments for target: {}", target);

@@ -1,1 +1,3 @@
 {{- template "common.service" . -}}
+---
+{{- template "common.service.management" . -}}

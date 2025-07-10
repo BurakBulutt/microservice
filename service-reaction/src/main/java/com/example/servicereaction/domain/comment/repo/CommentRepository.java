@@ -23,4 +23,6 @@ public interface CommentRepository extends JpaRepository<Comment,String>, JpaSpe
             countQuery = "select count(c) from Comment c where c.targetId = :targetId and c.parent is null"
     )
     Page<Comment> findAllByTargetIdAndParentIsNull(Pageable pageable,@Param("targetId") String targetId);
+
+    Page<Comment> findAllByParentIsNull(Pageable pageable);
 }

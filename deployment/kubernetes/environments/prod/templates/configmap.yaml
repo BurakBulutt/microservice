@@ -1,0 +1,7 @@
+{{- template "common.configmap" . -}}
+---
+{{- template "users.configmap" . -}}
+---
+{{- template "media.configmap" . -}}
+---
+{{- template "reaction.configmap" . -}}

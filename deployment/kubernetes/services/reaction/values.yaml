@@ -4,18 +4,19 @@ appLabel: service-reaction
 replicaCount: 1
 
 image:
-  registry: wraithkage/service-reaction
-  tag: 1.0.0-SNAPSHOT
+  repository: wraithkage/service-reaction
+  tag: 0.0.1-SNAPSHOT
 
 containerPort: 8080
 containerManagementPort: 9000
 
 service:
-  type: LoadBalancer
-  ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-    - name: management
-      port: 9000
-      targetPort: 9000
+  name: reaction
+  type: ClusterIP
+  port: 8080
+  targetPort: {{ .Values.containerPort }}
+  management:
+    name: reaction-management
+    type: ClusterIP
+    port: 9000
+    targetPort: {{ .Values.containerManagementPort }}

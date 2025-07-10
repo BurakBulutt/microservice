@@ -12,6 +12,9 @@ public interface CommentService {
     Page<CommentDto> getAll(Pageable pageable);
     Page<CommentDto> filter(Pageable pageable,String query);
 
+    @Cacheable(value = CommentConstants.CACHE_NAME_COMMENT_PAGE, key = "'comment-main:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString()")
+    Page<CommentDto> getAllByParentIsNull(Pageable pageable);
+
     @Cacheable(value = CommentConstants.CACHE_NAME_COMMENT_PAGE, key = "'comment-target:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize() + '_' + #pageable.getSort().toString() + '_' + #target")
     Page<CommentDto> getByTarget(Pageable pageable, String target);
 

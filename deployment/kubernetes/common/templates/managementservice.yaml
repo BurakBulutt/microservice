@@ -1,0 +1,14 @@
+{{- define "common.service.management" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.service.management.name}}
+spec:
+  selector:
+    app: {{.Values.appLabel}}
+  type: {{.Values.service.management.type}}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.management.port }}
+      targetPort: {{ .Values.service.management.targetPort }}
+{{- end -}}

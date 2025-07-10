@@ -9,9 +9,10 @@ data:
   MANAGEMENT_TRACING_ENABLED: {{ .Values.global.managementTracingEnabled }}
   EUREKA_HOST: {{ .Values.global.eurekaHost }}
   RABBITMQ_HOST: {{ .Values.global.rabbitHost }}
-  RABBITMQ_USER: {{ .Values.global.rabbitUser }}
-  RABBITMQ_PASSWORD: {{ .Values.global.rabbitPassword }}
   REDIS_HOST: {{ .Values.global.redisHost }}
+  DB_HOST: {{ .Values.global.dbHost }}
+  ESC_HOST: {{ .Values.global.escHost }}
+  MONGO_HOST: {{ .Values.global.mongoHost }}
   OTLP_HOST: {{ .Values.global.otlpHost }}
   OAUTH2_ISSUER_URI: {{ .Values.global.oauth2IssuerUri }}
   OAUTH2_JWK_SET_URI: {{ .Values.global.oauth2JwkSetUri }}
