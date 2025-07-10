@@ -7,7 +7,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +38,7 @@ services:
       - environments/keycloak.env
     extends:
       file: ../common-config.yaml
-      service: extended-config
+      service: base-config
 
   redis:
     image: redis:latest
@@ -64,7 +64,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - rabbit-data:/var/lib/rabbitmq
+      - rabbit_data:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
@@ -100,7 +100,7 @@ services:
       service: base-config
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.3
     container_name: service-elasticsearch
     ports:
       - "9200:9200"
@@ -120,10 +120,11 @@ services:
       - xpack.security.enabled=false
     extends:
       file: ../common-config.yaml
-      service: extended-config
+      service: base-config
+    mem_limit: 1024m
 
   app-eureka:
-    image: microservice/service-eureka:0.0.1-SNAPSHOT
+    image: wraithkage/service-eureka:0.0.1-SNAPSHOT
     container_name: service-eureka
     ports:
       - "8761:8761"
@@ -134,7 +135,7 @@ services:
       service: app-base-config
 
   app-gateway:
-    image: microservice/service-gateway:0.0.1-SNAPSHOT
+    image: wraithkage/service-gateway:0.0.1-SNAPSHOT
     container_name: service-gateway
     ports:
       - "8080:8080"
@@ -155,7 +156,7 @@ services:
       service: app-base-config
 
   app-users:
-    image: microservice/service-users:0.0.1-SNAPSHOT
+    image: wraithkage/service-users:0.0.1-SNAPSHOT
     container_name: service-users
     depends_on:
       auth:
@@ -174,7 +175,7 @@ services:
       service: app-base-config
 
   app-media:
-    image: microservice/service-media:0.0.1-SNAPSHOT
+    image: wraithkage/service-media:0.0.1-SNAPSHOT
     container_name: service-media
     depends_on:
       app-eureka:
@@ -195,7 +196,7 @@ services:
       service: app-base-config
 
   app-reaction:
-    image: microservice/service-reaction:0.0.1-SNAPSHOT
+    image: wraithkage/service-reaction:0.0.1-SNAPSHOT
     container_name: service-reaction
     depends_on:
       app-eureka:
@@ -222,14 +223,14 @@ networks:
 
 volumes:
   postgres_data:
-    name: compose_postgres_data
+    name: project_postgres_data
   keycloak_data:
-    name: compose_keycloak_data
+    name: project_keycloak_data
   redis_data:
-    name: compose_redis_data
-  rabbit-data:
-    name: compose_rabbit_data
+    name: project_redis_data
+  rabbit_data:
+    name: project_rabbit_data
   mongo_data:
-    name: compose_mongo_data
+    name: project_mongo_data
   elastic_data:
-    name: compose_elastic_data
+    name: project_elastic_data

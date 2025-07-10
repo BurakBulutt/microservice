@@ -207,6 +207,7 @@ services:
     ports:
       - "3110:3100"
       - "4318:4318"
+      - "4317:4317"
     volumes:
       - ./tempo/tempo-config.yml:/etc/tempo-config.yml
     extends:
@@ -219,5 +220,7 @@ networks:
     external: true
 
 volumes:
-  minio-data:
-  grafana-data:
+  minio_data:
+    name: grafana_minio_data
+  grafana_data:
+    name: grafana_grafana_data

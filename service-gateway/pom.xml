@@ -121,7 +121,7 @@
 				<version>3.3.2</version>
 				<configuration>
 					<to>
-						<image>microservice/${project.artifactId}:${project.version}</image>
+						<image>wraithkage/${project.artifactId}:${project.version}</image>
 					</to>
 				</configuration>
 			</plugin>

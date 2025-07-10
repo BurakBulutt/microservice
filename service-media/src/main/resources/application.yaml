@@ -16,7 +16,7 @@ spring:
     show-sql: true
   data:
     mongodb:
-      uri: mongodb://${MONGO_USERNAME:media_admin}:${MONGO_PASSWORD:Media_admin123}@${MONGO_HOST:localhost}:27017/${MONGO_DATABASE:service-media}?authSource=admin&authMechanism=SCRAM-SHA-256
+      uri: mongodb://${MONGO_USERNAME:media_admin}:${MONGO_PASSWORD:Media_admin123}@${MONGO_HOST:localhost}:27017/${MONGO_DATABASE:app_media}?authSource=admin&authMechanism=SCRAM-SHA-256
     redis:
       host: ${REDIS_HOST:localhost}
       port: 6379

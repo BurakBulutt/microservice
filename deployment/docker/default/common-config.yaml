@@ -4,7 +4,7 @@ services:
       - app-network
 
   base-config:
-    mem_limit: 512m
+    mem_limit: 700m
     cpus: '0.5'
     extends:
       service: network-deploy-service
@@ -18,9 +18,3 @@ services:
       start_period: 15s
     extends:
       service: base-config
-
-  extended-config:
-    mem_limit: 1024m
-    cpus: '1'
-    extends:
-      service: network-deploy-service

@@ -118,4 +118,4 @@ keycloak:
   auth-server-url: http://${KC_HOST:localhost}:${KC_PORT:8090}
   realm: ${KC_REALM:dev}
   client-id: ${KC_CLIENT:app-callcenter-client}
-  client-secret: ${KC_SECRET:Xp8KNvU35dGxfMT6GeK3Dk8WCAhgJIMd}
+  client-secret: ${KC_SECRET:Wr1Mv6LBjBMTc20ZsRT01YPBkH4MIRuz}
