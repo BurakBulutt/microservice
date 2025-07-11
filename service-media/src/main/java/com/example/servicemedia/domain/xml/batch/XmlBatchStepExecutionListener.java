@@ -17,11 +17,10 @@ public class XmlBatchStepExecutionListener implements StepExecutionListener {
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-
-        if (stepExecution.getExitStatus().getExitCode().equals("FAILED")) {
+        if (stepExecution.getExitStatus().getExitCode().equals(ExitStatus.FAILED.getExitCode())) {
             XmlDefinition definition = service.getById(stepExecution.getJobExecution().getJobParameters().getString(BATCH_DEFINITION_ID));
             definition.setSuccess(Boolean.FALSE);
-            definition.setErrorMessage(stepExecution.getExitStatus().getExitDescription());
+            definition.setErrorMessage(stepExecution.getExitStatus().getExitDescription().substring(0,2500));
             service.update(definition);
         }
         return StepExecutionListener.super.afterStep(stepExecution);
