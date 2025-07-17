@@ -1,8 +1,7 @@
 package com.example.servicereaction.auditlistener.repo;
 
 import com.example.servicereaction.auditlistener.model.EntityLog;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface EntityLogRepository extends MongoRepository<EntityLog, ObjectId> {
+public interface EntityLogRepository extends JpaRepository<EntityLog, String> {
 }

@@ -6,7 +6,7 @@ spring:
     version: 0.0.1-SNAPSHOT
   datasource:
     username: ${DB_USER:reaction_admin}
-    password: ${DB_PASSWORD:Reaction_admin123}
+    password: ${DB_PASSWORD:12345}
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:app_reaction}
     driver-class-name: org.postgresql.Driver
   jpa:
@@ -107,7 +107,7 @@ resilience4j:
   timelimiter:
     configs:
       default:
-        timeout-duration: 2s
+        timeout-duration: 10s
         cancel-running-future: false
   circuitbreaker:
     configs:
@@ -177,7 +177,7 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
-      connect-timeout: 1s
+      connect-timeout: 10s
       timeout: 10s
 logging:
   level:

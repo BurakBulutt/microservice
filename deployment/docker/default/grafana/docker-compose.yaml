@@ -72,7 +72,7 @@ services:
     ports:
       - "9000"
     volumes:
-      - minio-data:/data
+      - minio_data:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "localhost:9000/minio/health/live" ]
       interval: 10s
@@ -177,7 +177,7 @@ services:
     depends_on:
       - gateway
     volumes:
-      - grafana-data:/var/lib/grafana
+      - grafana_data:/var/lib/grafana
       - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
     ports:
       - "3000:3000"

@@ -32,6 +32,7 @@ import com.example.serviceusers.domain.user.constants.UserConstants;
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = UserConstants.CACHE_NAME_USER)
 public class UserServiceImpl implements UserService {
+    private static final String CLIENT_UUID = "9f094712-ef12-409f-823a-595f50311487";
     private final UsersResource usersResource;
     private final StreamBridge streamBridge;
 
@@ -136,7 +137,7 @@ public class UserServiceImpl implements UserService {
     public UserRepresentation update(String id, UpdateUserRequest request) {
         UserResource userResource = usersResource.get(id);
 
-        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
             throw new WebApplicationException(UserConstants.EXCEPTION_CANT_UPDATE_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
         }
 
@@ -197,7 +198,7 @@ public class UserServiceImpl implements UserService {
     public void delete(String id) {
         UserResource userResource = usersResource.get(id);
 
-        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
             throw new WebApplicationException(UserConstants.EXCEPTION_CANT_DELETE_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
         }
 
@@ -211,7 +212,7 @@ public class UserServiceImpl implements UserService {
     public void resetPassword(String id) {
         UserResource userResource = usersResource.get(id);
 
-        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
             throw new WebApplicationException(UserConstants.EXCEPTION_CANT_EXECUTE_EVENT_4_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
         }
 
@@ -228,7 +229,7 @@ public class UserServiceImpl implements UserService {
     public void verifyEmail(String id) {
         UserResource userResource = usersResource.get(id);
 
-        if (isAdmin(userResource.roles().realmLevel().listEffective())){
+        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
             throw new WebApplicationException(UserConstants.EXCEPTION_CANT_EXECUTE_EVENT_4_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
         }
 
@@ -254,8 +255,8 @@ public class UserServiceImpl implements UserService {
         userResource.resetPassword(credentialRepresentation);
     }
 
-    private boolean isAdmin(List<RoleRepresentation> realmRoles) {
-        return realmRoles.stream().filter(role -> !role.getClientRole())
+    private boolean isAdmin(List<RoleRepresentation> roles) {
+        return roles.stream()
                 .map(RoleRepresentation::getName)
                 .anyMatch(role -> role.equals(UserConstants.ROLE_ADMIN));
     }

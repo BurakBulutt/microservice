@@ -1,4 +1,4 @@
-package com.example.servicereaction.deadletterqueue.enums;
+package com.example.servicereaction.dlq.enums;
 
 public enum MessageType {
     DELETE_COMMENTS,

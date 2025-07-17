@@ -1,9 +1,9 @@
 package com.example.servicereaction.domain.comment.event;
 
 import com.example.servicereaction.domain.comment.service.CommentService;
-import com.example.servicereaction.deadletterqueue.dto.DeadLetterQueueDto;
-import com.example.servicereaction.deadletterqueue.enums.MessageType;
-import com.example.servicereaction.deadletterqueue.service.DeadLetterQueueService;
+import com.example.servicereaction.dlq.dto.DeadLetterQueueDto;
+import com.example.servicereaction.dlq.enums.MessageType;
+import com.example.servicereaction.dlq.service.DeadLetterQueueService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

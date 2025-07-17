@@ -8,3 +8,6 @@ management:
     port: 9000
   tracing:
     enabled: true
+  otlp:
+    tracing:
+      connect-timeout: 10s

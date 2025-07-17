@@ -1,15 +1,15 @@
-package com.example.servicereaction.deadletterqueue.service;
+package com.example.servicereaction.dlq.service;
 
-import com.example.servicereaction.deadletterqueue.dto.DeadLetterQueueDto;
-import com.example.servicereaction.deadletterqueue.enums.MessageType;
-import com.example.servicereaction.deadletterqueue.mapper.DeadLetterQueueServiceMapper;
-import com.example.servicereaction.deadletterqueue.model.DeadLetterQueue;
-import com.example.servicereaction.deadletterqueue.repo.DeadLetterQueueRepository;
+import com.example.servicereaction.dlq.dto.DeadLetterQueueDto;
+import com.example.servicereaction.dlq.enums.MessageType;
+import com.example.servicereaction.dlq.mapper.DeadLetterQueueServiceMapper;
+import com.example.servicereaction.dlq.model.DeadLetterQueue;
+import com.example.servicereaction.dlq.repo.DeadLetterQueueRepository;
 import com.example.servicereaction.util.exception.BaseException;
 import com.example.servicereaction.util.exception.MessageResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,10 +39,10 @@ public class DeadLetterQueueServiceImpl implements DeadLetterQueueService {
     }
 
     @Override
-    public void delete(ObjectId id) {
-        DeadLetterQueue deadLetterQueue = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,id.toString()));
+    public void delete(String id) {
+        DeadLetterQueue dlq = repository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,id));
 
         log.warn("Deleting dlq message: {}",id);
-        repository.delete(deadLetterQueue);
+        repository.delete(dlq);
     }
 }

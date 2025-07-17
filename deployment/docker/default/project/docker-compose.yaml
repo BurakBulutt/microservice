@@ -72,29 +72,7 @@ services:
       retries: 5
       start_period: 15s
     env_file:
-      - environments/rabbit.env
-    extends:
-      file: ../common-config.yaml
-      service: base-config
-
-  mongodb:
-    image: mongo:latest
-    container_name: service-mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: >
-        bash -c "
-        echo 'db.runCommand({ ping: 1 })' |
-        mongosh --username root --password mongodb --authenticationDatabase admin --quiet"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    env_file:
-      - environments/mongo.env
+      - environments/rabbitmq.env
     extends:
       file: ../common-config.yaml
       service: base-config

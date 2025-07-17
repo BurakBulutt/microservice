@@ -5,13 +5,13 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: 6379
-      connect-timeout: 2s
+      connect-timeout: 1s
   rabbitmq:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     host: ${RABBITMQ_HOST}
     port: 5672
-    connection-timeout: 2s
+    connection-timeout: 1s
   security:
     oauth2:
       resourceserver:
@@ -41,7 +41,7 @@ management:
   otlp:
     tracing:
       endpoint: https://${OTLP_HOST}:4318/v1/traces
-      connect-timeout: 2s
+      connect-timeout: 10s
 keycloak:
   auth-server-url: https://${KC_HOST}:${KC_PORT}
   realm: ${KC_REALM}

@@ -1,31 +1,27 @@
 package com.example.servicereaction.auditlistener.model;
 
 import com.example.servicereaction.auditlistener.enums.ProcessType;
-import jakarta.persistence.EntityListeners;
+import jakarta.persistence.*;
 import lombok.*;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.FieldType;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.time.LocalDateTime;
 
-@Document(EntityLog.TABLE)
+@Entity(name = EntityLog.TABLE)
 @Getter
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-@ToString
 @EntityListeners(AuditingEntityListener.class)
 public class EntityLog {
     public static final String TABLE = "entity_log";
 
-    @MongoId(FieldType.OBJECT_ID)
-    private ObjectId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @CreatedDate
     private LocalDateTime created;
@@ -34,7 +30,7 @@ public class EntityLog {
     private LocalDateTime updated;
 
     @LastModifiedBy
-    private String user;
+    private String userId;
 
     private ProcessType process;
 

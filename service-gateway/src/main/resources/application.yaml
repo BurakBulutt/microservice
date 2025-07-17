@@ -79,7 +79,7 @@ management:
         enabled: false
     tracing:
       endpoint: http://${OTLP_HOST:localhost}:4318/v1/traces
-      connect-timeout: 1s
+      connect-timeout: 10s
       timeout: 10s
 logging:
   level:

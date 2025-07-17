@@ -86,7 +86,7 @@ public class GatewayConfig {
         return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
                 .timeLimiterConfig(TimeLimiterConfig.custom()
-                        .timeoutDuration(Duration.ofSeconds(2L))
+                        .timeoutDuration(Duration.ofSeconds(10L))
                         .cancelRunningFuture(Boolean.TRUE)
                         .build())
                 .build());

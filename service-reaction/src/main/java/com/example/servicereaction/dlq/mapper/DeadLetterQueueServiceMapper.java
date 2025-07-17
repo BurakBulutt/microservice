@@ -1,7 +1,7 @@
-package com.example.servicereaction.deadletterqueue.mapper;
+package com.example.servicereaction.dlq.mapper;
 
-import com.example.servicereaction.deadletterqueue.dto.DeadLetterQueueDto;
-import com.example.servicereaction.deadletterqueue.model.DeadLetterQueue;
+import com.example.servicereaction.dlq.dto.DeadLetterQueueDto;
+import com.example.servicereaction.dlq.model.DeadLetterQueue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

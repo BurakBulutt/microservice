@@ -1,8 +1,8 @@
 package com.example.servicereaction.domain.like.event;
 
-import com.example.servicereaction.deadletterqueue.dto.DeadLetterQueueDto;
-import com.example.servicereaction.deadletterqueue.enums.MessageType;
-import com.example.servicereaction.deadletterqueue.service.DeadLetterQueueService;
+import com.example.servicereaction.dlq.dto.DeadLetterQueueDto;
+import com.example.servicereaction.dlq.enums.MessageType;
+import com.example.servicereaction.dlq.service.DeadLetterQueueService;
 import com.example.servicereaction.domain.like.service.LikeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
