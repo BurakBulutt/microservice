@@ -34,15 +34,14 @@ class UsersServiceTests {
         // Arrange
         UserRepresentation user1 = new UserRepresentation();
         user1.setId("1");
-        user1.setUsername("user1");
+
         UserRepresentation user2 = new UserRepresentation();
         user2.setId("2");
-        user2.setUsername("user2");
 
         Pageable pageable = PageRequest.of(0, 10);
         List<UserRepresentation> mockUsers = List.of(user1, user2);
-        int totalUsers = 2;
 
+        int totalUsers = mockUsers.size();
         int first = pageable.getPageNumber() * pageable.getPageSize();
         int max = pageable.getPageSize();
 

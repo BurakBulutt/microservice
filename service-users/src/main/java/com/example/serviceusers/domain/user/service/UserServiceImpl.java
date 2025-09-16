@@ -7,15 +7,20 @@ import com.example.serviceusers.domain.user.api.UpdateUserRequest;
 import com.example.serviceusers.utilities.exception.BaseException;
 import com.example.serviceusers.utilities.exception.MessageResource;
 import io.github.resilience4j.retry.annotation.Retry;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.*;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
@@ -27,14 +32,32 @@ import java.util.*;
 
 import com.example.serviceusers.domain.user.constants.UserConstants;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = UserConstants.CACHE_NAME_USER)
 public class UserServiceImpl implements UserService {
-    private static final String CLIENT_UUID = "9f094712-ef12-409f-823a-595f50311487";
-    private final UsersResource usersResource;
     private final StreamBridge streamBridge;
+    private final Keycloak keycloak;
+
+    @Value("${keycloak.realm}")
+    private String realm;
+
+    @Value("${keycloak.client-admin}")
+    private String adminClient;
+
+    private UsersResource usersResource;
+
+    @PostConstruct
+    public void init() {
+        usersResource = keycloak.realm(realm).users();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        keycloak.close();
+    }
 
     @Override
     @Cacheable(value = UserConstants.CACHE_NAME_USER_PAGE,key = "'user-all:' + #pageable.getPageNumber() + '_' + #pageable.getPageSize()")
@@ -137,9 +160,7 @@ public class UserServiceImpl implements UserService {
     public UserRepresentation update(String id, UpdateUserRequest request) {
         UserResource userResource = usersResource.get(id);
 
-        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
-            throw new WebApplicationException(UserConstants.EXCEPTION_CANT_UPDATE_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
-        }
+        checkRoleForAdminEdit(userResource);
 
         UserRepresentation userRepresentation = userResource.toRepresentation();
         userRepresentation.setFirstName(request.firstName());
@@ -159,6 +180,53 @@ public class UserServiceImpl implements UserService {
         userResource.update(userRepresentation);
 
         return usersResource.get(id).toRepresentation();
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = UserConstants.CACHE_NAME_USER_PAGE, allEntries = true),
+            @CacheEvict(key = "'user-id:' + #id")
+    })
+    public void delete(String id) {
+        UserResource userResource = usersResource.get(id);
+
+        checkRoleForAdminEdit(userResource);
+
+        log.warn("Deleting user: {}",id);
+        userResource.remove();
+        boolean deleteComments = streamBridge.send("deleteUserComments-out-0",id);
+        log.info("Sending delete user comments message: {}, status: {}",id,deleteComments);
+    }
+
+    @Override
+    public void resetPassword(String id) {
+        UserResource userResource = usersResource.get(id);
+
+        checkRoleForAdminEdit(userResource);
+
+        UserRepresentation representation = userResource.toRepresentation();
+        if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserConstants.ACTION_UPDATE_PASSWORD))) {
+            representation.getRequiredActions().add(UserConstants.ACTION_UPDATE_PASSWORD);
+            userResource.update(representation);
+        }
+        log.warn("Execute password reset action for user: {}",id);
+        userResource.executeActionsEmail(List.of(UserConstants.ACTION_UPDATE_PASSWORD));
+    }
+
+    @Override
+    public void verifyEmail(String id) {
+        UserResource userResource = usersResource.get(id);
+
+        checkRoleForAdminEdit(userResource);
+
+        UserRepresentation representation = userResource.toRepresentation();
+        if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserConstants.ACTION_VERIFY_EMAIL))) {
+            representation.setEmailVerified(Boolean.FALSE);
+            representation.getRequiredActions().add(UserConstants.ACTION_VERIFY_EMAIL);
+            userResource.update(representation);
+        }
+        log.warn("Execute verify email action for user: {}",id);
+        userResource.sendVerifyEmail();
     }
 
     @Override
@@ -191,59 +259,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = UserConstants.CACHE_NAME_USER_PAGE, allEntries = true),
-            @CacheEvict(key = "'user-id:' + #id")
-    })
-    public void delete(String id) {
-        UserResource userResource = usersResource.get(id);
-
-        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
-            throw new WebApplicationException(UserConstants.EXCEPTION_CANT_DELETE_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
-        }
-
-        log.warn("Deleting user: {}",id);
-        userResource.remove();
-        boolean deleteComments = streamBridge.send("deleteUserComments-out-0",id);
-        log.info("Sending delete user comments message: {}, status: {}",id,deleteComments);
-    }
-
-    @Override
-    public void resetPassword(String id) {
-        UserResource userResource = usersResource.get(id);
-
-        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
-            throw new WebApplicationException(UserConstants.EXCEPTION_CANT_EXECUTE_EVENT_4_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
-        }
-
-        UserRepresentation representation = userResource.toRepresentation();
-        if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserConstants.ACTION_UPDATE_PASSWORD))) {
-            representation.getRequiredActions().add(UserConstants.ACTION_UPDATE_PASSWORD);
-            userResource.update(representation);
-        }
-        log.warn("Execute password reset action for user: {}",id);
-        userResource.executeActionsEmail(List.of(UserConstants.ACTION_UPDATE_PASSWORD));
-    }
-
-    @Override
-    public void verifyEmail(String id) {
-        UserResource userResource = usersResource.get(id);
-
-        if (isAdmin(userResource.roles().clientLevel(CLIENT_UUID).listEffective())){
-            throw new WebApplicationException(UserConstants.EXCEPTION_CANT_EXECUTE_EVENT_4_ADMIN,Response.status(Response.Status.FORBIDDEN).build());
-        }
-
-        UserRepresentation representation = userResource.toRepresentation();
-        if (representation.getRequiredActions().stream().noneMatch(action -> action.equals(UserConstants.ACTION_VERIFY_EMAIL))) {
-            representation.setEmailVerified(Boolean.FALSE);
-            representation.getRequiredActions().add(UserConstants.ACTION_VERIFY_EMAIL);
-            userResource.update(representation);
-        }
-        log.warn("Execute verify email action for user: {}",id);
-        userResource.sendVerifyEmail();
-    }
-
-    @Override
     public void changePassword(String id, ChangePasswordRequest request) {
         UserResource userResource = usersResource.get(id);
         log.warn("Change password for user: {}",id);
@@ -255,9 +270,13 @@ public class UserServiceImpl implements UserService {
         userResource.resetPassword(credentialRepresentation);
     }
 
-    private boolean isAdmin(List<RoleRepresentation> roles) {
-        return roles.stream()
-                .map(RoleRepresentation::getName)
-                .anyMatch(role -> role.equals(UserConstants.ROLE_ADMIN));
+    private void checkRoleForAdminEdit(UserResource userResource) {
+        final String clientUuid = keycloak.realm(realm).clients().findByClientId(adminClient).get(0).getId();
+
+        List<RoleRepresentation> roles = userResource.roles().clientLevel(clientUuid).listEffective();
+
+        if (roles.stream().anyMatch(role -> role.getName().equals(UserConstants.ROLE_ADMIN))) {
+            throw new ForbiddenException();
+        }
     }
 }

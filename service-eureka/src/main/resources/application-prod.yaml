@@ -10,4 +10,4 @@ management:
     enabled: true
   otlp:
     tracing:
-      connect-timeout: 10s
+      endpoint: https://${OTLP_HOST}:4318/v1/traces

@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserConstants {
-    public static final String USER_GROUP = "app-users-group";
+    public static final String USER_GROUP = "app-user-group";
 
     public static final String ACTION_VERIFY_EMAIL = "VERIFY_EMAIL";
     public static final String ACTION_UPDATE_PASSWORD = "UPDATE_PASSWORD";

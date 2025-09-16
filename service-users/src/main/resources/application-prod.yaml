@@ -41,12 +41,13 @@ management:
   otlp:
     tracing:
       endpoint: https://${OTLP_HOST}:4318/v1/traces
-      connect-timeout: 10s
 keycloak:
   auth-server-url: https://${KC_HOST}:${KC_PORT}
   realm: ${KC_REALM}
   client-id: ${KC_CLIENT}
   client-secret: ${KC_SECRET}
+  client-admin: ${KC_CLIENT_ADMIN}
+  client-customer: ${KC_CLIENT_CUSTOMER}
 logging:
   level:
     com.example.serviceusers: info

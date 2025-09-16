@@ -5,8 +5,8 @@ spring:
     name: service-media
     version: 0.0.1-SNAPSHOT
   datasource:
-    username: ${DB_USER:media_admin}
-    password: ${DB_PASSWORD:12345}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:app_media}
     driver-class-name: org.postgresql.Driver
   jpa:

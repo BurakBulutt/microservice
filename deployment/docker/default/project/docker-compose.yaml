@@ -11,7 +11,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 10s
     env_file:
       - environments/postgres.env
     extends:
@@ -19,12 +19,14 @@ services:
       service: base-config
 
   auth:
-    image: bitnami/keycloak:latest
+    image: quay.io/keycloak/keycloak:latest
     container_name: service-auth
     ports:
       - "8090:8080"
     volumes:
-      - keycloak_data:/opt/bitnami/keycloak
+      - keycloak_data:/opt/keycloak/data
+    command:
+      - start-dev
     depends_on:
       database:
         condition: service_healthy
@@ -33,7 +35,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 20s
     env_file:
       - environments/keycloak.env
     extends:
@@ -52,7 +54,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 20s
     extends:
       file: ../common-config.yaml
       service: base-config
@@ -70,7 +72,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 20s
     env_file:
       - environments/rabbitmq.env
     extends:
@@ -86,20 +88,18 @@ services:
     volumes:
       - elastic_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: >
-        curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s
-        | grep -q '"status":"yellow"\|"status":"green"'
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health | grep -E 'green|yellow' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 40s
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-    extends:
-      file: ../common-config.yaml
-      service: base-config
     mem_limit: 1024m
+    cpus: '0.5'
+    networks:
+      - app-network
 
   app-eureka:
     image: wraithkage/service-eureka:0.0.1-SNAPSHOT

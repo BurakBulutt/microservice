@@ -23,9 +23,4 @@ public class KeycloakConfig {
                 .clientSecret(configProperties.getClientSecret())
                 .build();
     }
-
-    @Bean
-    public UsersResource usersResource(Keycloak keycloak) {
-        return keycloak.realm(configProperties.getRealm()).users();
-    }
 }

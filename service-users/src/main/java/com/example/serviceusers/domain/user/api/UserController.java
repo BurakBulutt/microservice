@@ -27,8 +27,10 @@ public class UserController {
 
     @GetMapping("filter")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Page<UserRepresentationResponse>> filter(Pageable pageable,
-                                                                   @RequestParam(required = false) String username) {
+    public ResponseEntity<Page<UserRepresentationResponse>> filter(
+            Pageable pageable,
+            @RequestParam(required = false) String username
+    ) {
         return ResponseEntity.ok(UserApiMapper.toPageResponse(service.filter(pageable, username)));
     }
 
@@ -52,21 +54,21 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> save(@RequestBody @Valid CreateUserRequest request) {
+    public ResponseEntity<Void> save(@Valid @RequestBody CreateUserRequest request) {
         service.save(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid UpdateUserRequest request) {
+    public ResponseEntity<Void> update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
         service.update(id, request);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/update-profile")
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
-    public ResponseEntity<Void> updateProfile(@PathVariable String id, @RequestBody @Valid UpdateProfileRequest request) {
+    public ResponseEntity<Void> updateProfile(@PathVariable String id, @Valid @RequestBody UpdateProfileRequest request) {
         service.updateProfile(id, request);
         return ResponseEntity.noContent().build();
     }
@@ -87,8 +89,8 @@ public class UserController {
 
     @PostMapping("/{id}/change-password")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> changePassword(@PathVariable String id,@RequestBody @Valid ChangePasswordRequest request) {
-        service.changePassword(id,request);
+    public ResponseEntity<Void> changePassword(@PathVariable String id, @Valid @RequestBody ChangePasswordRequest request) {
+        service.changePassword(id, request);
         return ResponseEntity.noContent().build();
     }
 
