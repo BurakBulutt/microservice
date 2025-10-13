@@ -30,12 +30,15 @@ public class SecurityConfig {
         http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
                 oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter())));
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers("/actuator/**").hasRole(ROLE_ADMIN)
-                        .anyExchange().permitAll()
+                .pathMatchers("/actuator/**").hasRole(ROLE_ADMIN)
+                .pathMatchers("/api/users/**").hasRole(ROLE_ADMIN)
+                .pathMatchers("/api/users/username/*").hasAnyRole(ROLE_ADMIN, ROLE_USER)
+                .pathMatchers("/api/users/*/update-profile").hasAnyRole(ROLE_ADMIN, ROLE_USER)
+                .anyExchange().permitAll()
         );
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost"));
+            corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost"));
             corsConfiguration.setAllowCredentials(Boolean.TRUE);
             corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
             corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));

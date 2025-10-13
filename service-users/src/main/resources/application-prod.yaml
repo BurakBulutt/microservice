@@ -12,11 +12,6 @@ spring:
     host: ${RABBITMQ_HOST}
     port: 5672
     connection-timeout: 1s
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI}
 resilience4j:
   timelimiter:
     configs:
@@ -36,6 +31,13 @@ eureka:
 management:
   server:
     port: 9000
+  info:
+    env:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
   tracing:
     enabled: true
   otlp:
