@@ -28,4 +28,6 @@ public class UserConstants {
     public static final String EXCEPTION_CANT_UPDATE_ADMIN = "Can not update admin";
     public static final String EXCEPTION_CANT_DELETE_ADMIN = "Can not delete admin";
     public static final String EXCEPTION_CANT_EXECUTE_EVENT_4_ADMIN = "Can not execute event for admin";
+
+    public static final String LOCALE_TR = "tr";
 }

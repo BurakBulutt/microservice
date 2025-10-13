@@ -127,7 +127,7 @@ public class UserServiceImpl implements UserService {
             userRepresentation.getRequiredActions().add(UserConstants.ACTION_VERIFY_EMAIL);
         }
 
-        Map<String, List<String>> attributes = Map.of(UserConstants.ATTRIBUTE_LOCALE, List.of("tr"),
+        Map<String, List<String>> attributes = Map.of(UserConstants.ATTRIBUTE_LOCALE, List.of(UserConstants.LOCALE_TR),
                 UserConstants.ATTRIBUTE_BIRTHDATE, List.of(request.birthdate().toString()));
         userRepresentation.setAttributes(attributes);
 
@@ -167,7 +167,7 @@ public class UserServiceImpl implements UserService {
         userRepresentation.setLastName(request.lastName());
         userRepresentation.setEmailVerified(request.emailVerified());
         userRepresentation.setEnabled(request.enabled());
-        userRepresentation.setAttributes(Map.of(UserConstants.ATTRIBUTE_LOCALE, List.of("tr"),
+        userRepresentation.setAttributes(Map.of(UserConstants.ATTRIBUTE_LOCALE, List.of(UserConstants.LOCALE_TR),
                 UserConstants.ATTRIBUTE_BIRTHDATE, List.of(request.birthdate().toString())));
 
         if (!userRepresentation.isEmailVerified() || !request.email().equals(userRepresentation.getEmail())) {

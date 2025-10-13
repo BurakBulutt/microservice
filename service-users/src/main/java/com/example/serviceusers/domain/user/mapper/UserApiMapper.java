@@ -1,6 +1,7 @@
 package com.example.serviceusers.domain.user.mapper;
 
 import com.example.serviceusers.domain.user.api.UserRepresentationResponse;
+import com.example.serviceusers.domain.user.constants.UserConstants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -17,7 +18,7 @@ public class UserApiMapper {
         LocalDate birthDate = null;
 
         if (userRepresentation.getAttributes() != null && !userRepresentation.getAttributes().isEmpty()) {
-            List<String> result = userRepresentation.getAttributes().get("birthdate");
+            List<String> result = userRepresentation.getAttributes().get(UserConstants.ATTRIBUTE_BIRTHDATE);
 
             if (result != null && !result.isEmpty()) {
                 birthDate = LocalDate.parse(result.get(0), DateTimeFormatter.ISO_DATE);

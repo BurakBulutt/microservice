@@ -15,5 +15,4 @@ public class KeycloakConfigProperties {
     private String clientId;
     private String clientSecret;
     private String clientAdmin;
-    private String clientCustomer;
 }

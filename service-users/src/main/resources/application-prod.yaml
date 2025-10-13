@@ -47,7 +47,6 @@ keycloak:
   client-id: ${KC_CLIENT}
   client-secret: ${KC_SECRET}
   client-admin: ${KC_CLIENT_ADMIN}
-  client-customer: ${KC_CLIENT_CUSTOMER}
 logging:
   level:
     com.example.serviceusers: info
