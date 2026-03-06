@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.web.reactive.resource.NoResourceFoundException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -53,6 +54,17 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(ConnectTimeoutException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleTimeoutException(ConnectTimeoutException e,ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(new ErrorResponse(
+                        exchange.getRequest().getPath().value(),
+                        HttpStatus.GATEWAY_TIMEOUT.getReasonPhrase(),
+                        e.getLocalizedMessage(),
+                        LocalDateTime.now()
+                )));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> noResourceFoundException(NoResourceFoundException e,ServerWebExchange exchange) {
         return Mono.just(ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
                 .body(new ErrorResponse(
                         exchange.getRequest().getPath().value(),

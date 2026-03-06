@@ -4,6 +4,16 @@ spring:
   application:
     name: service-users
     version: 0.0.1-SNAPSHOT
+  datasource:
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:app_users}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: update
+    show-sql: true
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -15,6 +25,14 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
     connection-timeout: 1s
+  elasticsearch:
+    connection-timeout: 1s
+    uris: http://${ESC_HOST:localhost}:9200
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
   cloud:
     stream:
       bindings:
@@ -25,11 +43,6 @@ spring:
           deleteUserComments-out-0:
             producer:
               ttl: 10000
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/dev/protocol/openid-connect/certs}
 resilience4j:
   timelimiter:
     configs:
@@ -114,9 +127,6 @@ info:
     name: ${spring.application.name}
     description: ${spring.application.name}
     version: ${spring.application.version}
-keycloak:
-  auth-server-url: http://${KC_HOST:localhost}:${KC_PORT:8090}
-  realm: ${KC_REALM:dev}
-  client-id: ${KC_CLIENT:app-callcenter-client}
-  client-secret: ${KC_CLIENT_SECRET}
-  client-admin: ${KC_CLIENT_ADMIN:app-admin-client}
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem

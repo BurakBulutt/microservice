@@ -55,7 +55,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/dev/protocol/openid-connect/certs}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8081/.well-known/jwks.json}
 resilience4j:
   timelimiter:
     configs:

@@ -1,28 +1,32 @@
 package com.example.serviceusers.domain.user.api;
 
+import com.example.serviceusers.domain.user.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
-
 public record UpdateUserRequest(
-        @NotNull(message = "validation.firstName.null")
-        @NotBlank(message = "validation.firstName.blank")
+        @NotBlank(message = "user.firstName.notBlank")
         String firstName,
-        @NotNull(message = "validation.lastName.null")
-        @NotBlank(message = "validation.lastName.blank")
+
+        @NotBlank(message = "user.lastName.notBlank")
         String lastName,
-        @NotNull(message = "validation.email.null")
-        @NotBlank(message = "validation.email.blank")
-        @Email(message = "validation.email.invalidEmail")
+
+        @NotBlank(message = "user.username.notBlank")
+        String username,
+
+        Role role,
+
+        @NotBlank(message = "user.email.notBlank")
+        @Email(message = "user.email.emailFormat")
         String email,
-        @NotNull(message = "validation.enabled.null")
-        Boolean enabled,
-        @NotNull(message = "validation.emailVerified.null")
-        Boolean emailVerified,
-        @NotNull(message = "validation.birthdate.null")
-        LocalDate birthdate
-        ) {
+
+        @NotNull(message = "user.isEnabled.notNull")
+        Boolean isEnabled,
+
+        @NotNull(message = "user.isVerified.notNull")
+        Boolean isVerified,
+
+        String userGroupId
+) {
 }

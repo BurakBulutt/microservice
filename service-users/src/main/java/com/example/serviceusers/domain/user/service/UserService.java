@@ -1,30 +1,16 @@
 package com.example.serviceusers.domain.user.service;
 
-import com.example.serviceusers.domain.user.api.ChangePasswordRequest;
-import com.example.serviceusers.domain.user.api.CreateUserRequest;
-import com.example.serviceusers.domain.user.api.UpdateProfileRequest;
-import com.example.serviceusers.domain.user.api.UpdateUserRequest;
-import org.keycloak.representations.idm.UserRepresentation;
+import com.example.serviceusers.domain.user.dto.UserDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
-public interface UserService {
-    Page<UserRepresentation> getAll(Pageable pageable);
-    Page<UserRepresentation> filter(Pageable pageable,String username);
-
-    UserRepresentation getByUsername(String username);
-    UserRepresentation getById(String id);
-
-    UserRepresentation save(CreateUserRequest request);
-    UserRepresentation update(String id, UpdateUserRequest request);
-    UserRepresentation updateProfile(String id, UpdateProfileRequest request);
-
-    void delete(String id);
-    void resetPassword(String id);
-    void verifyEmail(String id);
-
-    void changePassword(String id, ChangePasswordRequest request);
-
-    Integer count();
-
+public interface UserService extends UserDetailsService {
+    Page<UserDto> getAll(Pageable pageable);
+    Page<UserDto> filter(Pageable pageable,String username,Boolean isEnabled,Boolean isVerified);
+    UserDto getById(String id);
+    UserDto save(UserDto userDto);
+    UserDto update(String id,UserDto userDto);
+    void delete (String id);
+    Long count();
 }

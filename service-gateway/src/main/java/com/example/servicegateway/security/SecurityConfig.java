@@ -1,21 +1,17 @@
 package com.example.servicegateway.security;
 
 
-import com.example.servicegateway.security.converter.JwtRoleConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtGrantedAuthoritiesConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.example.servicegateway.security.SecurityConstants.*;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -27,11 +23,9 @@ public class SecurityConfig {
         http.formLogin(ServerHttpSecurity.FormLoginSpec::disable);
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
-        http.oauth2ResourceServer(oAuth2ResourceServerSpec ->
-                oAuth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter())));
+        http.securityContextRepository(NoOpServerSecurityContextRepository.getInstance());
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers("/actuator/**").hasRole(ROLE_ADMIN)
-                        .anyExchange().permitAll()
+                .anyExchange().permitAll()
         );
         http.cors(corsSpec -> corsSpec.configurationSource(exchange -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
@@ -43,15 +37,5 @@ public class SecurityConfig {
         }));
 
         return http.build();
-    }
-
-    private ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter() {
-        ReactiveJwtGrantedAuthoritiesConverterAdapter reactiveJwtGrantedAuthoritiesConverterAdapter =
-                new ReactiveJwtGrantedAuthoritiesConverterAdapter(new JwtRoleConverter());
-
-        ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
-        reactiveJwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(reactiveJwtGrantedAuthoritiesConverterAdapter);
-
-        return reactiveJwtAuthenticationConverter;
     }
 }

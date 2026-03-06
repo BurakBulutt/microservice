@@ -64,7 +64,7 @@ public class GatewayProdConfig {
                         )
                         .uri("lb://SERVICE-REACTION"))
                 .route(predicateSpec -> predicateSpec
-                        .path("/api/users/**")
+                        .path("/api/users/**","/api/auth/**")
                         .filters(filterSpec -> filterSpec.rewritePath("/api/(?<segment>.*)", "/${segment}")
                                 .addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .circuitBreaker(config -> config

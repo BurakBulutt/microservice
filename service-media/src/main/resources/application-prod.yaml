@@ -27,6 +27,11 @@ spring:
   elasticsearch:
     connection-timeout: 1s
     uris: https://${ESC_HOST}:9200
+  batch:
+    jdbc:
+      initialize-schema: never
+    job:
+      enabled: false
   security:
     oauth2:
       resourceserver:
