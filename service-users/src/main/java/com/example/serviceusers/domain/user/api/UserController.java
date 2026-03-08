@@ -31,6 +31,12 @@ public class UserController {
         return ResponseEntity.ok(UserApiMapper.toResponse(service.getById(id)));
     }
 
+    @GetMapping("username/{username}")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<UserResponse> getByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(UserApiMapper.toResponse(service.getByUsername(username)));
+    }
+
     @GetMapping("filter")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Page<UserResponse>> filter(Pageable pageable,
@@ -57,5 +63,11 @@ public class UserController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("count")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Long> getCount() {
+        return ResponseEntity.ok(service.count());
     }
 }

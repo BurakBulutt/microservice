@@ -2,9 +2,11 @@ package com.example.serviceusers.domain.auth.service;
 
 
 import com.example.serviceusers.config.security.jwt.JwtService;
+import com.example.serviceusers.domain.auth.api.UpdateUserRequest;
 import com.example.serviceusers.domain.auth.dto.AuthDto;
 import com.example.serviceusers.domain.auth.dto.LoginDto;
 import com.example.serviceusers.domain.auth.dto.RegisterDto;
+import com.example.serviceusers.domain.user.dto.UserDto;
 import com.example.serviceusers.domain.user.mapper.UserServiceMapper;
 import com.example.serviceusers.domain.user.model.Role;
 import com.example.serviceusers.domain.user.model.User;
@@ -19,12 +21,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +41,7 @@ public class AuthServiceImpl {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final JwtDecoder jwtDecoder;
 
     public AuthDto login(LoginDto loginDto) {
         User user = userRepository.findByUsername(loginDto.getUsername())
@@ -73,6 +81,47 @@ public class AuthServiceImpl {
         //TODO User verify  flow.
 
         return buildAuthDto(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserDto updateProfile(String id,UpdateUserRequest request) {
+        User user = userRepository.findById(id).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND));
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        userRepository.save(user);
+
+        return UserServiceMapper.toDto(user);
+    }
+
+
+    public UserDto extractUser(){
+        UserDto user = null;
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+
+        if (requestAttributes instanceof ServletRequestAttributes) {
+           final String token =  ((ServletRequestAttributes) requestAttributes).getRequest().getHeader("Authorization");
+
+           final String tokenValue = extractToken(token);
+
+           Map<String,Object> claims = jwtDecoder.decode(tokenValue).getClaims();
+
+           String subject = (String) claims.get("sub");
+
+           user = userRepository.findByUsername(subject).map(UserServiceMapper::toDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND,User.class.getSimpleName(),subject));
+
+        }else {
+            throw new BaseException(MessageResource.INTERNAL_SERVER_ERROR);
+        }
+
+        return user;
+    }
+
+    private String extractToken(String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new BaseException(MessageResource.UNAUTHORIZED);
+        }
+        return token.substring(7);
     }
 
     private AuthDto buildAuthDto(User user) {

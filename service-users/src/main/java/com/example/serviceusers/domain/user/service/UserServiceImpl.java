@@ -97,6 +97,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto getByUsername(String username) {
+        return repository.findByUsername(username).map(UserServiceMapper::toDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, User.class.getSimpleName(), username));
+    }
+
+    @Override
     @Transactional
     @Caching(
             put = {
