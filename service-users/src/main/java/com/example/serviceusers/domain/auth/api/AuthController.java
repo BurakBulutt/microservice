@@ -34,7 +34,7 @@ public class AuthController {
         return ResponseEntity.ok(UserApiMapper.toResponse(authService.extractUser()));
     }
 
-    @PostMapping("update-profile/{id}")
+    @PutMapping("update-profile/{id}")
     public ResponseEntity<UserResponse> updateProfile(@PathVariable String id,@RequestBody UpdateUserRequest request) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(UserApiMapper.toResponse(authService.updateProfile(id,request)));

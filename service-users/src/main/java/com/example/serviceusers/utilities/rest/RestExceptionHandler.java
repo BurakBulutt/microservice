@@ -53,12 +53,12 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ErrorResponse> handleWebApplication(BaseException e,WebRequest request) {
-        String msg = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), Locale.getDefault());
+    public ResponseEntity<ErrorResponse> handleBaseException(BaseException e,WebRequest request) {
+        String message = messageSource.getMessage(e.getMessageResource().getMessage(), e.getArgs(), Locale.getDefault());
         return ResponseEntity.status(e.getMessageResource().getStatus()).body(new ErrorResponse(
                 request.getDescription(false),
-                msg,
-                e.getLocalizedMessage(),
+                e.getMessageResource().name(),
+                message,
                 LocalDateTime.now()
         ));
     }

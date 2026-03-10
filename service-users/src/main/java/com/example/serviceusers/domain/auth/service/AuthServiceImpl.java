@@ -45,10 +45,10 @@ public class AuthServiceImpl {
 
     public AuthDto login(LoginDto loginDto) {
         User user = userRepository.findByUsername(loginDto.getUsername())
-                .orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(MessageResource.INVALID_USER_CREDENTIALS));
 
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
-            throw new BaseException(MessageResource.BAD_REQUEST);
+            throw new BaseException(MessageResource.INVALID_USER_CREDENTIALS);
         }
 
         if (!user.isEnabled()) {

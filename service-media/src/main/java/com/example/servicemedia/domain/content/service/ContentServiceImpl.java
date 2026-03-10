@@ -160,7 +160,7 @@ public class ContentServiceImpl implements ContentService {
             assert id != null;
             return repository.findById(id).map(this::toContentDto).orElseThrow(() -> new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName(), id));
         }
-        throw new BaseException(MessageResource.NOT_FOUND, Content.class.getSimpleName());
+        throw new BaseException(MessageResource.NOT_FOUND);
     }
 
     @Override

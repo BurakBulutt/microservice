@@ -14,7 +14,9 @@ public enum MessageResource {
     UNAUTHORIZED(401,"general.unauthorized"),
     CONFLICT(409,"general.conflict"),
     INTERNAL_SERVER_ERROR(500,"general.internalServerError"),
-    SERVICE_UNAVAILABLE(503,"general.serviceUnavailable");
+    SERVICE_UNAVAILABLE(503,"general.serviceUnavailable"),
+
+    INVALID_USER_CREDENTIALS(400,"general.invalidUserCredentials");
 
     private final int status;
     private final String message;
